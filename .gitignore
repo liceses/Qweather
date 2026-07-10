@@ -82,3 +82,11 @@ CMakeLists.txt.user*
 .uic/
 /build*/
 /.qtcreator/
+
+# Editor config (local only)
+.qmllint.ini
+CMakePresets.json
+.vscode/
+
+# Screenshots
+*.png

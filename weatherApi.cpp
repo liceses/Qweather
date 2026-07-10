@@ -300,32 +300,34 @@ void WeatherAPI::onReplyFinished(QNetworkReply *reply)
 
     auto type = static_cast<ApiRequestType>(
         reply->request().attribute(QNetworkRequest::User).toInt());
+    QUrlQuery q(reply->request().url());
+    QString loc = q.queryItemValue("location");   // 请求时的 location 参数
 
     switch (type) {
     case ApiRequestType::CityLookup:           handleCityLookup(data);           break;
     case ApiRequestType::CityTop:              handleCityTop(data);              break;
-    case ApiRequestType::WeatherNow:           handleWeatherNow(data);           break;
-    case ApiRequestType::WeatherDaily:         handleWeatherDaily(data);         break;
-    case ApiRequestType::WeatherHourly:        handleWeatherHourly(data);        break;
-    case ApiRequestType::GridWeatherNow:       handleGridWeatherNow(data);       break;
-    case ApiRequestType::GridWeatherDaily:     handleGridWeatherDaily(data);     break;
-    case ApiRequestType::GridWeatherHourly:    handleGridWeatherHourly(data);    break;
-    case ApiRequestType::MinutelyPrecip:       handleMinutelyPrecip(data);       break;
-    case ApiRequestType::WarningNow:           handleWarningNow(data);           break;
-    case ApiRequestType::Indices:              handleIndices(data);              break;
-    case ApiRequestType::AirCurrent:           handleAirCurrent(data);           break;
-    case ApiRequestType::AirHourly:            handleAirHourly(data);            break;
-    case ApiRequestType::AirDaily:             handleAirDaily(data);             break;
-    case ApiRequestType::HistoricalWeather:    handleHistoricalWeather(data);    break;
-    case ApiRequestType::HistoricalAir:        handleHistoricalAir(data);        break;
-    case ApiRequestType::StormList:            handleStormList(data);            break;
-    case ApiRequestType::StormTrack:           handleStormTrack(data);           break;
-    case ApiRequestType::StormForecast:        handleStormForecast(data);        break;
-    case ApiRequestType::OceanTide:            handleOceanTide(data);            break;
-    case ApiRequestType::SolarRadiation:       handleSolarRadiation(data);       break;
-    case ApiRequestType::AstronomySun:         handleAstronomySun(data);         break;
-    case ApiRequestType::AstronomyMoon:        handleAstronomyMoon(data);        break;
-    case ApiRequestType::SolarElevationAngle:  handleSolarElevationAngle(data);  break;
+    case ApiRequestType::WeatherNow:           handleWeatherNow(data, loc);           break;
+    case ApiRequestType::WeatherDaily:         handleWeatherDaily(data, loc);         break;
+    case ApiRequestType::WeatherHourly:        handleWeatherHourly(data, loc);        break;
+    case ApiRequestType::GridWeatherNow:       handleGridWeatherNow(data, loc);       break;
+    case ApiRequestType::GridWeatherDaily:     handleGridWeatherDaily(data, loc);     break;
+    case ApiRequestType::GridWeatherHourly:    handleGridWeatherHourly(data, loc);    break;
+    case ApiRequestType::MinutelyPrecip:       handleMinutelyPrecip(data, loc);       break;
+    case ApiRequestType::WarningNow:           handleWarningNow(data, loc);           break;
+    case ApiRequestType::Indices:              handleIndices(data, loc);              break;
+    case ApiRequestType::AirCurrent:           handleAirCurrent(data, loc);           break;
+    case ApiRequestType::AirHourly:            handleAirHourly(data, loc);            break;
+    case ApiRequestType::AirDaily:             handleAirDaily(data, loc);             break;
+    case ApiRequestType::HistoricalWeather:    handleHistoricalWeather(data, loc);    break;
+    case ApiRequestType::HistoricalAir:        handleHistoricalAir(data, loc);        break;
+    case ApiRequestType::StormList:            handleStormList(data, loc);            break;
+    case ApiRequestType::StormTrack:           handleStormTrack(data, loc);           break;
+    case ApiRequestType::StormForecast:        handleStormForecast(data, loc);        break;
+    case ApiRequestType::OceanTide:            handleOceanTide(data, loc);            break;
+    case ApiRequestType::SolarRadiation:       handleSolarRadiation(data, loc);       break;
+    case ApiRequestType::AstronomySun:         handleAstronomySun(data, loc);         break;
+    case ApiRequestType::AstronomyMoon:        handleAstronomyMoon(data, loc);        break;
+    case ApiRequestType::SolarElevationAngle:  handleSolarElevationAngle(data, loc);  break;
     }
 }
 void WeatherAPI::sendRequest(const QUrl &url, ApiRequestType type)
@@ -351,134 +353,149 @@ void WeatherAPI::handleCityTop(const QByteArray &d)
     emit cityTopReady(arr);
 }
 
-void WeatherAPI::handleWeatherNow(const QByteArray &d)
+void WeatherAPI::handleWeatherNow(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object()["now"].toObject();
+    obj["_location"] = loc;
     emit weatherNowReady(obj);
 }
 
-void WeatherAPI::handleWeatherDaily(const QByteArray &d)
+void WeatherAPI::handleWeatherDaily(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["daily"].toArray();
-    emit weatherDailyReady(arr);
+    emit weatherDailyReady(loc, arr);
 }
 
-void WeatherAPI::handleWeatherHourly(const QByteArray &d)
+void WeatherAPI::handleWeatherHourly(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["hourly"].toArray();
-    emit weatherHourlyReady(arr);
+    emit weatherHourlyReady(loc, arr);
 }
 
-void WeatherAPI::handleGridWeatherNow(const QByteArray &d)
+void WeatherAPI::handleGridWeatherNow(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object()["now"].toObject();
+    obj["_location"] = loc;
     emit gridWeatherNowReady(obj);
 }
 
-void WeatherAPI::handleGridWeatherDaily(const QByteArray &d)
+void WeatherAPI::handleGridWeatherDaily(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["daily"].toArray();
-    emit gridWeatherDailyReady(arr);
+    emit gridWeatherDailyReady(loc, arr);
 }
 
-void WeatherAPI::handleGridWeatherHourly(const QByteArray &d)
+void WeatherAPI::handleGridWeatherHourly(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["hourly"].toArray();
-    emit gridWeatherHourlyReady(arr);
+    emit gridWeatherHourlyReady(loc, arr);
 }
 
-void WeatherAPI::handleMinutelyPrecip(const QByteArray &d)
+void WeatherAPI::handleMinutelyPrecip(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit minutelyPrecipReady(obj);
 }
 
-void WeatherAPI::handleWarningNow(const QByteArray &d)
+void WeatherAPI::handleWarningNow(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit warningNowReady(obj);
 }
 
-void WeatherAPI::handleIndices(const QByteArray &d)
+void WeatherAPI::handleIndices(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["daily"].toArray();
-    emit indicesReady(arr);
+    emit indicesReady(loc, arr);
 }
 
-void WeatherAPI::handleAirCurrent(const QByteArray &d)
+void WeatherAPI::handleAirCurrent(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit airCurrentReady(obj);
 }
 
-void WeatherAPI::handleAirHourly(const QByteArray &d)
+void WeatherAPI::handleAirHourly(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit airHourlyReady(obj);
 }
 
-void WeatherAPI::handleAirDaily(const QByteArray &d)
+void WeatherAPI::handleAirDaily(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit airDailyReady(obj);
 }
 
-void WeatherAPI::handleHistoricalWeather(const QByteArray &d)
+void WeatherAPI::handleHistoricalWeather(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit historicalWeatherReady(obj);
 }
 
-void WeatherAPI::handleHistoricalAir(const QByteArray &d)
+void WeatherAPI::handleHistoricalAir(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit historicalAirReady(obj);
 }
 
-void WeatherAPI::handleStormList(const QByteArray &d)
+void WeatherAPI::handleStormList(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["storm"].toArray();
     emit stormListReady(arr);
 }
 
-void WeatherAPI::handleStormTrack(const QByteArray &d)
+void WeatherAPI::handleStormTrack(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit stormTrackReady(obj);
 }
 
-void WeatherAPI::handleStormForecast(const QByteArray &d)
+void WeatherAPI::handleStormForecast(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["forecast"].toArray();
     emit stormForecastReady(arr);
 }
 
-void WeatherAPI::handleOceanTide(const QByteArray &d)
+void WeatherAPI::handleOceanTide(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit oceanTideReady(obj);
 }
 
-void WeatherAPI::handleSolarRadiation(const QByteArray &d)
+void WeatherAPI::handleSolarRadiation(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit solarRadiationReady(obj);
 }
 
-void WeatherAPI::handleAstronomySun(const QByteArray &d)
+void WeatherAPI::handleAstronomySun(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit astronomySunReady(obj);
 }
 
-void WeatherAPI::handleAstronomyMoon(const QByteArray &d)
+void WeatherAPI::handleAstronomyMoon(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit astronomyMoonReady(obj);
 }
 
-void WeatherAPI::handleSolarElevationAngle(const QByteArray &d)
+void WeatherAPI::handleSolarElevationAngle(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
+    obj["_location"] = loc;
     emit solarElevationAngleReady(obj);
 }

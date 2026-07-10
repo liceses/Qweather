@@ -84,18 +84,18 @@ signals:
     void cityTopReady(const QJsonArray &cities);
     // 天气预报
     void weatherNowReady(const QJsonObject &now);
-    void weatherDailyReady(const QJsonArray &daily);
-    void weatherHourlyReady(const QJsonArray &hourly);
+    void weatherDailyReady(const QString &loc, const QJsonArray &daily);
+    void weatherHourlyReady(const QString &loc, const QJsonArray &hourly);
     // 格点天气
     void gridWeatherNowReady(const QJsonObject &now);
-    void gridWeatherDailyReady(const QJsonArray &daily);
-    void gridWeatherHourlyReady(const QJsonArray &hourly);
+    void gridWeatherDailyReady(const QString &loc, const QJsonArray &daily);
+    void gridWeatherHourlyReady(const QString &loc, const QJsonArray &hourly);
     // 分钟降水
     void minutelyPrecipReady(const QJsonObject &result);
     // 预警
     void warningNowReady(const QJsonObject &result);
     // 天气指数
-    void indicesReady(const QJsonArray &daily);
+    void indicesReady(const QString &loc, const QJsonArray &daily);
     // 空气质量
     void airCurrentReady(const QJsonObject &result);
     void airHourlyReady(const QJsonObject &result);
@@ -124,28 +124,28 @@ private:
     // 处理回复
     void handleCityLookup(const QByteArray &d);
     void handleCityTop(const QByteArray &d);
-    void handleWeatherNow(const QByteArray &d);
-    void handleWeatherDaily(const QByteArray &d);
-    void handleWeatherHourly(const QByteArray &d);
-    void handleGridWeatherNow(const QByteArray &d);
-    void handleGridWeatherDaily(const QByteArray &d);
-    void handleGridWeatherHourly(const QByteArray &d);
-    void handleMinutelyPrecip(const QByteArray &d);
-    void handleWarningNow(const QByteArray &d);
-    void handleIndices(const QByteArray &d);
-    void handleAirCurrent(const QByteArray &d);
-    void handleAirHourly(const QByteArray &d);
-    void handleAirDaily(const QByteArray &d);
-    void handleHistoricalWeather(const QByteArray &d);
-    void handleHistoricalAir(const QByteArray &d);
-    void handleStormList(const QByteArray &d);
-    void handleStormTrack(const QByteArray &d);
-    void handleStormForecast(const QByteArray &d);
-    void handleOceanTide(const QByteArray &d);
-    void handleSolarRadiation(const QByteArray &d);
-    void handleAstronomySun(const QByteArray &d);
-    void handleAstronomyMoon(const QByteArray &d);
-    void handleSolarElevationAngle(const QByteArray &d);
+    void handleWeatherNow(const QByteArray &d, const QString &loc);
+    void handleWeatherDaily(const QByteArray &d, const QString &loc);
+    void handleWeatherHourly(const QByteArray &d, const QString &loc);
+    void handleGridWeatherNow(const QByteArray &d, const QString &loc);
+    void handleGridWeatherDaily(const QByteArray &d, const QString &loc);
+    void handleGridWeatherHourly(const QByteArray &d, const QString &loc);
+    void handleMinutelyPrecip(const QByteArray &d, const QString &loc);
+    void handleWarningNow(const QByteArray &d, const QString &loc);
+    void handleIndices(const QByteArray &d, const QString &loc);
+    void handleAirCurrent(const QByteArray &d, const QString &loc);
+    void handleAirHourly(const QByteArray &d, const QString &loc);
+    void handleAirDaily(const QByteArray &d, const QString &loc);
+    void handleHistoricalWeather(const QByteArray &d, const QString &loc);
+    void handleHistoricalAir(const QByteArray &d, const QString &loc);
+    void handleStormList(const QByteArray &d, const QString &loc);
+    void handleStormTrack(const QByteArray &d, const QString &loc);
+    void handleStormForecast(const QByteArray &d, const QString &loc);
+    void handleOceanTide(const QByteArray &d, const QString &loc);
+    void handleSolarRadiation(const QByteArray &d, const QString &loc);
+    void handleAstronomySun(const QByteArray &d, const QString &loc);
+    void handleAstronomyMoon(const QByteArray &d, const QString &loc);
+    void handleSolarElevationAngle(const QByteArray &d, const QString &loc);
     QNetworkAccessManager * m_manager;
     const QString m_key = "ac6fe42e65be4a79a9eca8fc5043c2bf";
     QString m_host = "https://kc2k5qe8b5.re.qweatherapi.com";

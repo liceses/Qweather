@@ -8,6 +8,16 @@ ApplicationWindow{
     height: 480
     visible: true
     title:qsTr("hello world!")
+    Connections{
+        target: weatherApi
+        function onWeatherNowReady(now){
+            console.log(Logic.stringify(now));
+            cityTemp.text = now.temp
+        }
+        function onCityLookupReady(citys){
+            searchBox.cityList = citys
+        }
+    }
     header: MenuBar{
         Menu{
             title: qsTr("&file")
@@ -25,35 +35,36 @@ ApplicationWindow{
 
 
     }
-    Button{
-        id : but
-        text: qsTr("click me to search")
-        anchors.centerIn: parent
-        width: root.width/5
-        height: root.height/5
-        visible: true
-        onPressed: {
-            root.title = qsTr("u clicked me");
-            weatherApi.searchCity(cityInput.text);
-            console.log("afterapicall")
-        }
-    }
-    TextField{
-        id:cityInput
-        width:root.width/5
-        height:root.height/5
-        font.pointSize: 9
-        placeholderText: qsTr("please input city name")
-    }
-    Connections{
-        target: weatherApi
-        function onWeatherNowReady(now){
-            console.log(now);
-        }
-        function onCityLookupReady(citys){
-            console.log(Logic.stringify(citys))
-            
 
+    ComboBox{
+        id: searchBox
+        width: root.width/3
+        editable: true
+        property var cityList: []
+        property string selectedCityid: ""
+        model: cityList
+        textRole: "name"
+        onEditTextChanged: {
+            debounce.restart()
+        }
+        onActivated: function(index){
+            let city = cityList[index]
+            selectedCityid = city.id;
+            weatherApi.weatherNow(selectedCityid)
+        }
+
+        Timer{
+            id: debounce
+            interval: 300
+            onTriggered: weatherApi.searchCity(searchBox.editText)
         }
     }
+
+    Text {
+        id: cityTemp
+        text: qsTr("请搜索城市")
+        anchors.left: searchBox.right
+        anchors.leftMargin: 10
+    }
+
 }

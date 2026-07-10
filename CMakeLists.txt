@@ -25,6 +25,7 @@ qt_add_qml_module(appqml1
         SOURCES weatherApi.h
         SOURCES weatherApi.cpp
         QML_FILES logic.js
+        RESOURCES indicationsForDynamic_background.md
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
