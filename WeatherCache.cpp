@@ -1,8 +1,8 @@
 #include "WeatherCache.h"
+#include <QCoreApplication>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDateTime>
-#include <QDir>
 #include <QDebug>
 
 WeatherCache::WeatherCache(QObject *parent)
@@ -19,7 +19,8 @@ WeatherCache::~WeatherCache()
 void WeatherCache::initDb()
 {
     m_db = QSqlDatabase::addDatabase("QSQLITE");
-    QString path = QDir::homePath() + "/.qweather_cache.db";
+    // 绿色版：数据库与 exe 同目录，即删即走不留痕迹
+    QString path = QCoreApplication::applicationDirPath() + "/weather_cache.db";
     m_db.setDatabaseName(path);
 
     if (!m_db.open()) {
