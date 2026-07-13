@@ -28,6 +28,13 @@ qt_add_qml_module(appqml1
         SearchBar.qml
         InfoChip.qml
         CityStore.qml
+        DashboardPage.qml
+        AirQualityPage.qml
+        ForecastPage.qml
+        AstroSolarPage.qml
+        CityDetailPage.qml
+        FavoritesPage.qml
+        SettingsPage.qml
         RESOURCES logic.js
         RESOURCES todo.md
         RESOURCES indicationsForDynamic_background.md

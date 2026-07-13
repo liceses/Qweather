@@ -52,128 +52,34 @@ ApplicationWindow {
             currentIndex: 0
 
             // ===== Page 0: 仪表盘 =====
-            Item {
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 40
+            DashboardPage { id: dashPage; store: store; weatherApi: weatherApi }
 
-                    SearchBar {
-                        id: searchBox
-                        Layout.alignment: Qt.AlignTop | Qt.AlignRight
-                        onCitySelected: function(cityId) {
-                            root.switchFocus(cityId)
-                        }
-                    }
+            // ===== Page 1: 空气质量 =====
+            AirQualityPage { store: store; weatherApi: weatherApi }
 
-                    Item { Layout.preferredHeight: 40 }
+            // ===== Page 2: 天气预报 =====
+            ForecastPage { id: forecastPage; store: store; weatherApi: weatherApi }
 
-                    Text {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: store.cityName(store.focusCityId) || "搜索城市开始"
-                        color: "white"
-                        font.pixelSize: 56
-                        font.bold: true
-                    }
-
-                    Row {
-                        Layout.alignment: Qt.AlignHCenter
-                        spacing: 12
-                        WeatherIcon {
-                            code: root.focusWeather.icon || "100"
-                            iconSize: 42
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        Text {
-                            text: root.focusWeather.text || "--"
-                            color: "white"
-                            font.pixelSize: 28
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        Text {
-                            text: root.focusWeather.temp ? root.focusWeather.temp + "°" : "--°"
-                            color: "white"
-                            font.pixelSize: 42
-                            font.bold: true
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    Row {
-                        Layout.alignment: Qt.AlignHCenter
-                        spacing: 20
-                        InfoChip { label: "体感"; value: root.focusWeather.feelsLike + "°" }
-                        InfoChip { label: "湿度"; value: root.focusWeather.humidity + "%" }
-                        InfoChip { label: root.focusWeather.windDir || "风"; value: root.focusWeather.windScale + "级" }
-                    }
-
-                    Item { Layout.fillHeight: true }
-
-                    // 城市卡片行
-                    Row {
-                        Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
-                        spacing: 16
-                        Repeater {
-                            model: store.trackedCities
-                            CityCard {
-                                cityName: modelData.name
-                                cityId: modelData.id
-                                isFocus: modelData.id === store.focusCityId
-                                weatherData: store.cityWeather[modelData.id] || ({})
-                                onClicked: function(cityId) { root.switchFocus(cityId) }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ===== Page 1: 空气质量（占位） =====
-            Item {
-                Text { anchors.centerIn: parent; text: "空气质量"; color: "white"; font.pixelSize: 24 }
-            }
-
-            // ===== Page 2: 天气预报（占位） =====
-            Item {
-                Text { anchors.centerIn: parent; text: "天气预报"; color: "white"; font.pixelSize: 24 }
-            }
-
-            // ===== Page 3: 阳光天文（占位） =====
-            Item {
-                Text { anchors.centerIn: parent; text: "阳光天文"; color: "white"; font.pixelSize: 24 }
-            }
+            // ===== Page 3: 阳光天文 =====
+            AstroSolarPage { store: store; weatherApi: weatherApi }
 
             // ===== Page 4: 城市详情 =====
-            Item {
-                Text { anchors.centerIn: parent; text: "城市详情"; color: "white"; font.pixelSize: 24 }
+            CityDetailPage {
+                store: store; weatherApi: weatherApi
+                cityId: store.pinnedCityId || store.focusCityId
             }
 
             // ===== Page 5: 收藏 =====
-            Item {
-                Text { anchors.centerIn: parent; text: "收藏"; color: "white"; font.pixelSize: 24 }
-            }
+            FavoritesPage { store: store }
 
             // ===== Page 6: 设置 =====
-            Item {
-                Text { anchors.centerIn: parent; text: "设置"; color: "white"; font.pixelSize: 24 }
-            }
+            SettingsPage { id: settingsPage; weatherCache: null }
         }
     }
 
-    // ===== 逻辑 =====
-    function switchFocus(cityId) {
-        store.focusCityId = cityId
-        // 加城市到追踪列表
-        store.addCity({ name: root.cityNameFromSearch(cityId), id: cityId })
-        weatherApi.weatherNow(cityId)
-    }
-
-    // ===== 信号 =====
+    // ===== 全局信号转发 =====
     Connections {
         target: weatherApi
-        function onCityLookupReady(citys) {
-            searchBox.cityList = citys
-            // 缓存搜索结果供 store 查名字用
-            searchBox._lastResults = citys
-        }
         function onCityTopReady(cities) {
             for (let i = 0; i < Math.min(cities.length, 4); i++) {
                 let c = cities[i]
@@ -185,20 +91,10 @@ ApplicationWindow {
             }
         }
         function onWeatherNowReady(now) {
-            let id = now._location
-            store.updateWeather(id, now.temp, now.icon, now.text)
-            if (id === store.focusCityId) {
-                root.focusWeather = now
-            }
+            store.updateWeather(now._location, now.temp, now.icon, now.text)
         }
-    }
-
-    // 从搜索结果取城市名（跨函数复用）
-    function cityNameFromSearch(cityId) {
-        let results = searchBox.cityList
-        for (let j = 0; j < results.length; j++) {
-            if (results[j].id === cityId) return results[j].name
+        function onWeatherDailyReady(loc, daily) {
+            store.updateDaily(loc, daily)
         }
-        return cityId
     }
 }
