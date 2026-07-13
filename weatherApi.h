@@ -4,6 +4,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
+class WeatherCache;
+
 enum class ApiRequestType {
     CityLookup,         // 城市搜索
     CityTop,            // 热门城市
@@ -35,6 +37,8 @@ class WeatherAPI :public QObject{
     Q_OBJECT
 public:
     explicit WeatherAPI(QObject* parent = nullptr);
+    void setCache(WeatherCache *cache) { m_cache = cache; }
+
     // Q_INVOKABLE = 这个函数可以被 QML 直接调用
     // GeoAPI
     Q_INVOKABLE void searchCity(const QString &name);
@@ -115,13 +119,12 @@ signals:
     void astronomySunReady(const QJsonObject &result);
     void astronomyMoonReady(const QJsonObject &result);
     void solarElevationAngleReady(const QJsonObject &result);
+
 private slots:
-     // 处理 HTTP 响应
     void onReplyFinished(QNetworkReply *reply);
+
 private:
-    // 请求函数（统一组装 URL + 发送）
     void sendRequest(const QUrl &url, ApiRequestType type);
-    // 处理回复
     void handleCityLookup(const QByteArray &d);
     void handleCityTop(const QByteArray &d);
     void handleWeatherNow(const QByteArray &d, const QString &loc);
@@ -146,7 +149,10 @@ private:
     void handleAstronomySun(const QByteArray &d, const QString &loc);
     void handleAstronomyMoon(const QByteArray &d, const QString &loc);
     void handleSolarElevationAngle(const QByteArray &d, const QString &loc);
+
+private:
     QNetworkAccessManager * m_manager;
+    WeatherCache *m_cache = nullptr;
     const QString m_key = "ac6fe42e65be4a79a9eca8fc5043c2bf";
     QString m_host = "https://kc2k5qe8b5.re.qweatherapi.com";
 };

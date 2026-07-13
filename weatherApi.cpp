@@ -1,9 +1,42 @@
 #include "weatherApi.h"
+#include "WeatherCache.h"
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QUrlQuery>
 #include <QDebug>
+
+// 缓存配置：{ prefix, TTL秒 }
+struct CacheConf { const char* prefix; int ttl; };
+static CacheConf cacheConf(ApiRequestType t) {
+    switch (t) {
+    case ApiRequestType::WeatherNow:         return {"weather_now", 600};
+    case ApiRequestType::WeatherDaily:       return {"weather_daily", 3600};
+    case ApiRequestType::WeatherHourly:      return {"weather_hourly", 1800};
+    case ApiRequestType::GridWeatherNow:     return {"grid_now", 600};
+    case ApiRequestType::GridWeatherDaily:   return {"grid_daily", 3600};
+    case ApiRequestType::GridWeatherHourly:  return {"grid_hourly", 1800};
+    case ApiRequestType::MinutelyPrecip:     return {"minutely", 300};
+    case ApiRequestType::WarningNow:         return {"warning", 300};
+    case ApiRequestType::Indices:            return {"indices", 3600};
+    case ApiRequestType::AirCurrent:         return {"air_current", 1800};
+    case ApiRequestType::AirHourly:          return {"air_hourly", 3600};
+    case ApiRequestType::AirDaily:           return {"air_daily", 3600};
+    case ApiRequestType::HistoricalWeather:  return {"hist_weather", 86400};
+    case ApiRequestType::HistoricalAir:      return {"hist_air", 86400};
+    case ApiRequestType::StormList:          return {"storm_list", 3600};
+    case ApiRequestType::StormTrack:         return {"storm_track", 600};
+    case ApiRequestType::StormForecast:      return {"storm_forecast", 600};
+    case ApiRequestType::OceanTide:          return {"tide", 600};
+    case ApiRequestType::SolarRadiation:     return {"solar", 3600};
+    case ApiRequestType::AstronomySun:       return {"astro_sun", 86400};
+    case ApiRequestType::AstronomyMoon:      return {"astro_moon", 86400};
+    case ApiRequestType::SolarElevationAngle:return {"solar_angle", 3600};
+    case ApiRequestType::CityLookup:         return {"city_lookup", 86400};
+    case ApiRequestType::CityTop:            return {"city_top", 86400};
+    default: return {nullptr, 0};
+    }
+}
 
 WeatherAPI::WeatherAPI(QObject *parent) : QObject(parent) , m_manager(new QNetworkAccessManager(this))
 {
@@ -14,6 +47,15 @@ WeatherAPI::WeatherAPI(QObject *parent) : QObject(parent) , m_manager(new QNetwo
 
 void WeatherAPI::searchCity(const QString &name)
 {
+    if (m_cache) {
+        auto cc = cacheConf(ApiRequestType::CityLookup);
+        QString key = QString("%1:%2").arg(cc.prefix, name);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) {
+            QJsonArray arr = QJsonDocument::fromJson(c.toUtf8()).object()["location"].toArray();
+            if (!arr.isEmpty()) { emit cityLookupReady(arr); return; }
+        }
+    }
     QUrl url(m_host + "/geo/v2/city/lookup");
     QUrlQuery q;
     q.addQueryItem("location", name);
@@ -24,6 +66,16 @@ void WeatherAPI::searchCity(const QString &name)
 
 void WeatherAPI::topCity(const QString &range, int number)
 {
+    if (m_cache) {
+        auto cc = cacheConf(ApiRequestType::CityTop);
+        QString key = QString("%1:%2").arg(cc.prefix, range);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) {
+            QJsonArray arr = QJsonDocument::fromJson(c.toUtf8()).object()["topCityList"].toArray();
+            emit cityTopReady(arr);
+            return;
+        }
+    }
     QUrl url(m_host + "/geo/v2/city/top");
     QUrlQuery q;
     q.addQueryItem("range", range);
@@ -37,6 +89,12 @@ void WeatherAPI::topCity(const QString &range, int number)
 
 void WeatherAPI::weatherNow(const QString &loc)
 {
+    if (m_cache) {
+        auto cc = cacheConf(ApiRequestType::WeatherNow);
+        QString key = QString("%1:%2").arg(cc.prefix, loc);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) { handleWeatherNow(c.toUtf8(), loc); return; }
+    }
     QUrl url(m_host + "/v7/weather/now");
     QUrlQuery q;
     q.addQueryItem("location", loc);
@@ -52,6 +110,12 @@ void WeatherAPI::weatherDaily(const QString &days, const QString &loc)
     q.addQueryItem("location", loc);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
+    if (m_cache) {
+        auto cc = cacheConf(ApiRequestType::WeatherDaily);
+        QString key = QString("%1:%2:%3").arg(cc.prefix, days, loc);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) { handleWeatherDaily(c.toUtf8(), loc); return; }
+    }
     sendRequest(url, ApiRequestType::WeatherDaily);
 }
 
@@ -301,7 +365,16 @@ void WeatherAPI::onReplyFinished(QNetworkReply *reply)
     auto type = static_cast<ApiRequestType>(
         reply->request().attribute(QNetworkRequest::User).toInt());
     QUrlQuery q(reply->request().url());
-    QString loc = q.queryItemValue("location");   // 请求时的 location 参数
+    QString loc = q.queryItemValue("location");
+
+    // 写入缓存
+    if (m_cache) {
+        auto cc = cacheConf(type);
+        if (cc.prefix && !loc.isEmpty()) {
+            QString key = QString("%1:%2").arg(cc.prefix, loc);
+            m_cache->set(key, QString::fromUtf8(data));
+        }
+    }
 
     switch (type) {
     case ApiRequestType::CityLookup:           handleCityLookup(data);           break;

@@ -4,7 +4,7 @@ project(qml1 VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Network)
+find_package(Qt6 REQUIRED COMPONENTS Quick Network Sql)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
@@ -21,11 +21,18 @@ qt_add_qml_module(appqml1
     URI qml1
     QML_FILES
         Main.qml
+        SidePanel.qml
+        NavButton.qml
+        WeatherIcon.qml
+        CityCard.qml
+        SearchBar.qml
+        InfoChip.qml
+        AddCityButton.qml
+        RESOURCES logic.js
         RESOURCES todo.md
-        SOURCES weatherApi.h
-        SOURCES weatherApi.cpp
-        QML_FILES logic.js
         RESOURCES indicationsForDynamic_background.md
+        SOURCES weatherApi.h weatherApi.cpp
+        SOURCES WeatherCache.h WeatherCache.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -40,8 +47,7 @@ set_target_properties(appqml1 PROPERTIES
 )
 
 target_link_libraries(appqml1
-    PRIVATE Qt6::Quick
-    Qt6::Network
+    PRIVATE Qt6::Quick Qt6::Network Qt6::Sql
 )
 
 install(TARGETS appqml1

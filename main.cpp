@@ -4,14 +4,18 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include "weatherApi.h"
+#include "WeatherCache.h"
 
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
-    // 注册 QJson 类型，确保 QML Connections 能匹配信号参数
     qRegisterMetaType<QJsonArray>("QJsonArray");
     qRegisterMetaType<QJsonObject>("QJsonObject");
+
+    WeatherCache cache;
+    WeatherAPI weatherapi;
+    weatherapi.setCache(&cache);
 
     QQmlApplicationEngine engine;
     QObject::connect(
@@ -20,7 +24,6 @@ int main(int argc, char *argv[])
         &app,
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
-    WeatherAPI weatherapi;
     engine.rootContext()->setContextProperty("weatherApi", &weatherapi);
     engine.loadFromModule("qml1", "Main");
 
