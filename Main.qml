@@ -137,10 +137,6 @@ ApplicationWindow {
                             }
                         }
 
-                        // 添加按钮
-                        AddCityButton {
-                            onClicked: { searchBox.forceActiveFocus() }
-                        }
                     }
                 }
             }
