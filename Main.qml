@@ -9,25 +9,24 @@ ApplicationWindow {
     visible: true
     title: "天气"
 
-    // ===== 数据模型 =====
+    // ===== 全局数据 =====
     property string focusCityId: ""
-    property var focusWeather: ({})       // 焦点城市实时天气
-    property var cityTemps: ({})          // { cityId : { temp, icon, text } }
+    property string focusCityName: "北京"
+    property var focusWeather: ({})
+    property var cityList: []            // 已追踪的城市 [{name, id}]
 
-    // 卡片列表
+    // 卡片列表（Dashboard 用）
     ListModel {
         id: cardModel
-        // 元素: { name, id, temp, icon, text, focus }
     }
 
-    // ===== 初始化：加载热门城市 =====
+    // ===== 初始化 =====
     Component.onCompleted: {
         weatherApi.topCity("cn", 4)
     }
 
     // ===== Layer 0: 背景 =====
     Rectangle {
-        id: bg
         anchors.fill: parent
         gradient: Gradient {
             GradientStop { position: 0.0; color: "#4a90d9" }
@@ -41,8 +40,11 @@ ApplicationWindow {
         spacing: 0
 
         SidePanel {
-            Layout.preferredWidth: 80
+            id: sidePanel
+            Layout.preferredWidth: sidePanel.expanded ? 200 : 80
             Layout.fillHeight: true
+            currentPage: mainStack.currentIndex
+            focusCityName: root.focusCityName
             onPageChanged: function(page) { mainStack.currentIndex = page }
         }
 
@@ -58,48 +60,40 @@ ApplicationWindow {
                     anchors.fill: parent
                     anchors.margins: 40
 
-                    // 搜索框
                     SearchBar {
                         id: searchBox
                         Layout.alignment: Qt.AlignTop | Qt.AlignRight
                         onCitySelected: function(cityId) {
-                            addCityCard(cityId)
-                            switchFocus(cityId)
+                            root.addCityCard(cityId)
+                            root.switchFocus(cityId)
                         }
                     }
 
-                    // 弹性空白
                     Item { Layout.preferredHeight: 40 }
 
-                    // 焦点城市名
                     Text {
-                        id: cityNameText
                         Layout.alignment: Qt.AlignHCenter
-                        text: root.focusWeather._location || "搜索城市开始"
+                        text: root.focusCityName
                         color: "white"
                         font.pixelSize: 56
                         font.bold: true
                     }
 
-                    // 天气摘要行
                     Row {
                         Layout.alignment: Qt.AlignHCenter
                         spacing: 12
 
                         WeatherIcon {
-                            id: mainIcon
                             code: root.focusWeather.icon || "100"
                             iconSize: 42
                             anchors.verticalCenter: parent.verticalCenter
                         }
-
                         Text {
                             text: root.focusWeather.text || "--"
                             color: "white"
                             font.pixelSize: 28
                             anchors.verticalCenter: parent.verticalCenter
                         }
-
                         Text {
                             text: root.focusWeather.temp ? root.focusWeather.temp + "°" : "--°"
                             color: "white"
@@ -109,11 +103,9 @@ ApplicationWindow {
                         }
                     }
 
-                    // 副信息：体感、湿度、风力
                     Row {
                         Layout.alignment: Qt.AlignHCenter
                         spacing: 20
-
                         InfoChip { label: "体感"; value: root.focusWeather.feelsLike + "°" }
                         InfoChip { label: "湿度"; value: root.focusWeather.humidity + "%" }
                         InfoChip { label: root.focusWeather.windDir || "风"; value: root.focusWeather.windScale + "级" }
@@ -125,7 +117,6 @@ ApplicationWindow {
                     Row {
                         Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
                         spacing: 16
-
                         Repeater {
                             model: cardModel
                             CityCard {
@@ -133,32 +124,41 @@ ApplicationWindow {
                                 cityId: model.id
                                 isFocus: model.focus
                                 weatherData: ({ temp: model.temp, icon: model.icon, text: model.text })
-                                onClicked: function(cityId) { switchFocus(cityId) }
+                                onClicked: function(cityId) { root.switchFocus(cityId) }
                             }
                         }
-
                     }
                 }
             }
 
-            // ========== Page 1: 收藏（占位） ==========
+            // ========== Page 1: 空气质量（占位） ==========
             Item {
-                Text {
-                    anchors.centerIn: parent
-                    text: "收藏"
-                    color: "white"
-                    font.pixelSize: 24
-                }
+                Text { anchors.centerIn: parent; text: "空气质量"; color: "white"; font.pixelSize: 24 }
             }
 
-            // ========== Page 2: 设置（占位） ==========
+            // ========== Page 2: 天气预报（占位） ==========
             Item {
-                Text {
-                    anchors.centerIn: parent
-                    text: "设置"
-                    color: "white"
-                    font.pixelSize: 24
-                }
+                Text { anchors.centerIn: parent; text: "天气预报"; color: "white"; font.pixelSize: 24 }
+            }
+
+            // ========== Page 3: 阳光天文（占位） ==========
+            Item {
+                Text { anchors.centerIn: parent; text: "阳光天文"; color: "white"; font.pixelSize: 24 }
+            }
+
+            // ========== Page 4: 城市详情（占位，步骤 8 实现） ==========
+            Item {
+                Text { anchors.centerIn: parent; text: "城市详情"; color: "white"; font.pixelSize: 24 }
+            }
+
+            // ========== Page 5: 收藏（占位） ==========
+            Item {
+                Text { anchors.centerIn: parent; text: "收藏"; color: "white"; font.pixelSize: 24 }
+            }
+
+            // ========== Page 6: 设置（占位） ==========
+            Item {
+                Text { anchors.centerIn: parent; text: "设置"; color: "white"; font.pixelSize: 24 }
             }
         }
     }
@@ -167,38 +167,23 @@ ApplicationWindow {
     function switchFocus(cityId) {
         root.focusCityId = cityId
         weatherApi.weatherNow(cityId)
-        // 更新卡片焦点
         for (let i = 0; i < cardModel.count; i++) {
             cardModel.setProperty(i, "focus", cardModel.get(i).id === cityId)
         }
     }
 
     function addCityCard(cityId) {
-        // 查重
         for (let i = 0; i < cardModel.count; i++) {
             if (cardModel.get(i).id === cityId) return
         }
-        // 从搜索结果取 name
         let name = cityId
         for (let j = 0; j < searchBox.cityList.length; j++) {
             if (searchBox.cityList[j].id === cityId) {
-                name = searchBox.cityList[j].name
-                break
+                name = searchBox.cityList[j].name; break
             }
         }
         cardModel.append({ name: name, id: cityId, temp: "", icon: "", text: "", focus: false })
-        // 即时查天气
         weatherApi.weatherNow(cityId)
-    }
-
-    function updateCityWeather(cityId, temp, icon, text) {
-        for (let i = 0; i < cardModel.count; i++) {
-            if (cardModel.get(i).id === cityId) {
-                cardModel.setProperty(i, "temp", temp)
-                cardModel.setProperty(i, "icon", icon)
-                cardModel.setProperty(i, "text", text)
-            }
-        }
     }
 
     // ===== 信号连接 =====
@@ -208,10 +193,8 @@ ApplicationWindow {
             searchBox.cityList = citys
         }
         function onCityTopReady(cities) {
-            // 热门城市初始化卡片
             for (let i = 0; i < Math.min(cities.length, 4); i++) {
                 let c = cities[i]
-                // 查重
                 let dup = false
                 for (let j = 0; j < cardModel.count; j++) {
                     if (cardModel.get(j).id === c.id) { dup = true; break }
@@ -221,14 +204,20 @@ ApplicationWindow {
                     weatherApi.weatherNow(c.id)
                 }
             }
-            // 默认焦点第一个
             if (root.focusCityId === "" && cardModel.count > 0) {
-                switchFocus(cardModel.get(0).id)
+                root.switchFocus(cardModel.get(0).id)
+                root.focusCityName = cardModel.get(0).name
             }
         }
         function onWeatherNowReady(now) {
             let id = now._location
-            updateCityWeather(id, now.temp, now.icon, now.text)
+            for (let i = 0; i < cardModel.count; i++) {
+                if (cardModel.get(i).id === id) {
+                    cardModel.setProperty(i, "temp", now.temp)
+                    cardModel.setProperty(i, "icon", now.icon)
+                    cardModel.setProperty(i, "text", now.text)
+                }
+            }
             if (id === root.focusCityId) {
                 root.focusWeather = now
             }
