@@ -1,10 +1,12 @@
 import QtQuick
 import QtQuick.Controls
 
+// 自定义搜索框：半透明背景 + 白色文字
 ComboBox {
     id: searchBox
     width: 280
     editable: true
+    flat: true
 
     property var cityList: []
     property string selectedCityId: ""
@@ -12,14 +14,40 @@ ComboBox {
     model: cityList
     textRole: "name"
 
+    // 输入框背景
+    background: Rectangle {
+        radius: 8
+        color: "#25000000"
+        border.width: 1
+        border.color: "#30ffffff"
+    }
+
+    // 输入区文字
+    contentItem: TextField {
+        anchors.fill: parent
+        anchors.margins: 8
+        color: "white"
+        font.pixelSize: 14
+        placeholderText: "搜索城市..."
+        placeholderTextColor: "#80ffffff"
+        background: Item {}
+        verticalAlignment: Text.AlignVCenter
+    }
+
     // 下拉项
     delegate: ItemDelegate {
         width: searchBox.width
-        text: modelData.name + " - " + modelData.adm1
         highlighted: searchBox.highlightedIndex === index
+        contentItem: Text {
+            text: modelData.name + " - " + modelData.adm1
+            color: parent.highlighted ? "#4caf50" : "#333333"
+            font.pixelSize: 14
+        }
+        background: Rectangle {
+            color: parent.highlighted ? "#e8f5e9" : "transparent"
+        }
     }
 
-    // 输入防抖
     onEditTextChanged: {
         if (editText.length >= 1) debounce.restart()
     }

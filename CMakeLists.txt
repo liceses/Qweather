@@ -35,6 +35,7 @@ qt_add_qml_module(appqml1
         CityDetailPage.qml
         FavoritesPage.qml
         SettingsPage.qml
+        RESOURCES qtquickcontrols2.conf
         RESOURCES logic.js
         RESOURCES todo.md
         RESOURCES indicationsForDynamic_background.md

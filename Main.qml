@@ -37,7 +37,7 @@ ApplicationWindow {
 
         SidePanel {
             id: sidePanel
-            Layout.preferredWidth: sidePanel.expanded ? 200 : 80
+            Layout.preferredWidth: sidePanel.width
             Layout.fillHeight: true
             currentPage: mainStack.currentIndex
             focusCityName: store.pinnedCityId ? store.cityName(store.pinnedCityId)
@@ -52,7 +52,10 @@ ApplicationWindow {
             currentIndex: 0
 
             // ===== Page 0: 仪表盘 =====
-            DashboardPage { id: dashPage; store: store; weatherApi: weatherApi }
+            DashboardPage {
+                id: dashPage; store: store; weatherApi: weatherApi
+                onNavigateToPage: function(idx) { mainStack.currentIndex = idx }
+            }
 
             // ===== Page 1: 空气质量 =====
             AirQualityPage { store: store; weatherApi: weatherApi }

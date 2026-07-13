@@ -15,21 +15,9 @@ Rectangle {
 
     signal pageChanged(int page)
 
-    // 展开状态
-    state: expanded ? "wide" : "narrow"
-    states: [
-        State {
-            name: "narrow"
-            PropertyChanges { target: sidePanel; implicitWidth: 80 }
-        },
-        State {
-            name: "wide"
-            PropertyChanges { target: sidePanel; implicitWidth: 200 }
-        }
-    ]
-    transitions: Transition {
-        NumberAnimation { property: "implicitWidth"; duration: 200; easing.type: Easing.OutCubic }
-    }
+    // 展开状态：直接动画 width，Main.qml 的 Layout.preferredWidth 跟随
+    width: expanded ? 200 : 80
+    Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
     ColumnLayout {
         anchors.fill: parent

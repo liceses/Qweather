@@ -9,12 +9,17 @@ Item {
     property var weatherApi: null
     property string cityId: ""
 
+    function weatherValue(key) {
+        if (!page.store) return "--"
+        let w = page.store.cityWeather[page.cityId]
+        return w ? (w[key] || "--") : "--"
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 24
         spacing: 12
 
-        // 城市名
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: page.store ? page.store.cityName(page.cityId) : ""
@@ -23,31 +28,25 @@ Item {
             font.bold: true
         }
 
-        // 天气摘要
         Row {
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 12
+            Layout.alignment: Qt.AlignHCenter; spacing: 12
             WeatherIcon {
-                code: (page.store && page.store.cityWeather[page.cityId])
-                      ? page.store.cityWeather[page.cityId].icon || "100" : "100"
+                code: page.weatherValue("icon") === "--" ? "100" : page.weatherValue("icon")
                 iconSize: 36
                 anchors.verticalCenter: parent.verticalCenter
             }
             Text {
-                text: (page.store && page.store.cityWeather[page.cityId])
-                      ? (page.store.cityWeather[page.cityId].temp || "--") + "°" : "--°"
+                text: page.weatherValue("temp") === "--" ? "--°" : page.weatherValue("temp") + "°"
                 color: "white"; font.pixelSize: 42; font.bold: true
                 anchors.verticalCenter: parent.verticalCenter
             }
             Text {
-                text: (page.store && page.store.cityWeather[page.cityId])
-                      ? page.store.cityWeather[page.cityId].text || "" : ""
+                text: page.weatherValue("text")
                 color: "#ccffffff"; font.pixelSize: 24
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
 
-        // TabBar
         TabBar {
             id: tabBar
             Layout.alignment: Qt.AlignHCenter
@@ -57,13 +56,11 @@ Item {
             TabButton { text: "天文" }
         }
 
-        // 内容区
         StackLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             currentIndex: tabBar.currentIndex
 
-            // 实时天气
             Item {
                 Row {
                     anchors.centerIn: parent; spacing: 20
@@ -74,35 +71,34 @@ Item {
                 }
             }
 
-            // 逐日预报
-            ListView {
-                anchors.fill: parent
-                model: page.store ? (page.store.cityWeather[page.cityId] || {}).daily || [] : []
-                delegate: ItemDelegate {
-                    width: parent.width; height: 40
-                    Text {
-                        anchors.centerIn: parent
-                        color: "white"
-                        text: modelData.fxDate + "  " + modelData.textDay + " " + modelData.tempMax + "/" + modelData.tempMin + "°"
+            Item {
+                ListView {
+                    anchors.fill: parent; clip: true
+                    model: page.store ? (page.store.cityWeather[page.cityId] || {}).daily || [] : []
+                    delegate: ItemDelegate {
+                        width: ListView.view.width; height: 40
+                        contentItem: Text {
+                            color: "white"
+                            text: modelData.fxDate + "  " + modelData.textDay + " " + modelData.tempMax + "/" + modelData.tempMin + "°"
+                        }
                     }
                 }
             }
 
-            // 逐小时预报
-            ListView {
-                anchors.fill: parent
-                model: page.store ? (page.store.cityWeather[page.cityId] || {}).hourly || [] : []
-                delegate: ItemDelegate {
-                    width: parent.width; height: 36
-                    Text {
-                        anchors.centerIn: parent
-                        color: "white"; font.pixelSize: 12
-                        text: modelData.fxTime + "  " + modelData.temp + "°  " + (modelData.text || "")
+            Item {
+                ListView {
+                    anchors.fill: parent; clip: true
+                    model: page.store ? (page.store.cityWeather[page.cityId] || {}).hourly || [] : []
+                    delegate: ItemDelegate {
+                        width: ListView.view.width; height: 36
+                        contentItem: Text {
+                            color: "white"; font.pixelSize: 12
+                            text: modelData.fxTime + "  " + modelData.temp + "°  " + (modelData.text || "")
+                        }
                     }
                 }
             }
 
-            // 天文
             Item {
                 Column {
                     anchors.centerIn: parent; spacing: 8
@@ -111,11 +107,5 @@ Item {
                 }
             }
         }
-    }
-
-    function weatherValue(key) {
-        if (!page.store) return "--"
-        let w = page.store.cityWeather[page.cityId]
-        return w ? (w[key] || "--") : "--"
     }
 }

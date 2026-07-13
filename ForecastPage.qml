@@ -19,17 +19,20 @@ Item {
             spacing: 8
             Repeater {
                 model: ["3d", "7d", "10d"]
-                Button {
-                    text: modelData.replace("d", "天")
-                    flat: true
-                    palette.buttonText: page.days === modelData ? "white" : "#80ffffff"
-                    background: Rectangle {
-                        radius: 4
-                        color: page.days === modelData ? "#334caf50" : "transparent"
+                Rectangle {
+                    width: label.width + 20; height: 32; radius: 4
+                    color: page.days === modelData ? "#334caf50" : "transparent"
+                    Text {
+                        id: label
+                        anchors.centerIn: parent
+                        text: modelData.replace("d", "天")
+                        color: page.days === modelData ? "white" : "#80ffffff"
+                        font.pixelSize: 13
                     }
-                    onClicked: {
-                        page.days = modelData
-                        page.refreshAll()
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: { page.days = modelData; page.refreshAll() }
                     }
                 }
             }
