@@ -1,5 +1,9 @@
 import QtQuick
 
+// 和风天气图标组件 —— 根据 icon code（如 "100"=晴、"104"=阴）显示对应 SVG
+// 图标来源：https://icons.qweather.com/
+// 用法：WeatherIcon { code: "100"; iconSize: 48; isDay: true }
+
 Image {
     id: root
     property string code: "100"       // 和风天气 icon code

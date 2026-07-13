@@ -6,6 +6,7 @@
 
 class WeatherCache;
 
+// 请求类型枚举 —— 用于 QNetworkRequest::User 属性标记，统一路由
 enum class ApiRequestType {
     CityLookup,         // 城市搜索
     CityTop,            // 热门城市
@@ -37,10 +38,13 @@ class WeatherAPI :public QObject{
     Q_OBJECT
 public:
     explicit WeatherAPI(QObject* parent = nullptr);
+
+    // 注入缓存层 —— 设为 nullptr 则禁用缓存
     void setCache(WeatherCache *cache) { m_cache = cache; }
 
-    // Q_INVOKABLE = 这个函数可以被 QML 直接调用
-    // GeoAPI
+    // ===== 以下函数均可被 QML 直接调用（Q_INVOKABLE） =====
+
+    // —— GeoAPI 地理信息 ——
     Q_INVOKABLE void searchCity(const QString &name);
     Q_INVOKABLE void topCity(const QString &range = "cn", int number = 10);
     // 天气预报

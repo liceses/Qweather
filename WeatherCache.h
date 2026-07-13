@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QSqlDatabase>
 
+// SQLite 缓存 —— 键值对存储，自带 TTL 过期机制
+// 数据库文件：~/.qweather_cache.db
+// Q_INVOKABLE 方法可在 QML 中直接调用（如 cleanExpired / clearAll）
 class WeatherCache : public QObject {
     Q_OBJECT
 public:

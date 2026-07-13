@@ -1,5 +1,9 @@
 import QtQuick
 
+// 城市信息卡片 —— 半透明圆角矩形，显示城市名 + 天气图标 + 温度
+// 用法：CityCard { cityName:"北京"; cityId:"101010100"; isFocus:true; onClicked:{...} }
+// 双击卡片 → 跳转 CityDetailPage（阶段 2 实现）
+
 Rectangle {
     id: card
     width: 160; height: 100
