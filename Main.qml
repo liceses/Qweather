@@ -9,16 +9,12 @@ ApplicationWindow {
     visible: true
     title: "天气"
 
-    // ===== 全局数据 =====
-    property string focusCityId: ""
-    property string focusCityName: "北京"
-    property var focusWeather: ({})
-    property var cityList: []            // 已追踪的城市 [{name, id}]
+    // ===== 全局数据单例 =====
+    CityStore { id: store }
 
-    // 卡片列表（Dashboard 用）
-    ListModel {
-        id: cardModel
-    }
+    property var focusWeather: ({})
+    property alias focusCityId: store.focusCityId
+    property alias focusCityName: sidePanel.focusCityName
 
     // ===== 初始化 =====
     Component.onCompleted: {
@@ -44,7 +40,8 @@ ApplicationWindow {
             Layout.preferredWidth: sidePanel.expanded ? 200 : 80
             Layout.fillHeight: true
             currentPage: mainStack.currentIndex
-            focusCityName: root.focusCityName
+            focusCityName: store.pinnedCityId ? store.cityName(store.pinnedCityId)
+                                               : (store.focusCityId ? store.cityName(store.focusCityId) : "北京")
             onPageChanged: function(page) { mainStack.currentIndex = page }
         }
 
@@ -54,7 +51,7 @@ ApplicationWindow {
             Layout.fillHeight: true
             currentIndex: 0
 
-            // ========== Page 0: 仪表盘 ==========
+            // ===== Page 0: 仪表盘 =====
             Item {
                 ColumnLayout {
                     anchors.fill: parent
@@ -64,7 +61,6 @@ ApplicationWindow {
                         id: searchBox
                         Layout.alignment: Qt.AlignTop | Qt.AlignRight
                         onCitySelected: function(cityId) {
-                            root.addCityCard(cityId)
                             root.switchFocus(cityId)
                         }
                     }
@@ -73,7 +69,7 @@ ApplicationWindow {
 
                     Text {
                         Layout.alignment: Qt.AlignHCenter
-                        text: root.focusCityName
+                        text: store.cityName(store.focusCityId) || "搜索城市开始"
                         color: "white"
                         font.pixelSize: 56
                         font.bold: true
@@ -82,7 +78,6 @@ ApplicationWindow {
                     Row {
                         Layout.alignment: Qt.AlignHCenter
                         spacing: 12
-
                         WeatherIcon {
                             code: root.focusWeather.icon || "100"
                             iconSize: 42
@@ -118,12 +113,12 @@ ApplicationWindow {
                         Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
                         spacing: 16
                         Repeater {
-                            model: cardModel
+                            model: store.trackedCities
                             CityCard {
-                                cityName: model.name
-                                cityId: model.id
-                                isFocus: model.focus
-                                weatherData: ({ temp: model.temp, icon: model.icon, text: model.text })
+                                cityName: modelData.name
+                                cityId: modelData.id
+                                isFocus: modelData.id === store.focusCityId
+                                weatherData: store.cityWeather[modelData.id] || ({})
                                 onClicked: function(cityId) { root.switchFocus(cityId) }
                             }
                         }
@@ -131,96 +126,79 @@ ApplicationWindow {
                 }
             }
 
-            // ========== Page 1: 空气质量（占位） ==========
+            // ===== Page 1: 空气质量（占位） =====
             Item {
                 Text { anchors.centerIn: parent; text: "空气质量"; color: "white"; font.pixelSize: 24 }
             }
 
-            // ========== Page 2: 天气预报（占位） ==========
+            // ===== Page 2: 天气预报（占位） =====
             Item {
                 Text { anchors.centerIn: parent; text: "天气预报"; color: "white"; font.pixelSize: 24 }
             }
 
-            // ========== Page 3: 阳光天文（占位） ==========
+            // ===== Page 3: 阳光天文（占位） =====
             Item {
                 Text { anchors.centerIn: parent; text: "阳光天文"; color: "white"; font.pixelSize: 24 }
             }
 
-            // ========== Page 4: 城市详情（占位，步骤 8 实现） ==========
+            // ===== Page 4: 城市详情 =====
             Item {
                 Text { anchors.centerIn: parent; text: "城市详情"; color: "white"; font.pixelSize: 24 }
             }
 
-            // ========== Page 5: 收藏（占位） ==========
+            // ===== Page 5: 收藏 =====
             Item {
                 Text { anchors.centerIn: parent; text: "收藏"; color: "white"; font.pixelSize: 24 }
             }
 
-            // ========== Page 6: 设置（占位） ==========
+            // ===== Page 6: 设置 =====
             Item {
                 Text { anchors.centerIn: parent; text: "设置"; color: "white"; font.pixelSize: 24 }
             }
         }
     }
 
-    // ===== 逻辑函数 =====
+    // ===== 逻辑 =====
     function switchFocus(cityId) {
-        root.focusCityId = cityId
-        weatherApi.weatherNow(cityId)
-        for (let i = 0; i < cardModel.count; i++) {
-            cardModel.setProperty(i, "focus", cardModel.get(i).id === cityId)
-        }
-    }
-
-    function addCityCard(cityId) {
-        for (let i = 0; i < cardModel.count; i++) {
-            if (cardModel.get(i).id === cityId) return
-        }
-        let name = cityId
-        for (let j = 0; j < searchBox.cityList.length; j++) {
-            if (searchBox.cityList[j].id === cityId) {
-                name = searchBox.cityList[j].name; break
-            }
-        }
-        cardModel.append({ name: name, id: cityId, temp: "", icon: "", text: "", focus: false })
+        store.focusCityId = cityId
+        // 加城市到追踪列表
+        store.addCity({ name: root.cityNameFromSearch(cityId), id: cityId })
         weatherApi.weatherNow(cityId)
     }
 
-    // ===== 信号连接 =====
+    // ===== 信号 =====
     Connections {
         target: weatherApi
         function onCityLookupReady(citys) {
             searchBox.cityList = citys
+            // 缓存搜索结果供 store 查名字用
+            searchBox._lastResults = citys
         }
         function onCityTopReady(cities) {
             for (let i = 0; i < Math.min(cities.length, 4); i++) {
                 let c = cities[i]
-                let dup = false
-                for (let j = 0; j < cardModel.count; j++) {
-                    if (cardModel.get(j).id === c.id) { dup = true; break }
-                }
-                if (!dup) {
-                    cardModel.append({ name: c.name, id: c.id, temp: "", icon: "", text: "", focus: false })
-                    weatherApi.weatherNow(c.id)
-                }
+                store.addCity({ name: c.name, id: c.id, lat: c.lat, lon: c.lon })
+                weatherApi.weatherNow(c.id)
             }
-            if (root.focusCityId === "" && cardModel.count > 0) {
-                root.switchFocus(cardModel.get(0).id)
-                root.focusCityName = cardModel.get(0).name
+            if (!store.focusCityId && store.trackedCities.length > 0) {
+                store.focusCityId = store.trackedCities[0].id
             }
         }
         function onWeatherNowReady(now) {
             let id = now._location
-            for (let i = 0; i < cardModel.count; i++) {
-                if (cardModel.get(i).id === id) {
-                    cardModel.setProperty(i, "temp", now.temp)
-                    cardModel.setProperty(i, "icon", now.icon)
-                    cardModel.setProperty(i, "text", now.text)
-                }
-            }
-            if (id === root.focusCityId) {
+            store.updateWeather(id, now.temp, now.icon, now.text)
+            if (id === store.focusCityId) {
                 root.focusWeather = now
             }
         }
+    }
+
+    // 从搜索结果取城市名（跨函数复用）
+    function cityNameFromSearch(cityId) {
+        let results = searchBox.cityList
+        for (let j = 0; j < results.length; j++) {
+            if (results[j].id === cityId) return results[j].name
+        }
+        return cityId
     }
 }

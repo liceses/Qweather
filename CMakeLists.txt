@@ -27,6 +27,7 @@ qt_add_qml_module(appqml1
         CityCard.qml
         SearchBar.qml
         InfoChip.qml
+        CityStore.qml
         RESOURCES logic.js
         RESOURCES todo.md
         RESOURCES indicationsForDynamic_background.md
