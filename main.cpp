@@ -8,6 +8,8 @@
 
 int main(int argc, char *argv[])
 {
+    // Fusion 风格：通过环境变量在 QGuiApplication 构造前设置
+    qputenv("QT_QUICK_CONTROLS_STYLE", "Fusion");
     QGuiApplication app(argc, argv);
 
     qRegisterMetaType<QJsonArray>("QJsonArray");

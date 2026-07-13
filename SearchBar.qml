@@ -10,6 +10,7 @@ ComboBox {
 
     property var cityList: []
     property string selectedCityId: ""
+    property var weatherApi: null    // 外部注入
 
     model: cityList
     textRole: "name"
@@ -64,6 +65,6 @@ ComboBox {
     Timer {
         id: debounce
         interval: 300
-        onTriggered: weatherApi.searchCity(searchBox.editText)
+        onTriggered: { if (searchBox.weatherApi) searchBox.weatherApi.searchCity(searchBox.editText) }
     }
 }

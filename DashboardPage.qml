@@ -2,20 +2,16 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 
-// 仪表盘页面 —— 搜索框 + 焦点天气摘要 + 城市卡片行
+// 仪表盘页面 —— 直接属性绑定（响应式），不从函数读
 Item {
     id: page
     property var store: null
     property var weatherApi: null
     signal navigateToPage(int pageIndex)
-    signal focusOnCity(string cityId)
 
-    // 从 store 取当前焦点城市的天气数据（计算属性，跟随 store 自动更新）
-    function w(key) {
-        if (!store || !store.focusCityId) return "--"
-        let d = store.cityWeather[store.focusCityId]
-        return d ? (d[key] || "--") : "--"
-    }
+    // 焦点城市天气的快捷引用（响应式绑定）
+    property var fw: page.store && page.store.focusCityId
+                     ? (page.store.cityWeather[page.store.focusCityId] || {}) : ({})
 
     ColumnLayout {
         anchors.fill: parent
@@ -24,6 +20,7 @@ Item {
         SearchBar {
             id: searchBox
             Layout.alignment: Qt.AlignTop | Qt.AlignRight
+            weatherApi: page.weatherApi
             property var _lastResults: []
             onCitySelected: function(cityId) {
                 page.addAndFocus(cityId)
@@ -41,43 +38,25 @@ Item {
         }
 
         Row {
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 12
+            Layout.alignment: Qt.AlignHCenter; spacing: 12
             WeatherIcon {
-                code: page.w("icon") === "--" ? "100" : page.w("icon")
-                iconSize: 42
-                anchors.verticalCenter: parent.verticalCenter
+                code: page.fw.icon || "100"; iconSize: 42
             }
             Text {
-                text: page.w("text")
-                color: "white"
-                font.pixelSize: 28
-                anchors.verticalCenter: parent.verticalCenter
+                text: page.fw.text || "--"
+                color: "white"; font.pixelSize: 28
             }
             Text {
-                text: page.w("temp") === "--" ? "--°" : page.w("temp") + "°"
-                color: "white"
-                font.pixelSize: 42
-                font.bold: true
-                anchors.verticalCenter: parent.verticalCenter
+                text: page.fw.temp ? page.fw.temp + "°" : "--°"
+                color: "white"; font.pixelSize: 42; font.bold: true
             }
         }
 
         Row {
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 20
-            InfoChip {
-                label: "体感"
-                value: page.w("feelsLike") === "--" ? "--" : page.w("feelsLike") + "°"
-            }
-            InfoChip {
-                label: "湿度"
-                value: page.w("humidity") === "--" ? "--" : page.w("humidity") + "%"
-            }
-            InfoChip {
-                label: page.w("windDir") === "--" ? "风" : page.w("windDir")
-                value: page.w("windScale") === "--" ? "--" : page.w("windScale") + "级"
-            }
+            Layout.alignment: Qt.AlignHCenter; spacing: 20
+            InfoChip { label: "体感"; value: page.fw.feelsLike ? page.fw.feelsLike + "°" : "--" }
+            InfoChip { label: "湿度"; value: page.fw.humidity ? page.fw.humidity + "%" : "--" }
+            InfoChip { label: page.fw.windDir || "风"; value: page.fw.windScale ? page.fw.windScale + "级" : "--" }
         }
 
         Item { Layout.fillHeight: true }
@@ -95,17 +74,25 @@ Item {
                     onClicked: function(cityId) { page.addAndFocus(cityId) }
                     onDoubleClicked: function(cityId) {
                         page.store.focusCityId = cityId
-                        page.navigateToPage(4)   // 跳转城市详情页
+                        page.navigateToPage(4)
                     }
                 }
             }
         }
     }
 
+    // 收 cityLookup 更新搜索框
+    Connections {
+        target: page.weatherApi
+        function onCityLookupReady(citys) {
+            searchBox.cityList = citys
+            searchBox._lastResults = citys
+        }
+    }
+
     function addAndFocus(cityId) {
         if (!page.store || !page.weatherApi) return
         page.store.focusCityId = cityId
-        // 从搜索结果取城市名
         let name = cityId
         let results = searchBox._lastResults
         for (let j = 0; j < results.length; j++) {

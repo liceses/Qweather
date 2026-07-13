@@ -4,7 +4,7 @@ project(qml1 VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Network Sql)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Network Sql)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
