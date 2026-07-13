@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-// 空气质量页 —— 纯UI布局，数据由 C++ airQualityStore 驱动
+// 阳光天文页 —— 纯UI布局，数据由 C++ solarAstronomyStore 驱动
 Item {
     id: page
 
@@ -13,7 +13,7 @@ Item {
         // 标题
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: "空气质量"
+            text: "阳光天文"
             color: "white"
             font.pixelSize: Math.max(16, Math.min(26, page.width * 0.025))
             font.bold: true
@@ -27,14 +27,14 @@ Item {
             spacing: Math.max(8, Math.min(page.width, page.height) * 0.015)
 
             Repeater {
-                model: airQualityStore ? airQualityStore.cities.slice(0, 4) : []
+                model: solarAstronomyStore ? solarAstronomyStore.cities.slice(0, 4) : []
 
-                AirQualityCard {
+                SolarAstronomyCard {
                     width: Math.max(200, (cardGrid.width - cardGrid.spacing) / 2)
                     height: Math.max(200, (cardGrid.height - cardGrid.spacing) / 2)
                     cityId: modelData.id || ""
                     cityName: modelData.name || ""
-                    airData: airQualityStore ? (airQualityStore.airData[modelData.id] || ({})) : ({})
+                    solarData: solarAstronomyStore ? (solarAstronomyStore.solarData[modelData.id] || ({})) : ({})
                 }
             }
         }

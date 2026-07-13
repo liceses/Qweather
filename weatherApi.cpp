@@ -199,28 +199,37 @@ void WeatherAPI::indices(const QString &days, const QString &type, const QString
 
 // ============================ 空气质量 ============================
 
-void WeatherAPI::airCurrent(const QString &lat, const QString &lng)
+void WeatherAPI::airCurrent(const QString &lat, const QString &lng, const QString &cityId)
 {
+    if (m_cache && !cityId.isEmpty()) {
+        auto cc = cacheConf(ApiRequestType::AirCurrent);
+        QString key = QString("%1:%2").arg(cc.prefix, cityId);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) { handleAirCurrent(c.toUtf8(), cityId); return; }
+    }
     QUrl url(m_host + "/airquality/v1/current/" + lat + "/" + lng);
     QUrlQuery q;
+    q.addQueryItem("_loc", cityId);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
     sendRequest(url, ApiRequestType::AirCurrent);
 }
 
-void WeatherAPI::airHourly(const QString &lat, const QString &lng)
+void WeatherAPI::airHourly(const QString &lat, const QString &lng, const QString &cityId)
 {
     QUrl url(m_host + "/airquality/v1/hourly/" + lat + "/" + lng);
     QUrlQuery q;
+    q.addQueryItem("_loc", cityId);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
     sendRequest(url, ApiRequestType::AirHourly);
 }
 
-void WeatherAPI::airDaily(const QString &lat, const QString &lng)
+void WeatherAPI::airDaily(const QString &lat, const QString &lng, const QString &cityId)
 {
     QUrl url(m_host + "/airquality/v1/daily/" + lat + "/" + lng);
     QUrlQuery q;
+    q.addQueryItem("_loc", cityId);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
     sendRequest(url, ApiRequestType::AirDaily);
@@ -299,12 +308,19 @@ void WeatherAPI::oceanTide(const QString &loc, const QString &date)
 // ============================ 太阳辐射 ============================
 
 void WeatherAPI::solarRadiation(const QString &lat, const QString &lng,
-                                int hours, int interval)
+                                const QString &cityId, int hours, int interval)
 {
+    if (m_cache && !cityId.isEmpty()) {
+        auto cc = cacheConf(ApiRequestType::SolarRadiation);
+        QString key = QString("%1:%2").arg(cc.prefix, cityId);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) { handleSolarRadiation(c.toUtf8(), cityId); return; }
+    }
     QUrl url(m_host + "/solarradiation/v1/forecast/" + lat + "/" + lng);
     QUrlQuery q;
     q.addQueryItem("hours", QString::number(hours));
     q.addQueryItem("interval", QString::number(interval));
+    q.addQueryItem("_loc", cityId);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
     sendRequest(url, ApiRequestType::SolarRadiation);
@@ -312,23 +328,39 @@ void WeatherAPI::solarRadiation(const QString &lat, const QString &lng,
 
 // ============================ 天文 ============================
 
-void WeatherAPI::astronomySun(const QString &loc, const QString &date)
+void WeatherAPI::astronomySun(const QString &loc, const QString &date,
+                              const QString &cityId)
 {
+    if (m_cache && !cityId.isEmpty()) {
+        auto cc = cacheConf(ApiRequestType::AstronomySun);
+        QString key = QString("%1:%2:%3").arg(cc.prefix, cityId, date);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) { handleAstronomySun(c.toUtf8(), cityId); return; }
+    }
     QUrl url(m_host + "/v7/astronomy/sun");
     QUrlQuery q;
     q.addQueryItem("location", loc);
     q.addQueryItem("date", date);
+    q.addQueryItem("_loc", cityId);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
     sendRequest(url, ApiRequestType::AstronomySun);
 }
 
-void WeatherAPI::astronomyMoon(const QString &loc, const QString &date)
+void WeatherAPI::astronomyMoon(const QString &loc, const QString &date,
+                               const QString &cityId)
 {
+    if (m_cache && !cityId.isEmpty()) {
+        auto cc = cacheConf(ApiRequestType::AstronomyMoon);
+        QString key = QString("%1:%2:%3").arg(cc.prefix, cityId, date);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) { handleAstronomyMoon(c.toUtf8(), cityId); return; }
+    }
     QUrl url(m_host + "/v7/astronomy/moon");
     QUrlQuery q;
     q.addQueryItem("location", loc);
     q.addQueryItem("date", date);
+    q.addQueryItem("_loc", cityId);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
     sendRequest(url, ApiRequestType::AstronomyMoon);
@@ -365,13 +397,20 @@ void WeatherAPI::onReplyFinished(QNetworkReply *reply)
     auto type = static_cast<ApiRequestType>(
         reply->request().attribute(QNetworkRequest::User).toInt());
     QUrlQuery q(reply->request().url());
-    QString loc = q.queryItemValue("location");
+    QString loc = q.queryItemValue("_loc");
+    if (loc.isEmpty()) loc = q.queryItemValue("location");
 
     // 写入缓存
     if (m_cache) {
         auto cc = cacheConf(type);
         if (cc.prefix && !loc.isEmpty()) {
             QString key = QString("%1:%2").arg(cc.prefix, loc);
+            // 天文 API 缓存键需包含日期
+            if (type == ApiRequestType::AstronomySun || type == ApiRequestType::AstronomyMoon) {
+                QString date = q.queryItemValue("date");
+                if (!date.isEmpty())
+                    key = QString("%1:%2:%3").arg(cc.prefix, loc, date);
+            }
             m_cache->set(key, QString::fromUtf8(data));
         }
     }
@@ -487,22 +526,19 @@ void WeatherAPI::handleIndices(const QByteArray &d, const QString &loc)
 void WeatherAPI::handleAirCurrent(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
-    obj["_location"] = loc;
-    emit airCurrentReady(obj);
+    emit airCurrentReady(loc, obj);
 }
 
 void WeatherAPI::handleAirHourly(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
-    obj["_location"] = loc;
-    emit airHourlyReady(obj);
+    emit airHourlyReady(loc, obj);
 }
 
 void WeatherAPI::handleAirDaily(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
-    obj["_location"] = loc;
-    emit airDailyReady(obj);
+    emit airDailyReady(loc, obj);
 }
 
 void WeatherAPI::handleHistoricalWeather(const QByteArray &d, const QString &loc)
@@ -548,22 +584,19 @@ void WeatherAPI::handleOceanTide(const QByteArray &d, const QString &loc)
 void WeatherAPI::handleSolarRadiation(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
-    obj["_location"] = loc;
-    emit solarRadiationReady(obj);
+    emit solarRadiationReady(loc, obj);
 }
 
 void WeatherAPI::handleAstronomySun(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
-    obj["_location"] = loc;
-    emit astronomySunReady(obj);
+    emit astronomySunReady(loc, obj);
 }
 
 void WeatherAPI::handleAstronomyMoon(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
-    obj["_location"] = loc;
-    emit astronomyMoonReady(obj);
+    emit astronomyMoonReady(loc, obj);
 }
 
 void WeatherAPI::handleSolarElevationAngle(const QByteArray &d, const QString &loc)

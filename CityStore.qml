@@ -53,6 +53,12 @@ QtObject {
         cityWeatherChanged()
     }
 
+    function updateHourly(id, hourly) {
+        cityWeather[id] = cityWeather[id] || {}
+        cityWeather[id].hourly = hourly
+        cityWeatherChanged()
+    }
+
     // 获取城市名
     function cityName(id) {
         for (var i = 0; i < trackedCities.length; i++) {

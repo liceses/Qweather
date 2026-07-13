@@ -4,11 +4,10 @@ project(qml1 VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Network Sql)
+find_package(Qt6 REQUIRED COMPONENTS Quick Network Sql Charts Widgets)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
-# Content of downloaded design from Figma to Qt or similar
 if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/importedcontent/CMakeLists.txt")
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/importedcontent)
 endif()
@@ -21,33 +20,26 @@ qt_add_qml_module(appqml1
     URI qml1
     QML_FILES
         Main.qml
-        SidePanel.qml
         NavButton.qml
+        SearchBar.qml
         WeatherIcon.qml
         CityCard.qml
-        SearchBar.qml
-        InfoChip.qml
-        CityStore.qml
-        DashboardPage.qml
-        AirQualityPage.qml
         ForecastPage.qml
-        AstroSolarPage.qml
+        ForecastCard.qml
+        AirQualityPage.qml
+        AirQualityCard.qml
+        SolarAstronomyPage.qml
+        SolarAstronomyCard.qml
         CityDetailPage.qml
-        FavoritesPage.qml
-        SettingsPage.qml
-        RESOURCES qtquickcontrols2.conf
-        RESOURCES logic.js
-        RESOURCES todo.md
-        RESOURCES indicationsForDynamic_background.md
-        SOURCES weatherApi.h weatherApi.cpp
-        SOURCES WeatherCache.h WeatherCache.cpp
+    SOURCES weatherApi.h weatherApi.cpp
+    SOURCES WeatherCache.h WeatherCache.cpp
+    SOURCES ForecastStore.h ForecastStore.cpp
+    SOURCES AirQualityStore.h AirQualityStore.cpp
+    SOURCES SolarAstronomyStore.h SolarAstronomyStore.cpp
+    SOURCES CityDetailStore.h CityDetailStore.cpp
 )
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
 set_target_properties(appqml1 PROPERTIES
-#    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.appqml1
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
@@ -55,7 +47,7 @@ set_target_properties(appqml1 PROPERTIES
 )
 
 target_link_libraries(appqml1
-    PRIVATE Qt6::Quick Qt6::Network Qt6::Sql
+    PRIVATE Qt6::Quick Qt6::Network Qt6::Sql Qt6::Charts Qt6::Widgets
 )
 
 install(TARGETS appqml1

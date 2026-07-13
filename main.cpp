@@ -1,16 +1,19 @@
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QJsonArray>
 #include <QJsonObject>
 #include "weatherApi.h"
 #include "WeatherCache.h"
+#include "ForecastStore.h"
+#include "AirQualityStore.h"
+#include "SolarAstronomyStore.h"
+#include "CityDetailStore.h"
 
 int main(int argc, char *argv[])
 {
-    // Fusion 风格：通过环境变量在 QGuiApplication 构造前设置
     qputenv("QT_QUICK_CONTROLS_STYLE", "Fusion");
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
 
     qRegisterMetaType<QJsonArray>("QJsonArray");
     qRegisterMetaType<QJsonObject>("QJsonObject");
@@ -18,6 +21,18 @@ int main(int argc, char *argv[])
     WeatherCache cache;
     WeatherAPI weatherapi;
     weatherapi.setCache(&cache);
+
+    ForecastStore forecastStore;
+    forecastStore.setWeatherApi(&weatherapi);
+
+    AirQualityStore airQualityStore;
+    airQualityStore.setWeatherApi(&weatherapi);
+
+    SolarAstronomyStore solarAstronomyStore;
+    solarAstronomyStore.setWeatherApi(&weatherapi);
+
+    CityDetailStore cityDetailStore;
+    cityDetailStore.setWeatherApi(&weatherapi);
 
     QQmlApplicationEngine engine;
     QObject::connect(
@@ -27,7 +42,11 @@ int main(int argc, char *argv[])
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
     engine.rootContext()->setContextProperty("weatherApi", &weatherapi);
+    engine.rootContext()->setContextProperty("forecastStore", &forecastStore);
+    engine.rootContext()->setContextProperty("airQualityStore", &airQualityStore);
+    engine.rootContext()->setContextProperty("solarAstronomyStore", &solarAstronomyStore);
+    engine.rootContext()->setContextProperty("cityDetailStore", &cityDetailStore);
     engine.loadFromModule("qml1", "Main");
 
-    return QGuiApplication::exec();
+    return QApplication::exec();
 }

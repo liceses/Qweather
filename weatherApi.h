@@ -62,9 +62,9 @@ public:
     // 天气指数
     Q_INVOKABLE void indices(const QString &days, const QString &type, const QString &loc);
     // 空气质量
-    Q_INVOKABLE void airCurrent(const QString &lat, const QString &lng);
-    Q_INVOKABLE void airHourly(const QString &lat, const QString &lng);
-    Q_INVOKABLE void airDaily(const QString &lat, const QString &lng);
+    Q_INVOKABLE void airCurrent(const QString &lat, const QString &lng, const QString &cityId = "");
+    Q_INVOKABLE void airHourly(const QString &lat, const QString &lng, const QString &cityId = "");
+    Q_INVOKABLE void airDaily(const QString &lat, const QString &lng, const QString &cityId = "");
     // 时光机
     Q_INVOKABLE void historicalWeather(const QString &loc, const QString &date);
     Q_INVOKABLE void historicalAir(const QString &loc, const QString &date);
@@ -76,10 +76,13 @@ public:
     Q_INVOKABLE void oceanTide(const QString &loc, const QString &date);
     // 太阳辐射
     Q_INVOKABLE void solarRadiation(const QString &lat, const QString &lng,
+                                    const QString &cityId = "",
                                     int hours = 24, int interval = 60);
     // 天文
-    Q_INVOKABLE void astronomySun(const QString &loc, const QString &date);
-    Q_INVOKABLE void astronomyMoon(const QString &loc, const QString &date);
+    Q_INVOKABLE void astronomySun(const QString &loc, const QString &date,
+                                  const QString &cityId = "");
+    Q_INVOKABLE void astronomyMoon(const QString &loc, const QString &date,
+                                   const QString &cityId = "");
     Q_INVOKABLE void solarElevAngle(const QString &loc, const QString &date,
                                     const QString &time, const QString &tz, const QString &alt);
 
@@ -105,9 +108,9 @@ signals:
     // 天气指数
     void indicesReady(const QString &loc, const QJsonArray &daily);
     // 空气质量
-    void airCurrentReady(const QJsonObject &result);
-    void airHourlyReady(const QJsonObject &result);
-    void airDailyReady(const QJsonObject &result);
+    void airCurrentReady(const QString &cityId, const QJsonObject &result);
+    void airHourlyReady(const QString &cityId, const QJsonObject &result);
+    void airDailyReady(const QString &cityId, const QJsonObject &result);
     // 时光机
     void historicalWeatherReady(const QJsonObject &result);
     void historicalAirReady(const QJsonObject &result);
@@ -118,10 +121,10 @@ signals:
     // 海洋
     void oceanTideReady(const QJsonObject &result);
     // 太阳辐射
-    void solarRadiationReady(const QJsonObject &result);
+    void solarRadiationReady(const QString &cityId, const QJsonObject &result);
     // 天文
-    void astronomySunReady(const QJsonObject &result);
-    void astronomyMoonReady(const QJsonObject &result);
+    void astronomySunReady(const QString &cityId, const QJsonObject &result);
+    void astronomyMoonReady(const QString &cityId, const QJsonObject &result);
     void solarElevationAngleReady(const QJsonObject &result);
 
 private slots:
