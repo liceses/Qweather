@@ -1,4 +1,5 @@
 #include "SolarAstronomyStore.h"
+#include "AppSettings.h"
 #include "weatherApi.h"
 #include <QJsonArray>
 #include <QJsonObject>
@@ -18,6 +19,17 @@ void SolarAstronomyStore::setWeatherApi(WeatherAPI* api) {
                 this, &SolarAstronomyStore::onAstronomySunReady);
         connect(m_api, &WeatherAPI::astronomyMoonReady,
                 this, &SolarAstronomyStore::onAstronomyMoonReady);
+    }
+}
+
+void SolarAstronomyStore::setAppSettings(AppSettings* settings) {
+    m_appSettings = settings;
+    if (m_appSettings) {
+        connect(m_appSettings, &AppSettings::showSolarRadiationChanged,
+                this, [this]() {
+                    refreshAll();
+                    emit solarDataChanged();
+                });
     }
 }
 
@@ -44,7 +56,9 @@ void SolarAstronomyStore::refreshAll() {
         QString name = city["name"].toString();
         qDebug() << "[SolarAstronomy]   requesting for" << name << id << "lat:" << lat << "lon:" << lon;
         if (!lat.isEmpty() && !lon.isEmpty()) {
-            m_api->solarRadiation(lat, lon, id);
+            bool showSolar = !m_appSettings || m_appSettings->showSolarRadiation();
+            if (showSolar)
+                m_api->solarRadiation(lat, lon, id);
             m_api->astronomySun(id, today, id);
             m_api->astronomyMoon(id, today, id);
         }
@@ -130,14 +144,17 @@ void SolarAstronomyStore::mergeAndEmit(const QString& cityId) {
     QVariantMap moon = raw["moon"].toMap();
 
     QVariantMap entry;
-    entry["ghi"] = solar["ghi"];
-    entry["dni"] = solar["dni"];
-    entry["dhi"] = solar["dhi"];
-    entry["ghiUnit"] = solar["ghiUnit"];
-    entry["dniUnit"] = solar["dniUnit"];
-    entry["dhiUnit"] = solar["dhiUnit"];
-    entry["solarAzimuth"] = solar["solarAzimuth"];
-    entry["solarElevation"] = solar["solarElevation"];
+    bool showSolar = !m_appSettings || m_appSettings->showSolarRadiation();
+    if (showSolar) {
+        entry["ghi"] = solar["ghi"];
+        entry["dni"] = solar["dni"];
+        entry["dhi"] = solar["dhi"];
+        entry["ghiUnit"] = solar["ghiUnit"];
+        entry["dniUnit"] = solar["dniUnit"];
+        entry["dhiUnit"] = solar["dhiUnit"];
+        entry["solarAzimuth"] = solar["solarAzimuth"];
+        entry["solarElevation"] = solar["solarElevation"];
+    }
     entry["sunrise"] = sun["sunrise"];
     entry["sunset"] = sun["sunset"];
     entry["moonPhase"] = moon["moonPhase"];

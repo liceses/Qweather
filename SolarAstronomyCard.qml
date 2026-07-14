@@ -7,13 +7,18 @@ Item {
     property string cityId: ""
     property string cityName: ""
     property var solarData: ({})
+    property bool showSolarRadiation: true
 
     Rectangle {
         anchors.fill: parent
         radius: Math.min(card.width, card.height) * 0.04
-        color: "#20ffffff"
-        border.width: 1; border.color: "#30ffffff"
+        color: cardMouse.containsMouse ? "#25ffffff" : "#20ffffff"
+        border.width: 1
+        border.color: cardMouse.containsMouse ? "#50ffffff" : "#30ffffff"
         clip: true
+
+        Behavior on color { ColorAnimation { duration: 200 } }
+        Behavior on border.color { ColorAnimation { duration: 200 } }
 
         ColumnLayout {
             anchors.fill: parent
@@ -35,6 +40,7 @@ Item {
             Row {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 4
+                visible: card.showSolarRadiation
 
                 Text {
                     id: ghiText
@@ -57,12 +63,14 @@ Item {
                 text: "总水平辐照度 (GHI)"
                 color: "#60ffffff"
                 font.pixelSize: Math.max(8, Math.min(11, card.width * 0.035))
+                visible: card.showSolarRadiation
             }
 
             // DNI / DHI 副行
             Row {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: Math.max(12, card.width * 0.06)
+                visible: card.showSolarRadiation
 
                 Column {
                     spacing: 1
@@ -95,6 +103,7 @@ Item {
                 Layout.leftMargin: card.width * 0.05
                 Layout.rightMargin: card.width * 0.05
                 color: "#15ffffff"
+                visible: card.showSolarRadiation
             }
 
             // 日出日落
@@ -146,11 +155,17 @@ Item {
             // 无数据提示
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: "暂无天文数据"
+                text: card.showSolarRadiation ? "暂无天文数据" : "暂无日出日落/月相数据"
                 color: "#60ffffff"
                 font.pixelSize: Math.max(10, Math.min(16, card.width * 0.05))
-                visible: card.solarData.ghi === undefined && !card.solarData.sunrise && !card.solarData.moonPhase
+                visible: !card.solarData.ghi && !card.solarData.sunrise && !card.solarData.moonPhase
             }
         }
+    }
+
+    MouseArea {
+        id: cardMouse
+        anchors.fill: parent
+        hoverEnabled: true
     }
 }

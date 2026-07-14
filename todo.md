@@ -40,7 +40,119 @@
         - 收藏: 显示用户收藏的城市,双击城市卡片可以跳转至该城市的详情页面
         - 设置: 包揽所有设置项
     - 当用户未选择城市时,调取数据库历史城市若历史查看城市不足填满 dashboard , 调用 citytop 获取热门城市显示在 dashboard 信息卡片中.
+    - searchBar行为: 当用户键入时发出searchCity返回结果当联想功能,当用户输入回车键不管之前的请求,重新发请求确保能够search用户键入的内容
     - *低优先级*,宠物会说一些天气相关的话,有语音播报的功能,进阶功能接入语言大模型api 提供相关对话功能    
+
+
+## UI 设计规范
+
+> 确立于 2026-07-13，基于实际代码 + 界面设计要求提炼
+> 绿色渐变背景为临时方案，正式背景为动态天气背景（ShaderEffect）
+
+### 核心架构
+
+```
+Layer 0: WeatherBackground (ShaderEffect)  ← 晴天/阴天/雨天/雪天/夜间动态切换 + 鼠标视差
+Layer 1: 半透明蒙层（增强文字可读性）
+Layer 2: UI 前景（SidePanel + StackLayout 卡片）
+```
+
+背景实现路径：Rectangle 渐变（当前） → Canvas 粒子（备选） → ShaderEffect GPU（最终）
+
+### 风格：Fluent Glassmorphism
+
+半透明 ARGB 叠层 + `border.width: 1` 弱边框。无 backdrop-blur、无 DropShadow。
+
+### 颜色
+
+| 角色 | 值 | 说明 |
+|------|-----|------|
+| 卡片底色 | `#20ffffff` | 透出动态背景，全天气类型适用 |
+| 卡片边框 | `#30ffffff` | hover `#50ffffff` |
+| 深色遮罩 | `#20000000` / `#1a000000` | InfoChip / 侧边栏 |
+| 文字主 | `white` | 最高对比度 |
+| 文字次 | `#ccffffff` | 标签 |
+| 文字辅 | `#80ffffff` | 说明 |
+| 强调色 | `#4caf50` | 焦点/活跃 — 唯一跨背景高对比色 |
+| Popup 底 | `#eaf0ea` | 不透明实色，独立于背景 |
+| Popup 文字 | `#2e4a2e` / `#7a9a7a` | 深绿调 |
+
+### 圆角
+
+| 类型 | radius |
+|------|--------|
+| 搜索框(胶囊) | `20` |
+| 卡片/面板 | `12` |
+| 按钮/标签 | `8` |
+| 响应式卡片 | `min(w,h)*0.04` |
+
+### 字体
+
+| 层级 | px | 用途 |
+|------|-----|------|
+| 大标题 | 40–48 | 城市名 |
+| 核心数据 | 28–48 | 温度/AQI/GHI |
+| 标题 | 16–20 | 卡片标题 |
+| 正文 | 13–15 | 按钮、列表 |
+| 辅助 | 9–12 | 说明、单位 |
+
+### 动画
+
+| 场景 | 时长 |
+|------|------|
+| hover 变色 | 150–200ms |
+| Popup 进出 | 150ms in / 100ms out |
+| 侧边栏展开 | 200ms |
+| 背景切换 | 800ms 淡入淡出 |
+
+### 关键约束
+
+1. 卡片不透明度 ≤ 20%，透出动态背景
+2. 文字必须 white 系，全天气类型可读
+3. 强调色只用 `#4caf50`
+4. Popup 用实色，不参与毛玻璃
+5. 字号用 `Math.max(min, Math.min(max, dim*ratio))` 响应式
+
+### 卡片 Hover 标准
+
+> 确立于 2026-07-14，统一所有卡片 hover 行为
+
+**数值：**
+
+```
+背景:  #20ffffff → #25ffffff  (+5%)
+边框:  #30ffffff → #50ffffff  (+20%)
+过渡:  200ms ColorAnimation (color + border.color)
+```
+
+**QML 模板：**
+
+```qml
+color: <mouseId>.containsMouse ? "#25ffffff" : "#20ffffff"
+border.width: 1
+border.color: <mouseId>.containsMouse ? "#50ffffff" : "#30ffffff"
+
+Behavior on color        { ColorAnimation { duration: 200 } }
+Behavior on border.color { ColorAnimation { duration: 200 } }
+```
+
+**三类卡片 MouseArea 放置策略：**
+
+| 类型 | MouseArea 方式 | 额外处理 |
+|------|---------------|---------|
+| 有点击交互 (CityCard/FavoritesPage) | Rectangle 内置 MouseArea 同时处理 click + hover | 无 |
+| 纯展示 (AirQuality/SolarAstronomy) | 外层 Item 放独立 MouseArea `{ hoverEnabled: true }` | 无 |
+| 含交互子元素 (ForecastCard) | 外层 Item 放独立 MouseArea | `acceptedButtons: Qt.NoButton` |
+
+**不变项（不参与 hover）：**
+
+```
+强调色:     #4caf50 (焦点高亮，不参与 hover)
+InfoChip:   #20000000 (深色遮罩角色)
+SidePanel:  #1a000000 (侧边栏底色)
+SearchBar:  #30ffffff → #40ffffff (胶囊独立配色)
+CityDetailPage: 仅变 border (背景保持 #20ffffff)，含 Flickable 的卡片用 acceptedButtons: Qt.NoButton
+```
 
 
 # DATE
@@ -331,3 +443,30 @@ Main.qml focusId 变更
 3. **`visible: false` 不阻止绑定求值**：深层属性访问需要中间对象存在 — C++ 端预初始化空 map/list 可消解整类 TypeError
 4. **预初始化要在最早位置执行**：构造函数和 setCity() 都需预初始化，因为 QML 绑定在首个 onFocusIdChanged 之前就已开始求值
 4. **日志分层命名**：`[SolarAstronomy]` 前缀 + solarReady/sunReady/moonReady 子标签，一眼看出哪路数据到达、哪路缺失
+
+#### conclusion 7.13
+今日实现了
+- 空气质量 
+- 天气预报
+- 城市详情
+- 阳光天文
+
+四个主要页面的实现 
+同时实现了基本的收藏功能
+
+### 2026.07.14
+
+主要页面全部实现
+差的是细节
+1. 朝夕月相卡片的布局太空了不好看
+2. 城市详情页面一些卡片(天文,天气预警等)横向空间利用率太低了,想要做成近似正方形的网格式布局
+3. 页面切换动效,文字更新动效 缺失
+4. 天气预报的折线图,鼠标移动上去不能看到对应x轴日期的具体气温
+   -  不能交互,希望能用滚轮缩放x轴自动切换预报范围
+   -  天气预报页面的顶部范围选择栏也没有hover和切换动效
+5. 设置页面hover缺失,清除缓存只是摆设
+
+#### 已完成
+- DashboardPage 拆分为独立文件（Main.qml 减负）
+- 侧边栏展开动画（80↔200px，hover 触发，200ms OutCubic）
+- NavButton / WeatherIcon 黑夜模式图标颜色修复（ON=暗色 OFF=白色）

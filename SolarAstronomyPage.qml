@@ -13,7 +13,7 @@ Item {
         // 标题
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: "阳光天文"
+            text: appSettings && appSettings.showSolarRadiation ? "阳光天文" : "朝夕月相"
             color: "white"
             font.pixelSize: Math.max(16, Math.min(26, page.width * 0.025))
             font.bold: true
@@ -35,6 +35,7 @@ Item {
                     cityId: modelData.id || ""
                     cityName: modelData.name || ""
                     solarData: solarAstronomyStore ? (solarAstronomyStore.solarData[modelData.id] || ({})) : ({})
+                    showSolarRadiation: appSettings ? appSettings.showSolarRadiation : true
                 }
             }
         }

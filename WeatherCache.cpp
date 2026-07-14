@@ -81,3 +81,22 @@ void WeatherCache::clearAll()
     QSqlQuery q(m_db);
     q.exec("DELETE FROM cache");
 }
+
+void WeatherCache::save(const QString &key, const QString &value)
+{
+    QSqlQuery q(m_db);
+    q.prepare("INSERT OR REPLACE INTO cache (k, data, ts) VALUES (?, ?, ?)");
+    q.addBindValue(key);
+    q.addBindValue(value);
+    q.addBindValue(QDateTime::currentSecsSinceEpoch());
+    q.exec();
+}
+
+QString WeatherCache::load(const QString &key)
+{
+    QSqlQuery q(m_db);
+    q.prepare("SELECT data FROM cache WHERE k = ?");
+    q.addBindValue(key);
+    if (!q.exec() || !q.next()) return {};
+    return q.value(0).toString();
+}

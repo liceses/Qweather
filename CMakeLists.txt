@@ -20,10 +20,13 @@ qt_add_qml_module(appqml1
     URI qml1
     QML_FILES
         Main.qml
+        DashboardPage.qml
         NavButton.qml
         SearchBar.qml
         WeatherIcon.qml
         CityCard.qml
+        InfoChip.qml
+        FavoritesPage.qml
         ForecastPage.qml
         ForecastCard.qml
         AirQualityPage.qml
@@ -31,12 +34,26 @@ qt_add_qml_module(appqml1
         SolarAstronomyPage.qml
         SolarAstronomyCard.qml
         CityDetailPage.qml
+        SettingsPage.qml
+    SOURCES AppSettings.h AppSettings.cpp
     SOURCES weatherApi.h weatherApi.cpp
     SOURCES WeatherCache.h WeatherCache.cpp
     SOURCES ForecastStore.h ForecastStore.cpp
     SOURCES AirQualityStore.h AirQualityStore.cpp
     SOURCES SolarAstronomyStore.h SolarAstronomyStore.cpp
     SOURCES CityDetailStore.h CityDetailStore.cpp
+)
+
+qt_add_resources(appqml1 "icons"
+    PREFIX "/"
+    FILES
+        icons/squares-four.svg
+        icons/calendar.svg
+        icons/air-filter.svg
+        icons/sun-horizon.svg
+        icons/star.svg
+        icons/gear-six.svg
+        icons/map-pin-simple.svg
 )
 
 set_target_properties(appqml1 PROPERTIES

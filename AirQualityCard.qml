@@ -11,9 +11,13 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Math.min(card.width, card.height) * 0.04
-        color: "#20ffffff"
-        border.width: 1; border.color: "#30ffffff"
+        color: cardMouse.containsMouse ? "#25ffffff" : "#20ffffff"
+        border.width: 1
+        border.color: cardMouse.containsMouse ? "#50ffffff" : "#30ffffff"
         clip: true
+
+        Behavior on color { ColorAnimation { duration: 200 } }
+        Behavior on border.color { ColorAnimation { duration: 200 } }
 
         ColumnLayout {
             anchors.fill: parent
@@ -118,5 +122,11 @@ Item {
                 visible: !card.airData.aqi
             }
         }
+    }
+
+    MouseArea {
+        id: cardMouse
+        anchors.fill: parent
+        hoverEnabled: true
     }
 }

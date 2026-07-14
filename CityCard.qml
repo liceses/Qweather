@@ -6,9 +6,12 @@ Rectangle {
     id: card
     width: 160; height: 100
     radius: 12
-    color: hoverArea.containsMouse ? "#35000000" : "#20000000"
+    color: hoverArea.containsMouse ? "#25ffffff" : "#20ffffff"
     border.width: 1
     border.color: hoverArea.containsMouse ? "#50ffffff" : "#30ffffff"
+
+    Behavior on color { ColorAnimation { duration: 200 } }
+    Behavior on border.color { ColorAnimation { duration: 200 } }
 
     property string cityName: ""
     property string cityId: ""
@@ -31,14 +34,14 @@ Rectangle {
         WeatherIcon {
             anchors.horizontalCenter: parent.horizontalCenter
             code: card.weatherData.icon || "100"
-            iconSize: 32
+            iconSize: Math.max(22, Math.min(36, card.height * 0.35))
         }
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: card.cityName || "--"
             color: "white"
-            font.pixelSize: 14
+            font.pixelSize: Math.max(12, Math.min(16, card.width * 0.09))
             font.bold: card.isFocus
         }
 
@@ -46,7 +49,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             text: card.weatherData.temp ? card.weatherData.temp + "°" : "--°"
             color: "white"
-            font.pixelSize: 20
+            font.pixelSize: Math.max(18, Math.min(28, card.height * 0.22))
             font.bold: true
         }
     }

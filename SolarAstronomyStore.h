@@ -7,6 +7,7 @@
 #include <QJsonObject>
 
 class WeatherAPI;
+class AppSettings;
 
 class SolarAstronomyStore : public QObject {
     Q_OBJECT
@@ -21,6 +22,7 @@ public:
     explicit SolarAstronomyStore(QObject* parent = nullptr);
 
     void setWeatherApi(WeatherAPI* api);
+    void setAppSettings(AppSettings* settings);
 
     QVariantList cities() const { return m_cities; }
     QVariantMap solarData() const { return m_solarData; }
@@ -41,6 +43,7 @@ private:
     void mergeAndEmit(const QString& cityId);
 
     WeatherAPI* m_api = nullptr;
+    AppSettings* m_appSettings = nullptr;
     QVariantList m_cities;
     QVariantMap m_solarData;   // 最终数据，暴露给 QML
     QVariantMap m_solarRaw;    // 中间累积: { "<cityId>": { "solar":{...}, "sun":{...}, "moon":{...} } }

@@ -25,6 +25,10 @@ public:
     // 清除全部
     Q_INVOKABLE void clearAll();
 
+    // 持久化存储（无 TTL，用于收藏/历史/设置）
+    Q_INVOKABLE void save(const QString &key, const QString &value);
+    Q_INVOKABLE QString load(const QString &key);
+
 private:
     void initDb();
     QSqlDatabase m_db;

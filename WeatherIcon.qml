@@ -1,12 +1,12 @@
 import QtQuick
+import QtQuick.Effects
 
-// 和风天气图标组件 —— 根据 icon code（如 "100"=晴、"104"=阴）显示对应 SVG
-// 图标来源：https://icons.qweather.com/
+// 和风天气图标组件 —— 根据 icon code 显示对应 SVG
 // 用法：WeatherIcon { code: "100"; iconSize: 48; isDay: true }
-
+// Qt6 标准 SVG 染色：layer.effect MultiEffect (brightness + colorization)
 Image {
     id: root
-    property string code: "100"       // 和风天气 icon code
+    property string code: "100"
     property int iconSize: 48
     property bool isDay: true
 
@@ -16,13 +16,19 @@ Image {
     sourceSize.height: iconSize
     fillMode: Image.PreserveAspectFit
 
+    readonly property bool _dark: appSettings ? appSettings.darkMode : true
+
+    layer.enabled: true
+    layer.effect: MultiEffect {
+        brightness: 1.0
+        colorization: 1.0
+        colorizationColor: root._dark ? "#1a1a1a" : "#ccffffff"
+    }
+
     source: {
-        let c = parseInt(code)
+        let c = parseInt(root.code)
         if (isNaN(c)) return ""
-        // 和风天气图标项目: https://icons.qweather.com/
-        // 100 晴  104 阴  300-318 雨  400-410 雪
-        if (!isDay) {
-            // 夜间
+        if (!root.isDay) {
             if (c === 100) return "https://icons.qweather.com/assets/icons/150.svg"
             if (c === 101 || c === 102) return "https://icons.qweather.com/assets/icons/151.svg"
             if (c === 103) return "https://icons.qweather.com/assets/icons/152.svg"
@@ -31,7 +37,6 @@ Image {
             if (c >= 400 && c < 500) return "https://icons.qweather.com/assets/icons/450.svg"
             return "https://icons.qweather.com/assets/icons/150.svg"
         }
-        // 白天
         if (c === 100) return "https://icons.qweather.com/assets/icons/100.svg"
         if (c === 101 || c === 102) return "https://icons.qweather.com/assets/icons/101.svg"
         if (c === 103) return "https://icons.qweather.com/assets/icons/102.svg"

@@ -12,6 +12,8 @@ Flickable {
     ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
     property var detail: cityDetailStore.detail || ({})
+    property bool favorited: false
+    property var onToggleFav: function() {}
 
     Column {
         id: column
@@ -19,14 +21,45 @@ Flickable {
         padding: 16
         spacing: 12
 
-        // ========== 城市名大标题 ==========
-        Text {
-            id: cityTitle
-            text: detail.cityName || "选择城市"
-            color: "white"
-            font.pixelSize: 40
-            font.bold: true
+        // ========== 城市名大标题 + 收藏星标 ==========
+        Row {
             anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 8
+
+            Text {
+                id: cityTitle
+                text: detail.cityName || "选择城市"
+                color: "white"
+                font.pixelSize: 40
+                font.bold: true
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            // 收藏星标
+            Rectangle {
+                id: starBtn
+                anchors.verticalCenter: parent.verticalCenter
+                width: 36; height: 36; radius: 18
+                color: starMouse.containsMouse ? "#35000000" : "transparent"
+                visible: !!detail.cityName
+
+                Behavior on color { ColorAnimation { duration: 150 } }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: page.favorited ? "★" : "☆"
+                    color: page.favorited ? "#ffc107" : "#80ffffff"
+                    font.pixelSize: 22
+                }
+
+                MouseArea {
+                    id: starMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: page.onToggleFav()
+                }
+            }
         }
 
         // 无城市提示
@@ -45,7 +78,10 @@ Flickable {
             height: nowContent.implicitHeight + 24
             radius: 12
             color: "#20ffffff"
-            border.width: 1; border.color: "#30ffffff"
+            border.width: 1
+            border.color: nowHover.containsMouse ? "#50ffffff" : "#30ffffff"
+
+            Behavior on border.color { ColorAnimation { duration: 200 } }
             visible: !!detail.now && !!detail.now.temp
 
             ColumnLayout {
@@ -78,6 +114,13 @@ Flickable {
                     DetailChip { width: (nowCard.width - 24 - nowGrid.spacing * 2) / 3; label: "降水量"; value: (detail.now.precip || "0") + " mm" }
                 }
             }
+
+            MouseArea {
+                id: nowHover
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+            }
         }
 
         // ===== 卡片2: 空气质量 =====
@@ -87,7 +130,10 @@ Flickable {
             height: airContent.implicitHeight + 24
             radius: 12
             color: "#20ffffff"
-            border.width: 1; border.color: "#30ffffff"
+            border.width: 1
+            border.color: airHover.containsMouse ? "#50ffffff" : "#30ffffff"
+
+            Behavior on border.color { ColorAnimation { duration: 200 } }
             visible: !!detail.air && !!detail.air.aqi
 
             ColumnLayout {
@@ -145,6 +191,13 @@ Flickable {
                     }
                 }
             }
+
+            MouseArea {
+                id: airHover
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+            }
         }
 
         // ===== 卡片3: 逐日预报 =====
@@ -154,7 +207,10 @@ Flickable {
             height: dailyContent.implicitHeight + 24
             radius: 12
             color: "#20ffffff"
-            border.width: 1; border.color: "#30ffffff"
+            border.width: 1
+            border.color: dailyHover.containsMouse ? "#50ffffff" : "#30ffffff"
+
+            Behavior on border.color { ColorAnimation { duration: 200 } }
             visible: !!detail.daily && detail.daily.length > 0
 
             ColumnLayout {
@@ -191,6 +247,13 @@ Flickable {
                     }
                 }
             }
+
+            MouseArea {
+                id: dailyHover
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+            }
         }
 
         // ===== 卡片4: 逐小时预报 =====
@@ -200,7 +263,10 @@ Flickable {
             height: hourlyContent.implicitHeight + 24
             radius: 12
             color: "#20ffffff"
-            border.width: 1; border.color: "#30ffffff"
+            border.width: 1
+            border.color: hourlyHover.containsMouse ? "#50ffffff" : "#30ffffff"
+
+            Behavior on border.color { ColorAnimation { duration: 200 } }
             visible: !!detail.hourly && detail.hourly.length > 0
 
             ColumnLayout {
@@ -238,6 +304,13 @@ Flickable {
                     }
                 }
             }
+
+            MouseArea {
+                id: hourlyHover
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+            }
         }
 
         // ===== 卡片5: 天气指数 =====
@@ -247,7 +320,10 @@ Flickable {
             height: indicesContent.implicitHeight + 24
             radius: 12
             color: "#20ffffff"
-            border.width: 1; border.color: "#30ffffff"
+            border.width: 1
+            border.color: indicesHover.containsMouse ? "#50ffffff" : "#30ffffff"
+
+            Behavior on border.color { ColorAnimation { duration: 200 } }
             visible: !!detail.indices && detail.indices.length > 0
 
             ColumnLayout {
@@ -279,6 +355,13 @@ Flickable {
                     }
                 }
             }
+
+            MouseArea {
+                id: indicesHover
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+            }
         }
 
         // ===== 卡片6: 天气预警 =====
@@ -288,7 +371,10 @@ Flickable {
             height: warningContent.implicitHeight + 24
             radius: 12
             color: "#20ffffff"
-            border.width: 1; border.color: "#30ffffff"
+            border.width: 1
+            border.color: warningHover.containsMouse ? "#50ffffff" : "#30ffffff"
+
+            Behavior on border.color { ColorAnimation { duration: 200 } }
             visible: !!detail.warnings && detail.warnings.length > 0
 
             ColumnLayout {
@@ -329,6 +415,13 @@ Flickable {
                     }
                 }
             }
+
+            MouseArea {
+                id: warningHover
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+            }
         }
 
         // ===== 卡片7: 天文 —— 日出日落 + 月相 =====
@@ -338,7 +431,10 @@ Flickable {
             height: astroContent.implicitHeight + 24
             radius: 12
             color: "#20ffffff"
-            border.width: 1; border.color: "#30ffffff"
+            border.width: 1
+            border.color: astroHover.containsMouse ? "#50ffffff" : "#30ffffff"
+
+            Behavior on border.color { ColorAnimation { duration: 200 } }
             visible: (!!detail.sun && !!detail.sun.sunrise) || (!!detail.moon && !!detail.moon.moonPhase)
 
             ColumnLayout {
@@ -380,6 +476,13 @@ Flickable {
                     }
                 }
             }
+
+            MouseArea {
+                id: astroHover
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+            }
         }
 
         // ===== 卡片8: 太阳辐射 =====
@@ -389,7 +492,10 @@ Flickable {
             height: solarContent.implicitHeight + 24
             radius: 12
             color: "#20ffffff"
-            border.width: 1; border.color: "#30ffffff"
+            border.width: 1
+            border.color: solarHover.containsMouse ? "#50ffffff" : "#30ffffff"
+
+            Behavior on border.color { ColorAnimation { duration: 200 } }
             visible: !!detail.solar && detail.solar.ghi !== undefined
 
             ColumnLayout {
@@ -440,6 +546,13 @@ Flickable {
                     Text { text: "太阳高度角: " + (detail.solar.solarElevation || "--") + "°"; color: "#aaffffff"; font.pixelSize: 12 }
                 }
             }
+
+            MouseArea {
+                id: solarHover
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+            }
         }
 
         // ===== 卡片9: 分钟降水 =====
@@ -449,7 +562,10 @@ Flickable {
             height: minutelyContent.implicitHeight + 24
             radius: 12
             color: "#20ffffff"
-            border.width: 1; border.color: "#30ffffff"
+            border.width: 1
+            border.color: minutelyHover.containsMouse ? "#50ffffff" : "#30ffffff"
+
+            Behavior on border.color { ColorAnimation { duration: 200 } }
             visible: !!detail.minutely && !!detail.minutely.summary
 
             ColumnLayout {
@@ -486,6 +602,13 @@ Flickable {
                         }
                     }
                 }
+            }
+
+            MouseArea {
+                id: minutelyHover
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
             }
         }
 
