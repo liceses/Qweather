@@ -4,7 +4,7 @@ project(qml1 VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Network Sql Charts Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Quick Network Sql Charts Widgets ShaderTools)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
@@ -35,6 +35,16 @@ qt_add_qml_module(appqml1
         SolarAstronomyCard.qml
         CityDetailPage.qml
         SettingsPage.qml
+        # === V3 天空系统 QML ===
+        WeatherBackground.qml
+        SkyLayer.qml
+        AtmosphereLayer.qml
+        CloudLayer.qml
+        RainLayer.qml
+        SnowLayer.qml
+        FogLayer.qml
+        LightningLayer.qml
+        WeatherBackgroundDebugPanel.qml
     SOURCES AppSettings.h AppSettings.cpp
     SOURCES weatherApi.h weatherApi.cpp
     SOURCES WeatherCache.h WeatherCache.cpp
@@ -42,6 +52,13 @@ qt_add_qml_module(appqml1
     SOURCES AirQualityStore.h AirQualityStore.cpp
     SOURCES SolarAstronomyStore.h SolarAstronomyStore.cpp
     SOURCES CityDetailStore.h CityDetailStore.cpp
+    # === V3 天空系统 C++ ===
+    SOURCES GlobalClock.h GlobalClock.cpp
+    SOURCES WeatherProfile.h WeatherProfile.cpp
+    SOURCES AstronomyModel.h AstronomyModel.cpp
+    SOURCES SkyState.h
+    SOURCES BackgroundManager.h BackgroundManager.cpp
+    SOURCES TransitionController.h TransitionController.cpp
 )
 
 qt_add_resources(appqml1 "icons"
@@ -54,6 +71,19 @@ qt_add_resources(appqml1 "icons"
         icons/star.svg
         icons/gear-six.svg
         icons/map-pin-simple.svg
+)
+
+# ★ Shader 自动编译：.frag → .frag.qsb
+qt_add_shaders(appqml1 "shaders"
+    PREFIX "/"
+    FILES
+        shaders/sky.frag
+        shaders/atmosphere.frag
+        shaders/cloud.frag
+        shaders/rain.frag
+        shaders/snow.frag
+        shaders/fog.frag
+        shaders/lightning.frag
 )
 
 set_target_properties(appqml1 PROPERTIES

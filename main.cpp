@@ -10,6 +10,10 @@
 #include "SolarAstronomyStore.h"
 #include "CityDetailStore.h"
 #include "AppSettings.h"
+#include "GlobalClock.h"
+#include "BackgroundManager.h"
+#include "TransitionController.h"
+#include "SkyState.h"
 
 int main(int argc, char *argv[])
 {
@@ -40,6 +44,20 @@ int main(int argc, char *argv[])
     CityDetailStore cityDetailStore;
     cityDetailStore.setWeatherApi(&weatherapi);
 
+    // === V3 天空系统 ===
+    qRegisterMetaType<SkyState>("SkyState");
+    GlobalClock globalClock;
+    BackgroundManager bgManager;
+    TransitionController transitionCtrl;
+    bgManager.setTransitionController(&transitionCtrl);
+
+    // 天空状态变化时自动更新过渡控制器
+    QObject::connect(&bgManager, &BackgroundManager::skyStateChanged, &transitionCtrl, [&]() {
+        transitionCtrl.setSkyState(bgManager.skyState());
+    });
+
+    globalClock.start();
+
     QQmlApplicationEngine engine;
     QObject::connect(
         &engine,
@@ -54,6 +72,9 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("solarAstronomyStore", &solarAstronomyStore);
     engine.rootContext()->setContextProperty("cityDetailStore", &cityDetailStore);
     engine.rootContext()->setContextProperty("appSettings", &appSettings);
+    engine.rootContext()->setContextProperty("globalClock", &globalClock);
+    engine.rootContext()->setContextProperty("backgroundManager", &bgManager);
+    engine.rootContext()->setContextProperty("transitionCtrl", &transitionCtrl);
     engine.loadFromModule("qml1", "Main");
 
     return QApplication::exec();

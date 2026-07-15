@@ -107,13 +107,16 @@ ApplicationWindow {
         else cityDetailStore.setCity("", "", "", "")
     }
 
-    // ===== 背景（临时绿色渐变，待替换为动态天气背景） =====
-    Rectangle {
+    // ===== 动态天气背景（V3 天空模拟系统） =====
+    WeatherBackground {
+        id: weatherBg
         anchors.fill: parent
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#2e7d32" }
-            GradientStop { position: 1.0; color: "#81c784" }
-        }
+        z: -1  // 确保在所有 UI 元素之后
+    }
+
+    WeatherBackgroundDebugPanel {
+        id: debugPanel
+        z: 100
     }
 
     // ===== 主布局 =====
