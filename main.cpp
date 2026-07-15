@@ -51,11 +51,6 @@ int main(int argc, char *argv[])
     TransitionController transitionCtrl;
     bgManager.setTransitionController(&transitionCtrl);
 
-    // 天空状态变化时自动更新过渡控制器
-    QObject::connect(&bgManager, &BackgroundManager::skyStateChanged, &transitionCtrl, [&]() {
-        transitionCtrl.setSkyState(bgManager.skyState());
-    });
-
     globalClock.start();
 
     QQmlApplicationEngine engine;

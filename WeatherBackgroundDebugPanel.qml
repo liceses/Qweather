@@ -2,119 +2,85 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-// WeatherBackgroundDebugPanel — 浮动调试面板
-// 快捷键: Ctrl+Shift+B 切换显示
-// Debug 模式: 所有滑块可调，覆盖 SkyState
-// Auto 模式: 只读显示
+// WeatherBackgroundDebugPanel
+// 所有控件通过 commitSkyState({全部 17 字段}) 统一提交
 Rectangle {
     id: panel
     visible: false
     z: 100
-    anchors.right: parent.right
-    anchors.top: parent.top
-    anchors.margins: 12
-    width: 320
-    height: Math.min(580, parent.height - 24)
-    color: "#e8e8e8"
-    radius: 8
-    border.color: "#bbb"
-    border.width: 1
+    anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 12
+    width: 340; height: Math.min(700, parent.height - 24)
+    color: "#e8e8e8"; radius: 8
+    border.color: "#bbb"; border.width: 1
 
-    // 快捷键显示/隐藏
+    // 收集所有控件值 → 提交完整 SkyState
+    function commit() {
+        backgroundManager.commitSkyState({
+            solarAltitude:  sldSA.value,
+            solarAzimuth:   sldSZ.value,
+            moonAltitude:   sldMA.value,
+            moonAzimuth:    sldMZ.value,
+            moonPhase:      sldMP.value,
+            moonIllum:      sldMI.value,
+            cloudCoverage:  sldCC.value,
+            rainIntensity:  sldRI.value,
+            snowIntensity:  sldSI.value,
+            fogDensity:     sldFD.value,
+            lightningProb:  sldLP.value,
+            starVisibility: sldSV.value,
+            exposure:       sldEX.value,
+            twilightFactor: sldTF.value,
+            zenithColor:    colorZenith.color,
+            horizonColor:   colorHorizon.color,
+            ambientColor:   colorAmbient.color
+        })
+    }
+
     Shortcut {
         sequence: "Ctrl+Shift+B"
         onActivated: {
             panel.visible = !panel.visible
             if (panel.visible) {
                 console.log("[DebugPanel] opened")
-                // 进入 debug 模式时自动激活
-                if (backgroundManager.controlMode !== 1)
-                    backgroundManager.enterDebugMode()
+                if (backgroundManager.controlMode !== 1) backgroundManager.enterDebugMode()
             } else {
                 console.log("[DebugPanel] closed")
-                // 关闭面板时退出 debug 模式
-                if (backgroundManager.controlMode === 1)
-                    backgroundManager.exitDebugMode()
+                if (backgroundManager.controlMode === 1) backgroundManager.exitDebugMode()
             }
         }
     }
 
-    // 关闭按钮
+    // 关闭
     Rectangle {
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.margins: 4
-        width: 24; height: 24
-        radius: 12
-        color: "#d44"
-        Text {
-            anchors.centerIn: parent
-            text: "✕"
-            color: "white"
-            font.pixelSize: 14
-        }
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                panel.visible = false
-                if (backgroundManager.controlMode === 1)
-                    backgroundManager.exitDebugMode()
-                console.log("[DebugPanel] closed by button")
-            }
+        anchors.top: parent.top; anchors.right: parent.right; anchors.margins: 4
+        width: 24; height: 24; radius: 12; color: "#d44"
+        Text { anchors.centerIn: parent; text: "✕"; color: "white"; font.pixelSize: 14 }
+        MouseArea { anchors.fill: parent
+            onClicked: { panel.visible = false; if (backgroundManager.controlMode === 1) backgroundManager.exitDebugMode() }
         }
     }
 
     Flickable {
-        anchors.fill: parent
-        anchors.margins: 8
-        anchors.topMargin: 32
-        contentHeight: contentCol.implicitHeight + 16
-        clip: true
+        anchors.fill: parent; anchors.margins: 8; anchors.topMargin: 32
+        contentHeight: contentCol.implicitHeight + 16; clip: true
 
         ColumnLayout {
-            id: contentCol
-            width: parent.width - 8
-            spacing: 6
+            id: contentCol; width: parent.width - 8; spacing: 5
 
-            // === 标题 ===
-            Text {
-                text: "☰ 调试面板"
-                font.pixelSize: 15
-                font.bold: true
-                color: "#333"
-            }
+            Text { text: "☰ 调试面板"; font.pixelSize: 15; font.bold: true; color: "#333" }
 
-            // === 模式切换 ===
-            RowLayout {
-                spacing: 8
+            // === 模式 ===
+            RowLayout { spacing: 8
                 Text { text: "模式:"; color: "#555" }
-                Button {
-                    text: "● Auto"
-                    checked: backgroundManager.controlMode === 0
-                    onClicked: {
-                        if (backgroundManager.controlMode === 1)
-                            backgroundManager.exitDebugMode()
-                    }
-                }
-                Button {
-                    text: "◉ Debug"
-                    checked: backgroundManager.controlMode === 1
-                    onClicked: {
-                        if (backgroundManager.controlMode === 0)
-                            backgroundManager.enterDebugMode()
-                    }
-                }
+                Button { text: "● Auto"; onClicked: { if (backgroundManager.controlMode === 1) backgroundManager.exitDebugMode() } }
+                Button { text: "◉ Debug"; onClicked: { if (backgroundManager.controlMode === 0) backgroundManager.enterDebugMode() } }
             }
 
             Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
 
             // === Layer 状态 ===
             Text { text: "Layer 状态"; font.bold: true; color: "#555" }
-
-            GridLayout {
-                columns: 3
-                columnSpacing: 8; rowSpacing: 2
-
+            GridLayout { columns: 3; columnSpacing: 8; rowSpacing: 2
                 Repeater {
                     model: [
                         { label: "Sky",      active: true },
@@ -123,19 +89,10 @@ Rectangle {
                         { label: "Fog",      active: transitionCtrl.fogActive, tp: transitionCtrl.fogTP },
                         { label: "Lightning",active: transitionCtrl.lightningActive }
                     ]
-                    delegate: Item {
-                        implicitWidth: 90; implicitHeight: 20
-                        Rectangle {
-                            width: 10; height: 10; anchors.verticalCenter: parent.verticalCenter
-                            radius: 5; color: modelData.active ? "#4a4" : "#aaa"
-                        }
-                        Text {
-                            x: 16; anchors.verticalCenter: parent.verticalCenter
-                            text: {
-                                if (modelData.tp !== undefined && modelData.active)
-                                    return modelData.label + " " + modelData.tp.toFixed(2)
-                                return modelData.label + (modelData.active ? " ●" : " ○")
-                            }
+                    delegate: Item { implicitWidth: 90; implicitHeight: 20
+                        Rectangle { width: 10; height: 10; anchors.verticalCenter: parent.verticalCenter; radius: 5; color: modelData.active ? "#4a4" : "#aaa" }
+                        Text { x: 16; anchors.verticalCenter: parent.verticalCenter
+                            text: modelData.tp !== undefined && modelData.active ? modelData.label + " " + modelData.tp.toFixed(2) : modelData.label + (modelData.active ? " ●" : " ○")
                             font.pixelSize: 12; color: "#444"
                         }
                     }
@@ -144,174 +101,188 @@ Rectangle {
 
             Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
 
-            // === 参数滑块（使用直接属性绑定 — Q_GADGET 不支持 bracket 访问） ===
-            Text { text: "参数"; font.bold: true; color: "#555" }
+            // === 天文 ===
+            Text { text: "天文"; font.bold: true; color: "#555" }
 
-            // 云覆盖率
-            RowLayout { Layout.fillWidth: true; spacing: 4
-                Text { text: "云覆盖率"; width: 60; font.pixelSize: 11; color: "#555" }
-                Slider { id: sldCC; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.cloudCoverage
-                    enabled: backgroundManager.controlMode === 1
-                    onMoved: { backgroundManager.setDebugField("cloudCoverage", value); console.log("[DebugPanel] cloudCoverage = " + value.toFixed(3)) }
-                }
-                Text { text: sldCC.value.toFixed(2); width: 40; font.pixelSize: 11; color: "#888" }
-            }
-            // 雨强度
-            RowLayout { Layout.fillWidth: true; spacing: 4
-                Text { text: "雨强度"; width: 60; font.pixelSize: 11; color: "#555" }
-                Slider { id: sldRI; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.rainIntensity
-                    enabled: backgroundManager.controlMode === 1
-                    onMoved: { backgroundManager.setDebugField("rainIntensity", value); console.log("[DebugPanel] rainIntensity = " + value.toFixed(3)) }
-                }
-                Text { text: sldRI.value.toFixed(2); width: 40; font.pixelSize: 11; color: "#888" }
-            }
-            // 雪强度
-            RowLayout { Layout.fillWidth: true; spacing: 4
-                Text { text: "雪强度"; width: 60; font.pixelSize: 11; color: "#555" }
-                Slider { id: sldSI; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.snowIntensity
-                    enabled: backgroundManager.controlMode === 1
-                    onMoved: { backgroundManager.setDebugField("snowIntensity", value); console.log("[DebugPanel] snowIntensity = " + value.toFixed(3)) }
-                }
-                Text { text: sldSI.value.toFixed(2); width: 40; font.pixelSize: 11; color: "#888" }
-            }
-            // 雾密度
-            RowLayout { Layout.fillWidth: true; spacing: 4
-                Text { text: "雾密度"; width: 60; font.pixelSize: 11; color: "#555" }
-                Slider { id: sldFD; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.fogDensity
-                    enabled: backgroundManager.controlMode === 1
-                    onMoved: { backgroundManager.setDebugField("fogDensity", value); console.log("[DebugPanel] fogDensity = " + value.toFixed(3)) }
-                }
-                Text { text: sldFD.value.toFixed(2); width: 40; font.pixelSize: 11; color: "#888" }
-            }
-            // 星星
-            RowLayout { Layout.fillWidth: true; spacing: 4
-                Text { text: "星星"; width: 60; font.pixelSize: 11; color: "#555" }
-                Slider { id: sldSV; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.starVisibility
-                    enabled: backgroundManager.controlMode === 1
-                    onMoved: { backgroundManager.setDebugField("starVisibility", value); console.log("[DebugPanel] starVisibility = " + value.toFixed(3)) }
-                }
-                Text { text: sldSV.value.toFixed(2); width: 40; font.pixelSize: 11; color: "#888" }
-            }
-            // 太阳高度
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "太阳高度"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldSA; Layout.fillWidth: true; from: -10; to: 90
-                    value: backgroundManager.skyState.solarAltitude
-                    enabled: backgroundManager.controlMode === 1
-                    onMoved: { backgroundManager.setDebugField("solarAltitude", value); console.log("[DebugPanel] solarAltitude = " + value.toFixed(3)) }
-                }
-                Text { text: sldSA.value.toFixed(1) + "°"; width: 40; font.pixelSize: 11; color: "#888" }
+                    value: backgroundManager.skyState.solarAltitude; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldSA.value.toFixed(1) + "°"; width: 50; font.pixelSize: 11; color: "#888" }
             }
-            // 黄昏因子
             RowLayout { Layout.fillWidth: true; spacing: 4
-                Text { text: "黄昏因子"; width: 60; font.pixelSize: 11; color: "#555" }
-                Slider { id: sldTF; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.twilightFactor
-                    enabled: backgroundManager.controlMode === 1
-                    onMoved: { backgroundManager.setDebugField("twilightFactor", value); console.log("[DebugPanel] twilightFactor = " + value.toFixed(3)) }
-                }
-                Text { text: sldTF.value.toFixed(2); width: 40; font.pixelSize: 11; color: "#888" }
+                Text { text: "太阳方位"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldSZ; Layout.fillWidth: true; from: 0; to: 360
+                    value: backgroundManager.skyState.solarAzimuth; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldSZ.value.toFixed(1) + "°"; width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "月亮高度"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldMA; Layout.fillWidth: true; from: -90; to: 90
+                    value: backgroundManager.skyState.moonAltitude; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldMA.value.toFixed(1) + "°"; width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "月亮方位"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldMZ; Layout.fillWidth: true; from: 0; to: 360
+                    value: backgroundManager.skyState.moonAzimuth; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldMZ.value.toFixed(1) + "°"; width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "月相"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldMP; Layout.fillWidth: true; from: 0; to: 8
+                    value: backgroundManager.skyState.moonPhase; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldMP.value.toFixed(1); width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "月光"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldMI; Layout.fillWidth: true; from: 0; to: 1
+                    value: backgroundManager.skyState.moonIllum; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldMI.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
             }
 
             Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
 
-            // === 天文信息 (只读) ===
-            Text { text: "天文 (只读)"; font.bold: true; color: "#555" }
+            // === 天气 ===
+            Text { text: "天气"; font.bold: true; color: "#555" }
 
-            GridLayout {
-                columns: 2
-                columnSpacing: 8; rowSpacing: 2
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "云覆盖率"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldCC; Layout.fillWidth: true; from: 0; to: 1
+                    value: backgroundManager.skyState.cloudCoverage; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldCC.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "雨强度"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldRI; Layout.fillWidth: true; from: 0; to: 1
+                    value: backgroundManager.skyState.rainIntensity; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldRI.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "雪强度"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldSI; Layout.fillWidth: true; from: 0; to: 1
+                    value: backgroundManager.skyState.snowIntensity; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldSI.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "雾密度"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldFD; Layout.fillWidth: true; from: 0; to: 1
+                    value: backgroundManager.skyState.fogDensity; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldFD.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "闪电概率"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldLP; Layout.fillWidth: true; from: 0; to: 1
+                    value: backgroundManager.skyState.lightningProb; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldLP.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "星星"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldSV; Layout.fillWidth: true; from: 0; to: 1
+                    value: backgroundManager.skyState.starVisibility; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldSV.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "曝光"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldEX; Layout.fillWidth: true; from: 0.1; to: 2
+                    value: backgroundManager.skyState.exposure; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldEX.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "黄昏因子"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldTF; Layout.fillWidth: true; from: 0; to: 1
+                    value: backgroundManager.skyState.twilightFactor; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                Text { text: sldTF.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
+            }
 
-                Text { text: "太阳高度:"; font.pixelSize: 11; color: "#666" }
-                Text { text: backgroundManager.skyState.solarAltitude.toFixed(1) + "°"; font.pixelSize: 11; color: "#333" }
+            Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
 
-                Text { text: "月亮高度:"; font.pixelSize: 11; color: "#666" }
-                Text { text: backgroundManager.skyState.moonAltitude.toFixed(1) + "°"; font.pixelSize: 11; color: "#333" }
+            // === 颜色 ===
+            Text { text: "天空色"; font.bold: true; color: "#555" }
 
-                Text { text: "月相:"; font.pixelSize: 11; color: "#666" }
-                Text { text: backgroundManager.skyState.moonPhase.toFixed(0); font.pixelSize: 11; color: "#333" }
-
-                Text { text: "月光:"; font.pixelSize: 11; color: "#666" }
-                Text { text: (backgroundManager.skyState.moonIllum * 100).toFixed(0) + "%"; font.pixelSize: 11; color: "#333" }
-
-                Text { text: "黄昏:"; font.pixelSize: 11; color: "#666" }
-                Text { text: backgroundManager.skyState.twilightFactor.toFixed(3); font.pixelSize: 11; color: "#333" }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "天顶色"; width: 60; font.pixelSize: 11; color: "#555" }
+                Rectangle { id: colorZenith; width: 60; height: 20; radius: 3; border.color: "#999"; border.width: 1
+                    color: backgroundManager.skyState.zenithColor
+                    enabled: backgroundManager.controlMode === 1
+                    MouseArea { anchors.fill: parent; enabled: parent.enabled
+                        onClicked: {
+                            var pre = ["#4a90d9","#0a0a2e","#c05850","#3a5a8a","#1a2a5a"]
+                            var idx = pre.indexOf(colorZenith.color.toString()) + 1
+                            if (idx >= pre.length) idx = 0
+                            colorZenith.color = pre[idx]; commit()
+                        }
+                    }
+                }
+                Text { text: colorZenith.color.toString().substr(1,6); font.pixelSize: 11; color: "#666" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "地平线色"; width: 60; font.pixelSize: 11; color: "#555" }
+                Rectangle { id: colorHorizon; width: 60; height: 20; radius: 3; border.color: "#999"; border.width: 1
+                    color: backgroundManager.skyState.horizonColor
+                    enabled: backgroundManager.controlMode === 1
+                    MouseArea { anchors.fill: parent; enabled: parent.enabled
+                        onClicked: {
+                            var pre = ["#87ceeb","#1a1a3e","#e89560","#d4996a","#4a3060"]
+                            var idx = pre.indexOf(colorHorizon.color.toString()) + 1
+                            if (idx >= pre.length) idx = 0
+                            colorHorizon.color = pre[idx]; commit()
+                        }
+                    }
+                }
+                Text { text: colorHorizon.color.toString().substr(1,6); font.pixelSize: 11; color: "#666" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "环境色"; width: 60; font.pixelSize: 11; color: "#555" }
+                Rectangle { id: colorAmbient; width: 60; height: 20; radius: 3; border.color: "#999"; border.width: 1
+                    color: backgroundManager.skyState.ambientColor
+                    enabled: backgroundManager.controlMode === 1
+                    MouseArea { anchors.fill: parent; enabled: parent.enabled
+                        onClicked: {
+                            var pre = ["#c8e0f0","#15152e","#906050","#c0b0a0","#0a0a20"]
+                            var idx = pre.indexOf(colorAmbient.color.toString()) + 1
+                            if (idx >= pre.length) idx = 0
+                            colorAmbient.color = pre[idx]; commit()
+                        }
+                    }
+                }
+                Text { text: colorAmbient.color.toString().substr(1,6); font.pixelSize: 11; color: "#666" }
             }
 
             Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
 
             // === 快捷操作 ===
             Text { text: "快捷操作"; font.bold: true; color: "#555" }
-            RowLayout {
-                spacing: 4
-                Button {
-                    text: "晴天"
-                    onClicked: {
-                        backgroundManager.setDebugField("cloudCoverage", 0)
-                        backgroundManager.setDebugField("rainIntensity", 0)
-                        backgroundManager.setDebugField("snowIntensity", 0)
-                        backgroundManager.setDebugField("fogDensity", 0)
-                        backgroundManager.setDebugField("starVisibility", 0)
-                        backgroundManager.setDebugField("twilightFactor", 0)
-                        backgroundManager.setDebugField("solarAltitude", 60)
-                        console.log("[DebugPanel] quick: sunny")
-                    }
-                }
-                Button {
-                    text: "多云"
-                    onClicked: {
-                        backgroundManager.setDebugField("cloudCoverage", 0.6)
-                        backgroundManager.setDebugField("starVisibility", 0)
-                        backgroundManager.setDebugField("solarAltitude", 45)
-                        console.log("[DebugPanel] quick: cloudy")
-                    }
-                }
-                Button {
-                    text: "下雨"
-                    onClicked: {
-                        backgroundManager.setDebugField("cloudCoverage", 0.8)
-                        backgroundManager.setDebugField("rainIntensity", 0.6)
-                        backgroundManager.setDebugField("snowIntensity", 0)
-                        backgroundManager.setDebugField("fogDensity", 0)
-                        backgroundManager.setDebugField("starVisibility", 0)
-                        backgroundManager.setDebugField("twilightFactor", 0)
-                        console.log("[DebugPanel] quick: rainy")
-                    }
-                }
-                Button {
-                    text: "夜晚"
-                    onClicked: {
-                        backgroundManager.setDebugField("solarAltitude", -20)
-                        backgroundManager.setDebugField("starVisibility", 0.8)
-                        backgroundManager.setDebugField("cloudCoverage", 0)
-                        backgroundManager.setDebugField("rainIntensity", 0)
-                        backgroundManager.setDebugField("snowIntensity", 0)
-                        backgroundManager.setDebugField("fogDensity", 0)
-                        console.log("[DebugPanel] quick: night")
-                    }
-                }
+            RowLayout { spacing: 4
+                Button { text: "晴天"; onClicked: { setQVals({solarAltitude:60,cloudCoverage:0,rainIntensity:0,snowIntensity:0,fogDensity:0,starVisibility:0,lightningProb:0,twilightFactor:0}); commit() } }
+                Button { text: "多云"; onClicked: { setQVals({solarAltitude:45,cloudCoverage:0.6,starVisibility:0}); commit() } }
+                Button { text: "下雨"; onClicked: { setQVals({cloudCoverage:0.8,rainIntensity:0.6,snowIntensity:0,fogDensity:0,starVisibility:0,twilightFactor:0}); commit() } }
+                Button { text: "夜晚"; onClicked: { setQVals({solarAltitude:-20,starVisibility:0.8,cloudCoverage:0,rainIntensity:0,snowIntensity:0,fogDensity:0}); commit() } }
             }
 
-            // 状态转储
-            Button {
-                text: "📋 转储状态"
-                Layout.fillWidth: true
-                onClicked: {
-                    var dump = backgroundManager.dumpState()
-                    console.log(dump)
-                    console.log(transitionCtrl.dumpState())
-                }
+            Button { text: "📋 转储状态"; Layout.fillWidth: true
+                onClicked: { console.log(backgroundManager.dumpState()); console.log(transitionCtrl.dumpState()) }
             }
         }
     }
 
-    // 弹出提示
-    Component.onCompleted: {
-        console.log("[DebugPanel] ready — press Ctrl+Shift+B to toggle")
+    // 设滑块值（快捷操作用）
+    function setQVals(v) {
+        if (v.solarAltitude  !== undefined) sldSA.value = v.solarAltitude
+        if (v.solarAzimuth   !== undefined) sldSZ.value = v.solarAzimuth
+        if (v.moonAltitude   !== undefined) sldMA.value = v.moonAltitude
+        if (v.moonAzimuth    !== undefined) sldMZ.value = v.moonAzimuth
+        if (v.moonPhase      !== undefined) sldMP.value = v.moonPhase
+        if (v.moonIllum      !== undefined) sldMI.value = v.moonIllum
+        if (v.cloudCoverage  !== undefined) sldCC.value = v.cloudCoverage
+        if (v.rainIntensity  !== undefined) sldRI.value = v.rainIntensity
+        if (v.snowIntensity  !== undefined) sldSI.value = v.snowIntensity
+        if (v.fogDensity     !== undefined) sldFD.value = v.fogDensity
+        if (v.lightningProb  !== undefined) sldLP.value = v.lightningProb
+        if (v.starVisibility !== undefined) sldSV.value = v.starVisibility
+        if (v.exposure       !== undefined) sldEX.value = v.exposure
+        if (v.twilightFactor !== undefined) sldTF.value = v.twilightFactor
     }
+
+    Component.onCompleted: { console.log("[DebugPanel] ready — Ctrl+Shift+B to toggle") }
 }
