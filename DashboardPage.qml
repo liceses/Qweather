@@ -22,7 +22,7 @@ Item {
         for (let i = 0; i < list.length; i++) {
             if (list[i].id === id) return list[i].name
         }
-        return id
+        return root.cityName(id)  // Fallback to Main.qml which searches all arrays
     }
 
     ColumnLayout {
