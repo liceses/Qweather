@@ -24,6 +24,16 @@ layout(std140, binding=0) uniform buf {
 layout(location=0) in vec2 qt_TexCoord0;
 layout(location=0) out vec4 fragColor;
 
+// ---- ACES tone mapping (inlined) ----
+vec3 acesTonemap(vec3 color) {
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
+    return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
+}
+
 // ---- common functions ----
 const float PI = 3.14159265359;
 const float DEG2RAD = 0.01745329252;
@@ -106,7 +116,7 @@ void main() {
         vec3 sunCore = vec3(1.0, 0.95, 0.85) * core;
         float lowAngle = clamp(1.0 - (solarAltitude + 5.0) / 15.0, 0.0, 1.0);
         vec3 lowSunColor = mix(vec3(1.0, 0.9, 0.7), vec3(1.0, 0.5, 0.2), lowAngle);
-        skyColor += sunGlow * lowSunColor + sunCore;
+        skyColor += sunGlow * lowSunColor * 1.5 + sunCore;
     }
 
     // moon
@@ -129,9 +139,8 @@ void main() {
     vec3 stars = starField(uv, time, starVisibility, 1.0);
     skyColor += stars;
 
-    // exposure + tonemap
-    skyColor *= exposure;
-    skyColor = skyColor / (skyColor + vec3(1.0));
+    // exposure + tonemap (ACES)
+    skyColor = acesTonemap(skyColor * exposure);
 
     fragColor = vec4(skyColor, 1.0) * qt_Opacity;
 }

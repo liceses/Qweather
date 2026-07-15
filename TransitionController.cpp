@@ -107,11 +107,15 @@ void TransitionController::setSkyState(const SkyState &s)
 
     if (cloudNow && !cloudWas) {
         activateLayer(m_cloudTP, m_cloudActive, "cloud", m_transitionId,
-                      debugTPFor("cloud"), 600);
+                      debugTPFor("cloud"), 100);
     } else if (!cloudNow && cloudWas) {
         deactivateLayer(m_cloudTP, m_cloudActive, "cloud", m_transitionId, 600);
     } else if (cloudNow) {
         if (!m_cloudActive) { m_cloudActive = true; emit cloudActiveChanged(); }
+        // 自动模式：确保 tp=1.0（防止 delay timer 被 slider 拖动取消）
+        if (debugTPFor("cloud") < 0 && m_cloudTP < 0.99f) {
+            m_cloudTP = 1.0f; emit cloudTPChanged();
+        }
         float d = qAbs(s.cloudCoverage - prev.cloudCoverage);
         if (d > 0.01f) qDebug() << "[TransitionController] cloudCoverage:" << prev.cloudCoverage << "->" << s.cloudCoverage;
     } else {
@@ -128,12 +132,17 @@ void TransitionController::setSkyState(const SkyState &s)
              << "int=" << wi;
 
     if (weatherNow && !weatherWas) {
+        int wDelay = cloudNow ? 400 : 100;
         activateLayer(m_weatherTP, m_weatherActive, "weather", m_transitionId,
-                      debugTPFor("weather"), 600);
+                      debugTPFor("weather"), wDelay);
     } else if (!weatherNow && weatherWas) {
         deactivateLayer(m_weatherTP, m_weatherActive, "weather", m_transitionId, 600);
     } else if (weatherNow) {
         if (!m_weatherActive) { m_weatherActive = true; emit weatherActiveChanged(); }
+        // 自动模式：确保 tp=1.0
+        if (debugTPFor("weather") < 0 && m_weatherTP < 0.99f) {
+            m_weatherTP = 1.0f; emit weatherTPChanged();
+        }
         float d = qAbs(wi - pw);
         if (d > 0.01f) qDebug() << "[TransitionController] weatherIntensity:" << pw << "->" << wi;
     } else {
@@ -149,11 +158,15 @@ void TransitionController::setSkyState(const SkyState &s)
 
     if (fogNow && !fogWas) {
         activateLayer(m_fogTP, m_fogActive, "fog", m_transitionId,
-                      debugTPFor("fog"), 400);
+                      debugTPFor("fog"), 100);
     } else if (!fogNow && fogWas) {
         deactivateLayer(m_fogTP, m_fogActive, "fog", m_transitionId, 400);
     } else if (fogNow) {
         if (!m_fogActive) { m_fogActive = true; emit fogActiveChanged(); }
+        // 自动模式：确保 tp=1.0
+        if (debugTPFor("fog") < 0 && m_fogTP < 0.99f) {
+            m_fogTP = 1.0f; emit fogTPChanged();
+        }
     } else {
         if (m_fogActive) deactivateLayer(m_fogTP, m_fogActive, "fog", m_transitionId, 400);
     }
@@ -171,18 +184,14 @@ void TransitionController::setSkyState(const SkyState &s)
 
 void TransitionController::activateLayer(float &tp, bool &active,
                                           const char *name, int localId,
-                                          float debugOverride, float durationMs)
+                                          float debugOverride, float delayMs)
 {
-    Q_UNUSED(durationMs)
-    active = true;
-
-    // 发射 active 信号
-    if (name == QStringLiteral("cloud"))   emit cloudActiveChanged();
-    else if (name == QStringLiteral("weather")) emit weatherActiveChanged();
-    else if (name == QStringLiteral("fog")) emit fogActiveChanged();
-
-    // debug 覆盖
+    // debug 覆盖（始终即时）
     if (debugOverride >= 0.0f) {
+        active = true;
+        if (name == QStringLiteral("cloud"))   emit cloudActiveChanged();
+        else if (name == QStringLiteral("weather")) emit weatherActiveChanged();
+        else if (name == QStringLiteral("fog")) emit fogActiveChanged();
         tp = debugOverride;
         if (name == QStringLiteral("cloud"))   emit cloudTPChanged();
         else if (name == QStringLiteral("weather")) emit weatherTPChanged();
@@ -192,33 +201,61 @@ void TransitionController::activateLayer(float &tp, bool &active,
         return;
     }
 
-    if (m_fadeInEnabled) {
-        // 渐变：tp 保持当前（0），下一帧设 1 → Behavior 动画 0→1
+    int dly = m_fadeInEnabled ? static_cast<int>(delayMs) : 0;
+
+    // fadeIn=false + delay=0 → 完全即时，不用 timer
+    if (dly <= 0 && !m_fadeInEnabled) {
+        active = true;
+        tp = 1.0f;
+        if (name == QStringLiteral("cloud"))   { emit cloudActiveChanged(); emit cloudTPChanged(); }
+        else if (name == QStringLiteral("weather")) { emit weatherActiveChanged(); emit weatherTPChanged(); }
+        else if (name == QStringLiteral("fog")) { emit fogActiveChanged(); emit fogTPChanged(); }
         qDebug() << "[TransitionController] activate(" << name
-                 << ") active=true, tp=0.0 (schedule 1.0 in 16ms fadeIn)";
-        int id = localId;
-        QTimer::singleShot(16, this, [this, id, &tp, name]() {
-            if (m_transitionId != id) {
+                 << ") active=true, tp=1.0 (instant)";
+        return;
+    }
+
+    // 有延迟 → QTimer
+    int id = localId;
+    QTimer::singleShot(dly, this, [this, id, dly, &tp, &active, name]() {
+        if (m_transitionId != id) {
+            qDebug() << "[TransitionController] activate(" << name
+                     << ") delay CANCELLED";
+            return;
+        }
+        active = true;
+        if (name == QStringLiteral("cloud"))   emit cloudActiveChanged();
+        else if (name == QStringLiteral("weather")) emit weatherActiveChanged();
+        else if (name == QStringLiteral("fog")) emit fogActiveChanged();
+
+        if (m_fadeInEnabled) {
+            // 渐变：tp=0（组件已创建），再等一帧设 1→Behavior 动画
+            qDebug() << "[TransitionController] activate(" << name
+                     << ") active=true, schedule tp=1.0";
+            int id2 = m_transitionId;
+            QTimer::singleShot(16, this, [this, id2, &tp, name]() {
+                if (m_transitionId != id2) {
+                    qDebug() << "[TransitionController] activate(" << name
+                             << ") tp timer CANCELLED";
+                    return;
+                }
+                tp = 1.0f;
+                if (name == QStringLiteral("cloud"))   emit cloudTPChanged();
+                else if (name == QStringLiteral("weather")) emit weatherTPChanged();
+                else if (name == QStringLiteral("fog")) emit fogTPChanged();
                 qDebug() << "[TransitionController] activate(" << name
-                         << ") timer CANCELLED";
-                return;
-            }
+                         << ") tp timer FIRED → tp=1.0";
+            });
+        } else {
+            // 即时（但有延迟）
             tp = 1.0f;
             if (name == QStringLiteral("cloud"))   emit cloudTPChanged();
             else if (name == QStringLiteral("weather")) emit weatherTPChanged();
             else if (name == QStringLiteral("fog")) emit fogTPChanged();
             qDebug() << "[TransitionController] activate(" << name
-                     << ") timer FIRED → tp=1.0";
-        });
-    } else {
-        // 即时激活
-        tp = 1.0f;
-        if (name == QStringLiteral("cloud"))   emit cloudTPChanged();
-        else if (name == QStringLiteral("weather")) emit weatherTPChanged();
-        else if (name == QStringLiteral("fog")) emit fogTPChanged();
-        qDebug() << "[TransitionController] activate(" << name
-                 << ") active=true, tp=1.0 (instant)";
-    }
+                     << ") tp=1.0 (delayed " << dly << "ms)";
+        }
+    });
 }
 
 // ==================== 去激活 ====================

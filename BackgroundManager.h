@@ -41,6 +41,7 @@ public:
     // ===== Debug 模式 =====
     Q_INVOKABLE void enterDebugMode();
     Q_INVOKABLE void exitDebugMode();
+    Q_INVOKABLE void setDebugTime(qreal hour);
 
     Q_INVOKABLE QString dumpState() const;
 

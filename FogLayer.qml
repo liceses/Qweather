@@ -21,6 +21,13 @@ ShaderEffect {
         NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
     }
 
+    Behavior on intensity {
+        NumberAnimation {
+            duration: transitionCtrl.fadeInEnabled ? 400 : 0
+            easing.type: Easing.InOutCubic
+        }
+    }
+
     Rectangle {
         anchors.fill: parent
         visible: effect.status !== ShaderEffect.Compiled

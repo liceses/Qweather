@@ -22,6 +22,7 @@ public:
     void setSunTimes(const QString &sunrise, const QString &sunset);
     void setMoonData(int phaseIcon, float illumination);
     void update(qint64 nowMsecs);
+    void updateByMinute(int minuteOfDay);  // Debug 时间控制
 
     // 输出（只读）
     float solarAltitude()  const { return m_solarAltitude; }
@@ -33,16 +34,19 @@ public:
 
     // 派生值
     float sunProgress() const;       // 0=dawn, 0.5=noon, 1=dusk
+    float dayProgress() const;       // 无 clamp, -0.5~1.5 范围
     bool isNight() const;
     int sunriseMin() const { return m_sunriseMin; }
     int sunsetMin()  const { return m_sunsetMin; }
     int currentMin() const { return m_currentMin; }
+    int dayOfYear()  const { return m_dayOfYear; }
 
 signals:
     void updated();
 
 private:
     float m_lat = 39.9f, m_lon = 116.4f;       // 默认北京
+    int m_dayOfYear = 196;       // 默认 7 月 15 日
     int m_sunriseMin = 360;    // 06:00
     int m_sunsetMin = 1080;    // 18:00
     int m_currentMin = 720;    // 12:00

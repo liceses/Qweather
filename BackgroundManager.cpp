@@ -154,6 +154,27 @@ void BackgroundManager::exitDebugMode()
     emit debugModeExited();
 }
 
+void BackgroundManager::setDebugTime(qreal hour)
+{
+    if (m_controlMode != 1) {
+        qDebug() << "[BackgroundManager] setDebugTime ignored — not in debug mode";
+        return;
+    }
+    int minute = qBound(0, static_cast<int>(hour * 60.0), 1440);
+    m_astronomy.updateByMinute(minute);
+
+    QVariantMap ch = buildAstronomyChanges();
+    QVariantMap atmos = buildAtmosphereChanges();
+    ch.insert(atmos);
+
+    int h = minute / 60;
+    int m = minute % 60;
+    qDebug() << "[BackgroundManager] setDebugTime:" << h << ":" << m
+             << "→ solarAlt=" << m_astronomy.solarAltitude() << "°";
+
+    commitSkyState(ch);
+}
+
 // ==================== 定时器 ====================
 
 void BackgroundManager::onAstronomyTimer()
@@ -186,52 +207,105 @@ QVariantMap BackgroundManager::buildAstronomyChanges()
 
 QVariantMap BackgroundManager::buildAtmosphereChanges()
 {
-    float sp = m_astronomy.sunProgress();
-    bool night = m_astronomy.isNight();
+    float dp = m_astronomy.dayProgress();
 
-    QColor dayZenith("#4a90d9"), dayHorizon("#87ceeb"), dayAmbient("#c8e0f0");
-    QColor duskZenith("#c05850"), duskHorizon("#e89560"), duskAmbient("#906050");
-    QColor nightZenith("#0a0a2e"), nightHorizon("#1a1a3e"), nightAmbient("#15152e");
+    // ── 7 段天空色表 ──
+    struct Seg { float start; const char *name; QColor z, h, a; };
+    static const Seg SEGS[] = {
+        { -999.f, "深夜",   QColor("#0a0a1a"), QColor("#0d0d28"), QColor("#050510") },
+        { -0.30f, "蓝调",   QColor("#1a2a5a"), QColor("#4a3060"), QColor("#0a0a20") },
+        {  0.00f, "金粉",   QColor("#4a6fa5"), QColor("#f4a460"), QColor("#e07050") },
+        {  0.15f, "白天",   QColor("#4a90d9"), QColor("#87ceeb"), QColor("#c8e0f0") },
+        {  0.70f, "暖午后", QColor("#5a8ab5"), QColor("#d4996a"), QColor("#c0b0a0") },
+        {  0.90f, "橙红",   QColor("#3a5a8a"), QColor("#e07840"), QColor("#a03030") },
+        {  1.00f, "紫调",   QColor("#2a1a4a"), QColor("#602040"), QColor("#0a0a20") },
+        {  999.f, nullptr, {}, {}, {} },
+    };
+    static const int SEG_COUNT = std::size(SEGS) - 1;  // 去掉哨兵
 
-    QColor zenith, horizon, ambient;
-    float twilight = 0.0f;
+    // 查找 dp 所在段
+    int idx = 0;
+    for (int i = 1; i < SEG_COUNT; ++i) {
+        if (dp >= SEGS[i].start)
+            idx = i;
+    }
+    int next = qMin(idx + 1, SEG_COUNT - 1);
+
+    // 段内插值 t ∈ [0,1]
+    float segLen = SEGS[next].start - SEGS[idx].start;
+    float t = (segLen > 0.001f)
+        ? qBound(0.0f, (dp - SEGS[idx].start) / segLen, 1.0f)
+        : 0.0f;
+
+    QColor zenith  = mixColor(SEGS[idx].z, SEGS[next].z, t);
+    QColor horizon = mixColor(SEGS[idx].h, SEGS[next].h, t);
+    QColor ambient = mixColor(SEGS[idx].a, SEGS[next].a, t);
+
+    // ── 光照/曝光/星空 ──
     float exposure = 1.0f;
-    float starVis = m_skyState.starVisibility;
+    float twilightFactor = 0.0f;
+    float starVis = 0.0f;
+    float moonFactor = qBound(0.0f, (m_skyState.moonIllum + 1.0f) * 0.5f, 1.0f);
 
-    if (night) {
-        float moonFactor = (m_skyState.moonIllum + 1.0f) * 0.5f;
-        zenith  = mixColor(nightZenith,  duskZenith,  moonFactor * 0.3f);
-        horizon = mixColor(nightHorizon, duskHorizon, moonFactor * 0.3f);
-        ambient = mixColor(nightAmbient, duskAmbient, moonFactor * 0.3f);
-        exposure = 0.8f;
-    } else if (sp < 0.15f || sp > 0.85f) {
-        float dp = (sp < 0.15f) ? (sp / 0.15f) : ((1.0f - sp) / 0.15f);
-        twilight = 1.0f - dp;
-        zenith  = mixColor(dayZenith,  duskZenith,  twilight);
-        horizon = mixColor(dayHorizon, duskHorizon, twilight);
-        ambient = mixColor(dayAmbient, duskAmbient, twilight);
-        exposure = 0.9f + 0.1f * dp;
-        starVis = (1.0f - dp) * 0.3f;
-    } else {
-        zenith  = dayZenith;
-        horizon = dayHorizon;
-        ambient = dayAmbient;
-        exposure = 1.0f;
+    if (dp < 0.0f) {
+        // 日出前: 深夜/蓝调
+        float nightBlend = qBound(0.0f, dp / 0.3f + 1.0f, 1.0f);  // -0.3→0, 0→1
+        exposure = 0.3f + nightBlend * 0.3f;
+        starVis = (1.0f - nightBlend) * 0.8f + moonFactor * 0.2f;
+    } else if (dp < 0.15f) {
+        // 金粉→白天过渡
+        float p = dp / 0.15f;  // 0→1
+        exposure = 0.6f + 1.0f * p;
+        twilightFactor = 1.0f - p;
+        starVis = (1.0f - p) * 0.8f;
+    } else if (dp <= 0.90f) {
+        // 白天/暖午后
+        float baseExp = (dp < 0.70f) ? 1.6f : 1.5f;
+        exposure = baseExp;
         starVis = 0.0f;
+    } else if (dp <= 1.0f) {
+        // 橙红/紫调过渡
+        float p = (dp - 0.9f) / 0.1f;  // 0→1
+        exposure = 1.6f - 1.0f * p;
+        twilightFactor = p;
+        starVis = p * 0.8f;
+    } else {
+        // 日落后
+        float nightBlend = qBound(0.0f, (dp - 1.0f) / 0.3f, 1.0f);  // 1.0→1→0
+        nightBlend = 1.0f - qMin(nightBlend, 1.0f);
+        exposure = 0.3f + nightBlend * 0.3f;
+        starVis = (1.0f - nightBlend) * 0.8f + moonFactor * 0.2f;
     }
 
-    QVariantMap ch;
-    ch["zenithColor"]   = zenith;
-    ch["horizonColor"]  = horizon;
-    ch["ambientColor"]  = ambient;
-    ch["exposure"]      = static_cast<double>(exposure);
-    ch["twilightFactor"] = static_cast<double>(qBound(0.0f, twilight, 1.0f));
-    ch["starVisibility"] = static_cast<double>(starVis);
+    // ── 天气调制曝光 ──
+    float weatherMod = 0.0f;
+    if (m_skyState.cloudCoverage < 0.2f && m_skyState.rainIntensity < 0.01f && m_skyState.snowIntensity < 0.01f) {
+        weatherMod = 0.2f;
+    } else if (m_skyState.cloudCoverage > 0.7f || m_skyState.rainIntensity > 0.3f || m_skyState.snowIntensity > 0.3f) {
+        weatherMod = -0.15f;
+    }
+    exposure = qMax(0.1f, exposure + weatherMod);
 
-    qDebug() << "[BackgroundManager] buildAtmosphere: sp=" << sp
-             << "night=" << night
-             << "zenith=" << zenith.name()
-             << "exposure=" << exposure;
+    QVariantMap ch;
+    ch["zenithColor"]    = zenith;
+    ch["horizonColor"]   = horizon;
+    ch["ambientColor"]   = ambient;
+    ch["exposure"]       = static_cast<double>(exposure);
+    ch["twilightFactor"] = static_cast<double>(qBound(0.0f, twilightFactor, 1.0f));
+    ch["starVisibility"] = static_cast<double>(qBound(0.0f, starVis, 1.0f));
+
+    int h = m_astronomy.currentMin() / 60;
+    int m = m_astronomy.currentMin() % 60;
+    // 用 QDebug 分拆确保无模板歧义
+    qDebug() << "[Atm] dp=" << dp
+             << "seg=" << SEGS[idx].name
+             << "t=" << t;
+    qDebug() << "   [Atm] zenith=" << zenith.name()
+             << "horizon=" << horizon.name()
+             << "ambient=" << ambient.name();
+    qDebug() << "   [Atm] exp=" << exposure
+             << "twl=" << twilightFactor
+             << "stars=" << starVis;
 
     return ch;
 }

@@ -19,6 +19,13 @@ ShaderEffect {
         NumberAnimation { duration: 600; easing.type: Easing.OutCubic }
     }
 
+    Behavior on cloudCoverage {
+        NumberAnimation {
+            duration: transitionCtrl.fadeInEnabled ? 400 : 0
+            easing.type: Easing.InOutCubic
+        }
+    }
+
     Rectangle {
         anchors.fill: parent
         visible: effect.status !== ShaderEffect.Compiled

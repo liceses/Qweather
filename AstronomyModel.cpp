@@ -45,11 +45,11 @@ void AstronomyModel::setMoonData(int phaseIcon, float illumination)
 void AstronomyModel::update(qint64 nowMsecs)
 {
     QDateTime dt = QDateTime::fromMSecsSinceEpoch(nowMsecs);
-    int dayOfYear = dt.date().dayOfYear();
+    m_dayOfYear = dt.date().dayOfYear();
     int minuteOfDay = dt.time().hour() * 60 + dt.time().minute();
     m_currentMin = minuteOfDay;
 
-    calcSolarPosition(dayOfYear, minuteOfDay);
+    calcSolarPosition(m_dayOfYear, minuteOfDay);
 
     // 简化月亮位置：取太阳对跖点偏移
     float oppositeAlt = -m_solarAltitude;
@@ -57,12 +57,34 @@ void AstronomyModel::update(qint64 nowMsecs)
     m_moonAltitude = qBound(-90.0f, oppositeAlt + 15.0f, 90.0f);
     m_moonAzimuth  = oppositeAz;
 
-    qDebug() << "[AstronomyModel] update: dayOfYear=" << dayOfYear
+    qDebug() << "[AstronomyModel] update: dayOfYear=" << m_dayOfYear
              << "minute=" << minuteOfDay
+             << "sp=" << sunProgress() << "dp=" << dayProgress()
              << "solarAlt=" << m_solarAltitude
-             << "solarAz=" << m_solarAzimuth
-             << "moonAlt=" << m_moonAltitude
-             << "moonAz=" << m_moonAzimuth;
+             << "solarAz=" << m_solarAzimuth;
+
+    emit updated();
+}
+
+void AstronomyModel::updateByMinute(int minuteOfDay)
+{
+    minuteOfDay = qBound(0, minuteOfDay, 1440);
+    m_currentMin = minuteOfDay;
+
+    calcSolarPosition(m_dayOfYear, minuteOfDay);
+
+    // 月亮位置
+    float oppositeAlt = -m_solarAltitude;
+    float oppositeAz  = fmod(m_solarAzimuth + 180.0f, 360.0f);
+    m_moonAltitude = qBound(-90.0f, oppositeAlt + 15.0f, 90.0f);
+    m_moonAzimuth  = oppositeAz;
+
+    int h = minuteOfDay / 60;
+    int m = minuteOfDay % 60;
+    qDebug() << "[AstronomyModel] updateByMinute: minute=" << minuteOfDay
+             << "time=" << h << ":" << m
+             << "sp=" << sunProgress() << "dp=" << dayProgress()
+             << "solarAlt=" << m_solarAltitude << "solarAz=" << m_solarAzimuth;
 
     emit updated();
 }
@@ -99,6 +121,13 @@ float AstronomyModel::sunProgress() const
     if (dayLength <= 0) return 0.5f;
     float progress = static_cast<float>(m_currentMin - m_sunriseMin) / dayLength;
     return qBound(0.0f, progress, 1.0f);
+}
+
+float AstronomyModel::dayProgress() const
+{
+    int dayLength = m_sunsetMin - m_sunriseMin;
+    if (dayLength <= 0) return 0.5f;
+    return static_cast<float>(m_currentMin - m_sunriseMin) / dayLength;
 }
 
 bool AstronomyModel::isNight() const

@@ -114,15 +114,42 @@ ApplicationWindow {
         z: -1  // 确保在所有 UI 元素之后
     }
 
+    // 自适应曝光遮罩 — 仅强光下压暗, 改善文字可读性
+    Rectangle {
+        anchors.fill: parent
+        z: 0
+        color: "#000000"
+        opacity: {
+            var exp = backgroundManager ? backgroundManager.skyState.exposure : 0
+            var raw = (exp - 1.2) / 0.6
+            return Math.max(0, Math.min(raw, 1.0)) * 0.2
+        }
+        Behavior on opacity { NumberAnimation { duration: 500 } }
+    }
+
     WeatherBackgroundDebugPanel {
         id: debugPanel
         z: 100
     }
 
-    // ===== 主布局 =====
-    RowLayout {
+    // ===== 主布局（视差 MouseArea 为卡片 MouseArea 的父级） =====
+    MouseArea {
+        id: parallaxArea
         anchors.fill: parent
-        spacing: 0
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+        cursorShape: Qt.ArrowCursor
+        onPositionChanged: {
+            var px = Math.max(-1, Math.min(1, (mouseX / width - 0.5) * 2.0))
+            var py = Math.max(-1, Math.min(1, (mouseY / height - 0.5) * 2.0))
+            weatherBg.parallaxX = px
+            weatherBg.parallaxY = py
+            backgroundManager.setParallax(px, py)
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            spacing: 0
 
         // 左侧栏
         Rectangle {
@@ -281,7 +308,8 @@ ApplicationWindow {
                 }
             }
         }
-    }
+        }  // RowLayout (ends inside parallaxArea)
+    }  // parallaxArea
 
     // ===== 逻辑 =====
     function cityName(id) {

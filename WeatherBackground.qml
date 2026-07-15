@@ -7,18 +7,9 @@ Item {
     anchors.fill: parent
 
     // ===== 视差 =====
+    // 鼠标位置由 Main.qml 中的父级 MouseArea 驱动，见 Main.qml
     property double parallaxX: 0.0
     property double parallaxY: 0.0
-
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        onPositionChanged: function(mouse) {
-            bgRoot.parallaxX = Math.max(-1, Math.min(1, (mouse.x / bgRoot.width  - 0.5) * 2.0))
-            bgRoot.parallaxY = Math.max(-1, Math.min(1, (mouse.y / bgRoot.height - 0.5) * 2.0))
-            backgroundManager.setParallax(bgRoot.parallaxX, bgRoot.parallaxY)
-        }
-    }
 
     // ===== Layer 栈 (z-ordered) =====
     // SkyLayer + AtmosphereLayer: 始终渲染

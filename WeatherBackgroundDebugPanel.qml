@@ -154,6 +154,56 @@ Rectangle {
 
             Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
 
+            // === 时间控制 ===
+            Text { text: "时间控制"; font.bold: true; color: "#555" }
+
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "时间"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: sldTime; Layout.fillWidth: true; from: 0; to: 24; stepSize: 0.05
+                    value: 12
+                    enabled: backgroundManager.controlMode === 1
+                    onMoved: backgroundManager.setDebugTime(value)
+                }
+                Text {
+                    text: {
+                        var h = Math.floor(sldTime.value)
+                        var m = Math.round((sldTime.value - h) * 60)
+                        if (m >= 60) { h += 1; m -= 60 }
+                        return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m
+                    }
+                    width: 40; font.pixelSize: 11; color: "#888"
+                }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "太阳高度"; width: 60; font.pixelSize: 11; color: "#555" }
+                Text { text: backgroundManager.skyState.solarAltitude.toFixed(1) + "°"; font.pixelSize: 11; color: "#333" }
+                Text {
+                    text: {
+                        var alt = backgroundManager.skyState.solarAltitude
+                        if (alt > 5) return "白天"
+                        if (alt > -5) return "黄昏/黎明"
+                        return "夜晚"
+                    }
+                    font.pixelSize: 11; color: "#666"
+                }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "时段"; width: 60; font.pixelSize: 11; color: "#555" }
+                Text {
+                    text: {
+                        var a = backgroundManager.skyState.solarAltitude
+                        if (a > 20) return "☀ 白天"
+                        if (a > 8)  return "🌤 暖午后"
+                        if (a > 4)  return "🌅 橙红"
+                        if (a > 0)  return "🌄 金粉"
+                        if (a > -5) return "🌆 紫调"
+                        if (a > -12) return "🌇 蓝调"
+                        return "🌙 深夜"
+                    }
+                    font.pixelSize: 11; color: "#333"; font.bold: true
+                }
+            }
+
             // === 天文 ===
             Text { text: "天文"; font.bold: true; color: "#555" }
 

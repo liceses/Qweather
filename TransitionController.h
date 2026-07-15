@@ -88,7 +88,7 @@ private:
 
     // 内部方法 — 带 localId 防抖
     void activateLayer(float &tp, bool &active, const char *name, int localId,
-                       float debugOverride, float durationMs);
+                       float debugOverride, float delayMs);
     void deactivateLayer(float &tp, bool &active, const char *name, int localId,
                          float durationMs);
 
