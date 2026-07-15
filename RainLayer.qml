@@ -1,6 +1,6 @@
 import QtQuick
 
-// RainLayer — 雨丝粒子
+// RainLayer �?雨丝粒子
 ShaderEffect {
     id: effect
     anchors.fill: parent
@@ -9,11 +9,11 @@ ShaderEffect {
     // === 通用 ===
     property real time: 0.0
 
-    // === 雨参数 ===
+    // === 雨参�?===
     property real intensity: 0.0
     property int variant: 0
     property real windSpeed: 0.1
-    property real transitionProgress: 1.0
+    property real transitionProgress: 0.0
     property int particleLimit: 60
 
     fragmentShader: "qrc:/shaders/rain.frag.qsb"

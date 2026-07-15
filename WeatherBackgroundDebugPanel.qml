@@ -101,6 +101,59 @@ Rectangle {
 
             Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
 
+            // === 过渡控制 ===
+            Text { text: "过渡控制"; font.bold: true; color: "#555" }
+
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "云 tp"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: tpCloud; Layout.fillWidth: true; from: 0; to: 1; stepSize: 0.01
+                    value: transitionCtrl.debugCloudTP
+                    enabled: transitionCtrl.cloudActive && backgroundManager.controlMode === 1 && !transitionCtrl.fadeInEnabled
+                    onMoved: transitionCtrl.debugCloudTP = value
+                }
+                Text {
+                    text: tpCloud.value <= 0.001 ? "自动" : tpCloud.value.toFixed(2)
+                    width: 40; font.pixelSize: 11; color: "#888"
+                }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "天气 tp"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: tpWeather; Layout.fillWidth: true; from: 0; to: 1; stepSize: 0.01
+                    value: transitionCtrl.debugWeatherTP
+                    enabled: transitionCtrl.weatherActive && backgroundManager.controlMode === 1 && !transitionCtrl.fadeInEnabled
+                    onMoved: transitionCtrl.debugWeatherTP = value
+                }
+                Text {
+                    text: tpWeather.value <= 0.001 ? "自动" : tpWeather.value.toFixed(2)
+                    width: 40; font.pixelSize: 11; color: "#888"
+                }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "雾 tp"; width: 60; font.pixelSize: 11; color: "#555" }
+                Slider { id: tpFog; Layout.fillWidth: true; from: 0; to: 1; stepSize: 0.01
+                    value: transitionCtrl.debugFogTP
+                    enabled: transitionCtrl.fogActive && backgroundManager.controlMode === 1 && !transitionCtrl.fadeInEnabled
+                    onMoved: transitionCtrl.debugFogTP = value
+                }
+                Text {
+                    text: tpFog.value <= 0.001 ? "自动" : tpFog.value.toFixed(2)
+                    width: 40; font.pixelSize: 11; color: "#888"
+                }
+            }
+
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "淡入"; width: 60; font.pixelSize: 11; color: "#555" }
+                CheckBox {
+                    id: chkFadeIn
+                    checked: transitionCtrl.fadeInEnabled
+                    enabled: backgroundManager.controlMode === 1
+                    onClicked: transitionCtrl.fadeInEnabled = checked
+                }
+                Text { text: chkFadeIn.checked ? "渐变激活" : "即时激活"; font.pixelSize: 11; color: "#888" }
+            }
+
+            Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
+
             // === 天文 ===
             Text { text: "天文"; font.bold: true; color: "#555" }
 

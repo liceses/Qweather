@@ -128,6 +128,7 @@ Item {
         id: lightningComp
         LightningLayer {
             time: globalClock.elapsed
+            lightningProb: backgroundManager.skyState.lightningProb
         }
     }
 

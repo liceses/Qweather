@@ -6,8 +6,8 @@ ShaderEffect {
     anchors.fill: parent
     opacity: 1.0
 
-    // === 通用 ===
     property real time: 0.0
+    property real lightningProb: 0.0
 
     fragmentShader: "qrc:/shaders/lightning.frag.qsb"
 
