@@ -74,6 +74,7 @@ Item {
         CloudLayer {
             time: globalClock.elapsed
             cloudCoverage: backgroundManager.skyState.cloudCoverage
+            variant: backgroundManager.skyState.cloudVariant
             windSpeed: 0.1
             transitionProgress: transitionCtrl.cloudTP
         }
@@ -88,6 +89,7 @@ Item {
                 anchors.fill: parent
                 time: globalClock.elapsed
                 intensity: backgroundManager.skyState.rainIntensity
+                variant: backgroundManager.skyState.weatherVariant
                 windSpeed: 0.1
                 transitionProgress: transitionCtrl.weatherTP
                 particleLimit: 60
@@ -97,6 +99,7 @@ Item {
                 anchors.fill: parent
                 time: globalClock.elapsed
                 intensity: backgroundManager.skyState.snowIntensity
+                variant: backgroundManager.skyState.weatherVariant
                 windSpeed: 0.1
                 transitionProgress: transitionCtrl.weatherTP
                 particleLimit: 60
@@ -110,6 +113,7 @@ Item {
         FogLayer {
             time: globalClock.elapsed
             intensity: backgroundManager.skyState.fogDensity
+            variant: backgroundManager.skyState.fogVariant
             windSpeed: 0.1
             transitionProgress: transitionCtrl.fogTP
         }

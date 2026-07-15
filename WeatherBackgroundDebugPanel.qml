@@ -28,6 +28,9 @@ Rectangle {
             fogDensity:     sldFD.value,
             lightningProb:  sldLP.value,
             starVisibility: sldSV.value,
+            cloudVariant:   cbCloudV.currentIndex,
+            fogVariant:     cbFogV.currentIndex,
+            weatherVariant: cbRainV.currentIndex,
             exposure:       sldEX.value,
             twilightFactor: sldTF.value,
             zenithColor:    colorZenith.color,
@@ -204,6 +207,56 @@ Rectangle {
                 }
             }
 
+            Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
+
+            // === 天气码模拟 ===
+            Text { text: "天气码模拟"; font.bold: true; color: "#555" }
+
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "icon"; width: 60; font.pixelSize: 11; color: "#555" }
+                TextField {
+                    id: txtCode
+                    text: "100"
+                    Layout.fillWidth: true
+                    validator: IntValidator { bottom: 100; top: 999 }
+                    font.pixelSize: 11
+                    enabled: backgroundManager.controlMode === 1
+                }
+                CheckBox {
+                    id: chkIsDay
+                    checked: true
+                    text: "白天"
+                    font.pixelSize: 11
+                    enabled: backgroundManager.controlMode === 1
+                }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "预设"; width: 60; font.pixelSize: 11; color: "#555" }
+                ComboBox {
+                    id: cbPreset
+                    Layout.fillWidth: true
+                    font.pixelSize: 11
+                    model: ["100-晴","101-多云","104-阴","150-晴(夜)","300-阵雨","302-雷暴","305-小雨","310-暴雨","400-雪","500-薄雾","501-雾","502-霾"]
+                    enabled: backgroundManager.controlMode === 1
+                    onActivated: function(idx) {
+                        var code = model[idx].split("-")[0]
+                        txtCode.text = code
+                        chkIsDay.checked = parseInt(code) < 150
+                    }
+                }
+                Button {
+                    text: "应用"
+                    enabled: backgroundManager.controlMode === 1
+                    onClicked: {
+                        var code = parseInt(txtCode.text)
+                        if (!isNaN(code)) {
+                            backgroundManager.updateWeather(code, chkIsDay.checked)
+                            console.log("[DebugPanel] updateWeather code=" + code + " isDay=" + chkIsDay.checked)
+                        }
+                    }
+                }
+            }
+
             // === 天文 ===
             Text { text: "天文"; font.bold: true; color: "#555" }
 
@@ -284,6 +337,42 @@ Rectangle {
                 Slider { id: sldSV; Layout.fillWidth: true; from: 0; to: 1
                     value: backgroundManager.skyState.starVisibility; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
                 Text { text: sldSV.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "云变体"; width: 60; font.pixelSize: 11; color: "#555" }
+                ComboBox {
+                    id: cbCloudV
+                    model: ["0-少云","1-多云","2-阴"]
+                    Layout.fillWidth: true
+                    font.pixelSize: 11
+                    enabled: backgroundManager.controlMode === 1
+                    Component.onCompleted: currentIndex = backgroundManager.skyState.cloudVariant
+                    onActivated: commit()
+                }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "雾变体"; width: 60; font.pixelSize: 11; color: "#555" }
+                ComboBox {
+                    id: cbFogV
+                    model: ["0-雾","1-霾","2-沙尘"]
+                    Layout.fillWidth: true
+                    font.pixelSize: 11
+                    enabled: backgroundManager.controlMode === 1
+                    Component.onCompleted: currentIndex = backgroundManager.skyState.fogVariant
+                    onActivated: commit()
+                }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "雨变体"; width: 60; font.pixelSize: 11; color: "#555" }
+                ComboBox {
+                    id: cbRainV
+                    model: ["0-普通","1-雷暴","2-冰雹","3-雷暴+冰雹"]
+                    Layout.fillWidth: true
+                    font.pixelSize: 11
+                    enabled: backgroundManager.controlMode === 1
+                    Component.onCompleted: currentIndex = backgroundManager.skyState.weatherVariant
+                    onActivated: commit()
+                }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "曝光"; width: 60; font.pixelSize: 11; color: "#555" }
@@ -383,9 +472,22 @@ Rectangle {
         if (v.fogDensity     !== undefined) sldFD.value = v.fogDensity
         if (v.lightningProb  !== undefined) sldLP.value = v.lightningProb
         if (v.starVisibility !== undefined) sldSV.value = v.starVisibility
+        if (v.cloudVariant   !== undefined) cbCloudV.currentIndex = v.cloudVariant
+        if (v.fogVariant     !== undefined) cbFogV.currentIndex = v.fogVariant
+        if (v.weatherVariant !== undefined) cbRainV.currentIndex = v.weatherVariant
         if (v.exposure       !== undefined) sldEX.value = v.exposure
         if (v.twilightFactor !== undefined) sldTF.value = v.twilightFactor
     }
 
     Component.onCompleted: { console.log("[DebugPanel] ready — Ctrl+Shift+B to toggle") }
+
+    // 从 backend 同步 variant 状态
+    Connections {
+        target: backgroundManager
+        function onSkyStateChanged() {
+            cbCloudV.currentIndex = backgroundManager.skyState.cloudVariant
+            cbFogV.currentIndex = backgroundManager.skyState.fogVariant
+            cbRainV.currentIndex = backgroundManager.skyState.weatherVariant
+        }
+    }
 }

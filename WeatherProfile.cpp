@@ -48,53 +48,85 @@ void WeatherProfileDB::dumpRegisteredCodes() const
 
 void WeatherProfileDB::initProfiles()
 {
-    // TODO: 完整 68 码映射（推迟实现）
-    // 目前只注册少数典型码用于 debug
-    // 和风天气 icon code 范围: 100~104(晴/多云/阴), 300~304(雨), 400~404(雪), 500~504(雾/霾)
+    // 和风天气完整 68 码映射
+    // struct: { particle, intensity, weatherVariant, cloudActive, cloudCoverage, cloudVariant, fogActive, fogIntensity, fogVariant, lightningActive }
 
-    // === 白天 ===
-    // 100: 晴
-    m_dayProfiles[100] = { "", 0, 0, false, 0.0f, 0, false, 0.0f, 0, false };
-    // 101: 多云
-    m_dayProfiles[101] = { "", 0, 0, true, 0.3f, 1, false, 0.0f, 0, false };
-    // 102: 少云 (和风用 102 表示少云)
-    m_dayProfiles[102] = { "", 0, 0, true, 0.15f, 0, false, 0.0f, 0, false };
-    // 103: 晴间多云
-    m_dayProfiles[103] = { "", 0, 0, true, 0.2f, 0, false, 0.0f, 0, false };
-    // 104: 阴
-    m_dayProfiles[104] = { "", 0, 0, true, 0.9f, 2, false, 0.0f, 0, false };
-    // 300: 阵雨
-    m_dayProfiles[300] = { "rain", 0.4f, 0, true, 0.6f, 1, false, 0.0f, 0, false };
-    // 301: 强阵雨
-    m_dayProfiles[301] = { "rain", 0.7f, 0, true, 0.8f, 2, false, 0.0f, 0, false };
-    // 302: 雷暴
-    m_dayProfiles[302] = { "rain", 0.8f, 1, true, 0.9f, 2, false, 0.0f, 0, true };
-    // 303: 强雷暴
-    m_dayProfiles[303] = { "rain", 1.0f, 3, true, 1.0f, 2, false, 0.0f, 0, true };
-    // 400: 雪
-    m_dayProfiles[400] = { "snow", 0.4f, 0, true, 0.7f, 2, false, 0.0f, 0, false };
-    // 401: 阵雪
-    m_dayProfiles[401] = { "snow", 0.3f, 0, true, 0.5f, 1, false, 0.0f, 0, false };
-    // 402: 大雪
-    m_dayProfiles[402] = { "snow", 0.8f, 0, true, 0.9f, 2, false, 0.0f, 0, false };
-    // 500: 薄雾
-    m_dayProfiles[500] = { "", 0, 0, false, 0.0f, 0, true, 0.3f, 0, false };
-    // 501: 雾
-    m_dayProfiles[501] = { "", 0, 0, false, 0.0f, 0, true, 0.6f, 0, false };
-    // 502: 霾
-    m_dayProfiles[502] = { "", 0, 0, false, 0.0f, 0, true, 0.5f, 1, false };
-    // 503: 沙尘
-    m_dayProfiles[503] = { "", 0, 0, false, 0.0f, 0, true, 0.7f, 2, false };
+    // === 白天 晴天类 100–104 ===
+    m_dayProfiles[100] = { "",     0.0f, 0, false, 0.00f, 0, false, 0.0f, 0, false }; // 晴
+    m_dayProfiles[101] = { "",     0.0f, 0, true,  0.30f, 1, false, 0.0f, 0, false }; // 多云
+    m_dayProfiles[102] = { "",     0.0f, 0, true,  0.15f, 0, false, 0.0f, 0, false }; // 少云
+    m_dayProfiles[103] = { "",     0.0f, 0, true,  0.20f, 0, false, 0.0f, 0, false }; // 晴间多云
+    m_dayProfiles[104] = { "",     0.0f, 0, true,  0.90f, 2, false, 0.0f, 0, false }; // 阴
+
+    // === 白天 雨类 300–399 ===
+    m_dayProfiles[300] = { "rain", 0.4f, 0, true, 0.60f, 1, false, 0.0f, 0, false }; // 阵雨
+    m_dayProfiles[301] = { "rain", 0.7f, 0, true, 0.80f, 2, false, 0.0f, 0, false }; // 强阵雨
+    m_dayProfiles[302] = { "rain", 0.8f, 1, true, 0.90f, 2, false, 0.0f, 0, true  }; // 雷阵雨
+    m_dayProfiles[303] = { "rain", 1.0f, 3, true, 1.00f, 2, false, 0.0f, 0, true  }; // 强雷阵雨
+    m_dayProfiles[304] = { "rain", 0.8f, 2, true, 0.90f, 2, false, 0.0f, 0, true  }; // 雷阵雨伴有冰雹
+    m_dayProfiles[305] = { "rain", 0.2f, 0, true, 0.50f, 1, false, 0.0f, 0, false }; // 小雨
+    m_dayProfiles[306] = { "rain", 0.5f, 0, true, 0.70f, 1, false, 0.0f, 0, false }; // 中雨
+    m_dayProfiles[307] = { "rain", 0.7f, 0, true, 0.80f, 2, false, 0.0f, 0, false }; // 大雨
+    m_dayProfiles[308] = { "rain", 1.0f, 0, true, 1.00f, 2, false, 0.0f, 0, false }; // 极端降雨
+    m_dayProfiles[309] = { "rain", 0.1f, 0, true, 0.40f, 1, false, 0.0f, 0, false }; // 毛毛雨
+    m_dayProfiles[310] = { "rain", 0.8f, 0, true, 0.90f, 2, false, 0.0f, 0, false }; // 暴雨
+    m_dayProfiles[311] = { "rain", 0.9f, 0, true, 1.00f, 2, false, 0.0f, 0, false }; // 大暴雨
+    m_dayProfiles[312] = { "rain", 1.0f, 0, true, 1.00f, 2, false, 0.0f, 0, false }; // 特大暴雨
+    m_dayProfiles[313] = { "rain", 0.4f, 2, true, 0.70f, 1, false, 0.0f, 0, false }; // 冻雨
+    m_dayProfiles[314] = { "rain", 0.35f,0, true, 0.60f, 1, false, 0.0f, 0, false }; // 小到中雨
+    m_dayProfiles[315] = { "rain", 0.6f, 0, true, 0.75f, 1, false, 0.0f, 0, false }; // 中到大雨
+    m_dayProfiles[316] = { "rain", 0.8f, 0, true, 0.85f, 2, false, 0.0f, 0, false }; // 大到暴雨
+    m_dayProfiles[317] = { "rain", 0.9f, 0, true, 0.95f, 2, false, 0.0f, 0, false }; // 暴雨到大暴雨
+    m_dayProfiles[318] = { "rain", 1.0f, 0, true, 1.00f, 2, false, 0.0f, 0, false }; // 大暴雨到特大暴雨
+    m_dayProfiles[399] = { "rain", 0.5f, 0, true, 0.60f, 1, false, 0.0f, 0, false }; // 雨(通用)
+
+    // === 白天 雪类 400–499 ===
+    m_dayProfiles[400] = { "snow", 0.2f, 0, true, 0.50f, 1, false, 0.0f, 0, false }; // 小雪
+    m_dayProfiles[401] = { "snow", 0.5f, 0, true, 0.70f, 1, false, 0.0f, 0, false }; // 中雪
+    m_dayProfiles[402] = { "snow", 0.8f, 0, true, 0.85f, 2, false, 0.0f, 0, false }; // 大雪
+    m_dayProfiles[403] = { "snow", 1.0f, 0, true, 1.00f, 2, false, 0.0f, 0, false }; // 暴雪
+    m_dayProfiles[404] = { "snow", 0.4f, 1, true, 0.60f, 1, false, 0.0f, 0, false }; // 雨夹雪
+    m_dayProfiles[405] = { "snow", 0.5f, 1, true, 0.70f, 1, false, 0.0f, 0, false }; // 雨雪天气
+    m_dayProfiles[406] = { "snow", 0.3f, 1, true, 0.50f, 1, false, 0.0f, 0, false }; // 阵雨夹雪
+    m_dayProfiles[407] = { "snow", 0.3f, 0, true, 0.40f, 1, false, 0.0f, 0, false }; // 阵雪
+    m_dayProfiles[408] = { "snow", 0.35f,0, true, 0.60f, 1, false, 0.0f, 0, false }; // 小到中雪
+    m_dayProfiles[409] = { "snow", 0.65f,0, true, 0.75f, 1, false, 0.0f, 0, false }; // 中到大雪
+    m_dayProfiles[410] = { "snow", 0.9f, 0, true, 0.90f, 2, false, 0.0f, 0, false }; // 大到暴雪
+    m_dayProfiles[499] = { "snow", 0.5f, 0, true, 0.60f, 1, false, 0.0f, 0, false }; // 雪(通用)
+
+    // === 白天 雾/霾/沙尘 500–515 ===
+    m_dayProfiles[500] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.20f, 0, false }; // 薄雾
+    m_dayProfiles[501] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.50f, 0, false }; // 雾
+    m_dayProfiles[502] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.40f, 1, false }; // 霾
+    m_dayProfiles[503] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.60f, 2, false }; // 扬沙
+    m_dayProfiles[504] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.50f, 2, false }; // 浮尘
+    m_dayProfiles[507] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.80f, 2, false }; // 沙尘暴
+    m_dayProfiles[508] = { "",     0.0f, 0, false, 0.00f, 0, true, 1.00f, 2, false }; // 强沙尘暴
+    m_dayProfiles[509] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.70f, 0, false }; // 浓雾
+    m_dayProfiles[510] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.85f, 0, false }; // 强浓雾
+    m_dayProfiles[511] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.50f, 1, false }; // 中度霾
+    m_dayProfiles[512] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.70f, 1, false }; // 重度霾
+    m_dayProfiles[513] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.90f, 1, false }; // 严重霾
+    m_dayProfiles[514] = { "",     0.0f, 0, false, 0.00f, 0, true, 0.80f, 0, false }; // 大雾
+    m_dayProfiles[515] = { "",     0.0f, 0, false, 0.00f, 0, true, 1.00f, 0, false }; // 特强浓雾
+
+    // === 白天 极端/未知 ===
+    m_dayProfiles[900] = { "",     0.0f, 0, false, 0.00f, 0, false, 0.0f, 0, false }; // 热
+    m_dayProfiles[901] = { "",     0.0f, 0, false, 0.00f, 0, false, 0.0f, 0, false }; // 冷
+    m_dayProfiles[999] = { "",     0.0f, 0, false, 0.00f, 0, false, 0.0f, 0, false }; // 未知
 
     // === 夜间覆盖 ===
-    // 150: 晴(夜)
-    m_nightOverrides[150] = { "", 0, 0, false, 0.0f, 0, false, 0.0f, 0, false };
-    // 151: 多云(夜)
-    m_nightOverrides[151] = { "", 0, 0, true, 0.35f, 1, false, 0.0f, 0, false };
-    // 152: 阴(夜)
-    m_nightOverrides[152] = { "", 0, 0, true, 0.85f, 2, false, 0.0f, 0, false };
-    // 153: 晴间多云(夜)
-    m_nightOverrides[153] = { "", 0, 0, true, 0.15f, 0, false, 0.0f, 0, false };
+    // 晴天类 150–153
+    m_nightOverrides[150] = { "",     0.0f, 0, false, 0.00f, 0, false, 0.0f, 0, false }; // 晴(夜)
+    m_nightOverrides[151] = { "",     0.0f, 0, true,  0.35f, 1, false, 0.0f, 0, false }; // 多云(夜)
+    m_nightOverrides[152] = { "",     0.0f, 0, true,  0.85f, 2, false, 0.0f, 0, false }; // 阴(夜)
+    m_nightOverrides[153] = { "",     0.0f, 0, true,  0.15f, 0, false, 0.0f, 0, false }; // 晴间多云(夜)
+    // 夜间雨类 350–351
+    m_nightOverrides[350] = { "rain", 0.4f, 0, true,  0.60f, 1, false, 0.0f, 0, false }; // 阵雨(夜)
+    m_nightOverrides[351] = { "rain", 0.7f, 0, true,  0.80f, 2, false, 0.0f, 0, false }; // 强阵雨(夜)
+    // 夜间雪类 456–457
+    m_nightOverrides[456] = { "snow", 0.3f, 1, true,  0.50f, 1, false, 0.0f, 0, false }; // 阵雨夹雪(夜)
+    m_nightOverrides[457] = { "snow", 0.3f, 0, true,  0.40f, 1, false, 0.0f, 0, false }; // 阵雪(夜)
 }
 
 // ===== 静态辅助 =====

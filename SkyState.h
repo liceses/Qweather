@@ -26,6 +26,10 @@ struct SkyState {
     Q_PROPERTY(float fogDensity     MEMBER fogDensity)
     Q_PROPERTY(float lightningProb  MEMBER lightningProb)
     Q_PROPERTY(float starVisibility MEMBER starVisibility)
+    // 变体
+    Q_PROPERTY(int cloudVariant   MEMBER cloudVariant)
+    Q_PROPERTY(int fogVariant     MEMBER fogVariant)
+    Q_PROPERTY(int weatherVariant MEMBER weatherVariant)
 
 public:
     // 天文
@@ -51,6 +55,11 @@ public:
     float lightningProb = 0.0f;
     float starVisibility = 0.0f;
 
+    // 变体
+    int cloudVariant = 0;
+    int fogVariant = 0;
+    int weatherVariant = 0;
+
     // 验证输出
     QString dump() const {
         return QStringLiteral(
@@ -68,7 +77,10 @@ public:
             .arg(lightningProb, 0, 'f', 2)
             .arg(starVisibility, 0, 'f', 2)
             .arg(twilightFactor, 0, 'f', 2)
-            .arg(exposure, 0, 'f', 2);
+            .arg(exposure, 0, 'f', 2)
+            .arg(cloudVariant)
+            .arg(fogVariant)
+            .arg(weatherVariant);
     }
 };
 

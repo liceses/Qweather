@@ -35,6 +35,13 @@ void BackgroundManager::commitSkyState(const QVariantMap &changes)
             changed = true;
         }
     };
+    auto applyInt = [&](const char *key, int &field, int minVal, int maxVal) {
+        auto it = changes.find(key);
+        if (it != changes.end()) {
+            field = qBound(minVal, static_cast<int>(it->toDouble()), maxVal);
+            changed = true;
+        }
+    };
 
     // 天文
     applyFloat("solarAltitude",  m_skyState.solarAltitude,  -90.0f, 90.0f);
@@ -59,6 +66,11 @@ void BackgroundManager::commitSkyState(const QVariantMap &changes)
     applyFloat("lightningProb",  m_skyState.lightningProb,   0.0f, 1.0f);
     applyFloat("starVisibility", m_skyState.starVisibility,  0.0f, 1.0f);
 
+    // 变体
+    applyInt("cloudVariant",   m_skyState.cloudVariant,   0, 3);
+    applyInt("fogVariant",     m_skyState.fogVariant,     0, 3);
+    applyInt("weatherVariant", m_skyState.weatherVariant, 0, 3);
+
     if (!changed) {
         qDebug() << "[BackgroundManager] commitSkyState: no matching keys in changes";
         return;
@@ -76,12 +88,6 @@ void BackgroundManager::commitSkyState(const QVariantMap &changes)
 
 void BackgroundManager::updateWeather(int iconCode, bool isDay)
 {
-    if (m_controlMode == 1) {
-        qDebug() << "[BackgroundManager] updateWeather SKIPPED (debug mode)"
-                 << "code=" << iconCode << "isDay=" << isDay;
-        return;
-    }
-
     WeatherProfile p = m_profiles.fromCode(iconCode, isDay);
     QVariantMap ch;
     ch["cloudCoverage"]  = p.cloudCoverage;
@@ -90,8 +96,52 @@ void BackgroundManager::updateWeather(int iconCode, bool isDay)
     ch["fogDensity"]     = static_cast<double>(p.fogIntensity);
     ch["lightningProb"]  = p.lightningActive ? 1.0 : 0.0;
     ch["starVisibility"] = (!isDay) ? 0.8 : 0.0;
+    ch["cloudVariant"]   = p.cloudVariant;
+    ch["fogVariant"]     = p.fogVariant;
+    ch["weatherVariant"] = p.weatherVariant;
 
-    qDebug() << "[BackgroundManager] updateWeather: code=" << iconCode << "isDay=" << isDay;
+    // 临时校正天文状态以匹配 isDay，重新计算天空色
+    int savedMin = m_astronomy.currentMin();
+    bool needsAtmos = false;
+    if (!isDay && !m_astronomy.isNight()) {
+        m_astronomy.updateByMinute(m_astronomy.sunriseMin() - 30);
+        needsAtmos = true;
+    } else if (isDay && m_astronomy.isNight()) {
+        int noon = (m_astronomy.sunriseMin() + m_astronomy.sunsetMin()) / 2;
+        m_astronomy.updateByMinute(noon);
+        needsAtmos = true;
+    }
+    if (needsAtmos) {
+        QVariantMap atmos = buildAtmosphereChanges();
+        ch.insert(atmos);
+        m_astronomy.updateByMinute(savedMin);
+    } else if (!ch.contains("exposure")) {
+        QVariantMap atmos = buildAtmosphereChanges();
+        ch.insert(atmos);
+    }
+
+    // ── weather → exposure 调制 (S 曲线) ──
+    auto smoothstep = [](float a, float b, float x) -> float {
+        float t = qBound(0.0f, (x - a) / (b - a), 1.0f);
+        return t * t * (3.0f - 2.0f * t);
+    };
+    float cloudDim = 1.0f - smoothstep(0.0f, 1.0f, p.cloudCoverage) * 0.55f;
+    float rainDim = 1.0f;
+    if (p.weatherParticle == "rain")
+        rainDim = 1.0f - smoothstep(0.0f, 1.0f, p.intensity) * 0.45f;
+    float snowDim = 1.0f;
+    if (p.weatherParticle == "snow")
+        snowDim = 1.0f - smoothstep(0.0f, 1.0f, p.intensity) * 0.15f;
+    float fogDim = 1.0f;
+    if (p.fogIntensity > 0.05f)
+        fogDim = 1.0f - smoothstep(0.0f, 1.0f, p.fogIntensity) * 0.65f;
+    float weatherScale = qMax(0.15f, cloudDim * rainDim * snowDim * fogDim);
+    double baseExp = ch.contains("exposure") ? ch["exposure"].toDouble() : static_cast<double>(m_skyState.exposure);
+    ch["exposure"] = baseExp * weatherScale;
+
+    qDebug() << "[BackgroundManager] updateWeather: code=" << iconCode
+             << "isDay=" << isDay
+             << "mode=" << (m_controlMode == 0 ? "Auto" : "Debug");
     commitSkyState(ch);
 }
 
@@ -212,13 +262,13 @@ QVariantMap BackgroundManager::buildAtmosphereChanges()
     // ── 7 段天空色表 ──
     struct Seg { float start; const char *name; QColor z, h, a; };
     static const Seg SEGS[] = {
-        { -999.f, "深夜",   QColor("#0a0a1a"), QColor("#0d0d28"), QColor("#050510") },
-        { -0.30f, "蓝调",   QColor("#1a2a5a"), QColor("#4a3060"), QColor("#0a0a20") },
-        {  0.00f, "金粉",   QColor("#4a6fa5"), QColor("#f4a460"), QColor("#e07050") },
-        {  0.15f, "白天",   QColor("#4a90d9"), QColor("#87ceeb"), QColor("#c8e0f0") },
-        {  0.70f, "暖午后", QColor("#5a8ab5"), QColor("#d4996a"), QColor("#c0b0a0") },
-        {  0.90f, "橙红",   QColor("#3a5a8a"), QColor("#e07840"), QColor("#a03030") },
-        {  1.00f, "紫调",   QColor("#2a1a4a"), QColor("#602040"), QColor("#0a0a20") },
+        { -999.f, "深夜",   QColor(0x0a,0x0a,0x1a), QColor(0x0d,0x0d,0x28), QColor(0x05,0x05,0x10) },
+        { -0.30f, "蓝调",   QColor(0x1a,0x2a,0x5a), QColor(0x4a,0x30,0x60), QColor(0x0a,0x0a,0x20) },
+        {  0.00f, "金粉",   QColor(0x4a,0x6f,0xa5), QColor(0xf4,0xa4,0x60), QColor(0xe0,0x70,0x50) },
+        {  0.15f, "白天",   QColor(0x4a,0x90,0xd9), QColor(0x87,0xce,0xeb), QColor(0xc8,0xe0,0xf0) },
+        {  0.70f, "暖午后", QColor(0x5a,0x8a,0xb5), QColor(0xd4,0x99,0x6a), QColor(0xc0,0xb0,0xa0) },
+        {  0.90f, "橙红",   QColor(0x3a,0x5a,0x8a), QColor(0xe0,0x78,0x40), QColor(0xa0,0x30,0x30) },
+        {  1.00f, "紫调",   QColor(0x2a,0x1a,0x4a), QColor(0x60,0x20,0x40), QColor(0x0a,0x0a,0x20) },
         {  999.f, nullptr, {}, {}, {} },
     };
     static const int SEG_COUNT = std::size(SEGS) - 1;  // 去掉哨兵
