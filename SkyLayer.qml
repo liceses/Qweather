@@ -28,6 +28,12 @@ ShaderEffect {
     // === 星星 ===
     property real starVisibility: 0.0
 
+    // === 平滑过渡 ===
+    Behavior on zenithColor  { ColorAnimation { duration: 800; easing.type: Easing.OutCubic } }
+    Behavior on horizonColor { ColorAnimation { duration: 800; easing.type: Easing.OutCubic } }
+    Behavior on ambientColor { ColorAnimation { duration: 800; easing.type: Easing.OutCubic } }
+    Behavior on exposure     { NumberAnimation   { duration: 600; easing.type: Easing.OutCubic } }
+
     // === 视差 ===
     property real parallaxX: 0.0
     property real parallaxY: 0.0

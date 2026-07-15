@@ -14,7 +14,7 @@ ShaderEffect {
     property int variant: 0
     property real windSpeed: 0.1
     property real transitionProgress: 0.0
-    property int particleLimit: 60
+    property int particleLimit: 120
 
     fragmentShader: "qrc:/shaders/rain.frag.qsb"
 

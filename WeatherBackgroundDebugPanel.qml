@@ -257,6 +257,15 @@ Rectangle {
                 }
             }
 
+            RowLayout { Layout.fillWidth: true; spacing: 4; visible: backgroundManager.controlMode === 0
+                Text { text: "当前"; width: 60; font.pixelSize: 11; color: "#555" }
+                Text {
+                    text: backgroundManager.currentWeatherCode + " "
+                          + (backgroundManager.currentIsDay ? "☀白天" : "🌙夜间")
+                    font.pixelSize: 11; color: "#333"; font.bold: true
+                }
+            }
+
             // === 天文 ===
             Text { text: "天文"; font.bold: true; color: "#555" }
 

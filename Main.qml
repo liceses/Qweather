@@ -100,11 +100,18 @@ ApplicationWindow {
         if (focusId) {
             addHistoryEntry(focusId)
             weatherApi.weatherNow(focusId)
+            var today = new Date().toISOString().slice(0,10).replace(/-/g,"")
+            weatherApi.astronomySun(focusId, today, focusId)
+            weatherApi.astronomyMoon(focusId, today, focusId)
         }
         if (typeof cityDetailStore === "undefined" || !cityDetailStore) return
         let c = findCity(focusId)
-        if (c) cityDetailStore.setCity(c.id, c.name, c.lat || "", c.lon || "")
-        else cityDetailStore.setCity("", "", "", "")
+        if (c) {
+            cityDetailStore.setCity(c.id, c.name, c.lat || "", c.lon || "")
+            // 同步经纬度到天文模型
+            if (c.lat && c.lon)
+                backgroundManager.setLocation(parseFloat(c.lat), parseFloat(c.lon))
+        } else cityDetailStore.setCity("", "", "", "")
     }
 
     // ===== 动态天气背景（V3 天空模拟系统） =====
@@ -387,6 +394,23 @@ ApplicationWindow {
             let w = Object.assign({}, weathers)
             w[id] = { temp: now.temp, icon: now.icon, text: now.text }
             weathers = w
+
+            // 转发到动态背景系统
+            var iconCode = parseInt(now.icon)
+            var isDay = iconCode < 150  // 150+ 为夜间码
+            backgroundManager.updateWeather(iconCode, isDay)
+        }
+        function onAstronomySunReady(cityId, result) {
+            if (cityId !== root.focusId || !result.sunrise) return
+            backgroundManager.updateSunTimes(result.sunrise, result.sunset)
+        }
+        function onAstronomyMoonReady(cityId, result) {
+            if (cityId !== root.focusId) return
+            var phases = result.moonPhase
+            if (phases && phases.length > 0) {
+                var p = phases[0]
+                backgroundManager.updateMoonData(parseInt(p.icon), parseFloat(p.illumination))
+            }
         }
     }
 

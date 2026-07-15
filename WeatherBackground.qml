@@ -48,24 +48,32 @@ Item {
         anchors.fill: parent
         active: transitionCtrl.cloudActive
         sourceComponent: cloudComp
+        opacity: transitionCtrl.cloudActive ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
     }
     Loader {
         z: 30
         anchors.fill: parent
         active: transitionCtrl.weatherActive
         sourceComponent: weatherComp
+        opacity: transitionCtrl.weatherActive ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
     }
     Loader {
         z: 40
         anchors.fill: parent
         active: transitionCtrl.fogActive
         sourceComponent: fogComp
+        opacity: transitionCtrl.fogActive ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
     }
     Loader {
         z: 50
         anchors.fill: parent
         active: transitionCtrl.lightningActive
         sourceComponent: lightningComp
+        opacity: transitionCtrl.lightningActive ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
     }
 
     // Layer 组件定义

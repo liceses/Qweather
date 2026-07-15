@@ -81,7 +81,7 @@ private:
 
     // Debug 覆盖（0=自动，>0=手动控制）
     float m_debugCloudTP = 0.0f, m_debugWeatherTP = 0.0f, m_debugFogTP = 0.0f;
-    bool m_fadeInEnabled = false;
+    bool m_fadeInEnabled = true;
 
     // 防抖：每次 setSkyState 递增，timer lambda 捕获判断
     int m_transitionId = 0;

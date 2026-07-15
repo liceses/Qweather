@@ -65,16 +65,19 @@ void main() {
     else densityScale = 1.2;                    // 阴
 
     // 两层 fBM
-    vec2 cloudUV = uv * 3.0 + vec2(drift, 0.0);
-    float cloud1 = fbm2D(cloudUV, 3);
+    vec2 cloudUV  = uv * 3.0 + vec2(drift, 0.0);
+    float cloud1  = fbm2D(cloudUV, 3);                     // 低频外形
 
     vec2 cloudUV2 = uv * 1.5 + vec2(drift * 0.7, drift * 0.3);
-    float cloud2 = fbm2D(cloudUV2, 2) * 0.6;
+    float cloud2  = fbm2D(cloudUV2, 2) * 0.6;              // 中频层叠
 
-    float cloud = (cloud1 + cloud2) * 0.8;
+    vec2 cloudUV3 = uv * 6.0 + vec2(drift * 1.2, drift * 0.5);
+    float cloud3  = fbm2D(cloudUV3, 2) * 0.3;              // 高频细节
 
-    // 阈值处理，使云更分明
-    cloud = smoothstep(0.3, 0.8, cloud);
+    float cloud = (cloud1 + cloud2 + cloud3) * 0.7;
+
+    // 软阈值，保留中间灰度过渡
+    cloud = smoothstep(0.25, 1.0, cloud);
 
     // 覆盖率控制
     cloud *= cloudCoverage * densityScale * tp;

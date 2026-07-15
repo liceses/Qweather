@@ -88,3 +88,6 @@
 2. **WeatherProfile 68 码映射未完整实现** — 当前为骨架，需要在 `WeatherProfileDB::initProfiles()` 中补全全部 68 个码
 3. **TransitionController 防抖未实现** — `m_transitionId` 机制标注为"先不做"
 4. **`weatherVariant` 字段未在 SkyState 中暴露** — `WeatherLayer.qml` 分派器需要 variant 信息来选择粒子变体（雷暴/冰雹/雨夹雪等）
+
+
+虽然可以正常显示黑夜的图标了,但是图标和天气码还是不对应啊

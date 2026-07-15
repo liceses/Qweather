@@ -17,6 +17,12 @@ ShaderEffect {
     property real exposure: 1.0
     property real twilightFactor: 0.0
 
+    // === 平滑过渡 ===
+    Behavior on zenithColor  { ColorAnimation { duration: 800; easing.type: Easing.OutCubic } }
+    Behavior on horizonColor { ColorAnimation { duration: 800; easing.type: Easing.OutCubic } }
+    Behavior on ambientColor { ColorAnimation { duration: 800; easing.type: Easing.OutCubic } }
+    Behavior on exposure     { NumberAnimation   { duration: 600; easing.type: Easing.OutCubic } }
+
     fragmentShader: "qrc:/shaders/atmosphere.frag.qsb"
 
     Rectangle {

@@ -18,12 +18,14 @@ void AstronomyModel::setLocation(float lat, float lon)
 
 void AstronomyModel::setSunTimes(const QString &sunrise, const QString &sunset)
 {
-    // 解析 "HH:MM" 格式
     auto toMinutes = [](const QString &t) -> int {
+        QDateTime dt = QDateTime::fromString(t, Qt::ISODate);
+        if (dt.isValid())
+            return dt.time().hour() * 60 + dt.time().minute();
         auto parts = t.split(':');
         if (parts.size() >= 2)
             return parts[0].toInt() * 60 + parts[1].toInt();
-        return 360; // 默认 06:00
+        return 360;
     };
 
     m_sunriseMin = toMinutes(sunrise);

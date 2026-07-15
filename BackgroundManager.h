@@ -45,11 +45,18 @@ public:
 
     Q_INVOKABLE QString dumpState() const;
 
+    // 当前天气码（只读，供 Debug 面板在 Auto 模式显示）
+    Q_PROPERTY(int currentWeatherCode READ currentWeatherCode NOTIFY currentWeatherChanged)
+    Q_PROPERTY(bool currentIsDay READ currentIsDay NOTIFY currentWeatherChanged)
+    int currentWeatherCode() const { return m_currentWeatherCode; }
+    bool currentIsDay() const { return m_currentIsDay; }
+
 signals:
     void skyStateChanged();
     void controlModeChanged();
     void debugModeEntered();
     void debugModeExited();
+    void currentWeatherChanged();
 
 private slots:
     void onAstronomyTimer();
@@ -59,6 +66,8 @@ private:
     int m_controlMode = 0;
 
     WeatherProfileDB m_profiles;
+    int m_currentWeatherCode = 100;
+    bool m_currentIsDay = true;
     AstronomyModel m_astronomy;
     TransitionController *m_transitionCtrl = nullptr;
     QTimer m_astronomyTimer;

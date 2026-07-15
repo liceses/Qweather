@@ -1,6 +1,7 @@
 #version 450
 
-// RainLayer - rain particle system
+// RainLayer - grid-based rain with neighbor checking (adapted from Shadertoy)
+// 仅 X 方向划分网格，每条竖带一条雨丝，邻格检测保证水平移动连续
 layout(std140, binding=0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
@@ -9,25 +10,15 @@ layout(std140, binding=0) uniform buf {
     int variant;
     float windSpeed;
     float transitionProgress;
-    int particleLimit;
+    int particleLimit;  // unused
 };
 
 layout(location=0) in vec2 qt_TexCoord0;
 layout(location=0) out vec4 fragColor;
 
-// ---- common functions ----
-float hash1(float p) {
-    p = fract(p * 0.1031);
-    p *= p + 33.33;
-    p *= p + p;
-    return fract(p);
-}
-
-vec2 hash2(float p) {
-    vec2 r;
-    r.x = hash1(p + 0.1);
-    r.y = hash1(p + 0.2);
-    return r;
+// 椭圆 SDF (Inigo Quilez)
+float sdEllipse(vec2 p, vec2 r) {
+    return (length(p / r) - 1.0) * min(r.x, r.y);
 }
 
 void main() {
@@ -41,44 +32,77 @@ void main() {
         return;
     }
 
-    int maxDrops = int(float(particleLimit) * activeIntensity);
-    vec3 rainColor = vec3(0.7, 0.75, 0.85);
+    vec3 rainColor = vec3(0.55, 0.65, 0.85);
+    float accum = 0.0;
 
-    vec3 accum = vec3(0.0);
-    float alpha = 0.0;
+    // 景深：下部更亮
+    float depth = 0.6 + 0.4 * uv.y;
 
-    for (int i = 0; i < 60; i++) {
-        if (i >= maxDrops) break;
+    // 风向倾斜
+    float tilt = windSpeed * 0.04;
+    vec2 tuv = uv;
+    tuv.y = 1.0 - tuv.y;                  // Qt Y↓ → Shadertoy Y↑
+    tuv.x += tilt * (0.5 - tuv.y);        // 风向倾斜
 
-        float seed = float(i) * 13.7;
-        vec2 pos = hash2(seed);
+    // 转换到 Shadertoy 坐标系 [-0.5, 0.5]
+    vec2 suv = (tuv - 0.5) * vec2(1.6, 1.0);
 
-        float speed = mix(0.3, 0.8, hash1(seed + 0.3));
-        float yOffset = fract(time * speed * 0.5 + seed * 0.7) - 0.5;
-        float windOffset = time * windSpeed * 0.1 * hash1(seed + 0.4);
+    // 多层雨（参考 Shadertoy: 10 层）
+    for (float l = 0.0; l < 8.0; l++) {
+        float scale = 8.0 + l * 0.8;
+        vec2 layerUV = suv * scale;
 
-        pos.y += yOffset;
-        pos.x += windOffset;
-        pos.x = fract(pos.x + 1.0);
+        // 仅 X 方向网格
+        float cellIDx = floor(layerUV.x);
+        float localX = fract(layerUV.x) - 0.5;
+        // Y 连续，不做网格
 
-        vec2 delta = uv - pos;
-        delta.y /= 0.15;
+        // 当前格和邻格的随机偏移
+        float cellOff     = fract(324.6 * sin(46.7 * cellIDx + l));
+        float n_cellOff   = fract(324.6 * sin(46.7 * (cellIDx + 1.0) + l));
 
-        float dist = length(delta);
-        float dropAlpha = smoothstep(0.02, 0.0, dist) * 0.5;
-        dropAlpha *= activeIntensity;
-        alpha += dropAlpha;
-        accum += rainColor * dropAlpha;
+        // X 偏移（雨丝水平位置）
+        float hOff = 0.6 * (cellOff - 0.5);
+        float n_hOff = 0.6 * (n_cellOff - 0.5);
+
+        // 下落进度
+        float fallProg     = fract(time * (0.4 + 0.3 * cellOff) + cellOff);
+        float n_fallProg   = fract(time * (0.4 + 0.3 * n_cellOff) + n_cellOff);
+
+        // 雨丝在 Y 方向的位置
+        float fallHeight = 2.0;
+        float rainfallBottom = -1.5;
+        float yVal   = fallHeight - (fallHeight - rainfallBottom) * fallProg;
+        float n_yVal = fallHeight - (fallHeight - rainfallBottom) * n_fallProg;
+
+        // 当前像素到屏幕底部的距离（用于涟漪）
+        float groundDist = uv.y;
+
+        // 椭圆雨滴 SDF（当前格 + 邻格）
+        float drop1 = sdEllipse(
+            vec2(localX - n_hOff, layerUV.y - n_yVal),
+            vec2(0.025 * depth, 0.15 * depth * (0.6 + 0.4 * fallProg))
+        );
+        float drop2 = sdEllipse(
+            vec2(localX - hOff, layerUV.y - yVal) - vec2(-1.0, 0.0),
+            vec2(0.025 * depth, 0.15 * depth * (0.6 + 0.4 * fallProg))
+        );
+
+        float drop = min(drop1, drop2);
+        float w = 0.003;
+        float dropAlpha = smoothstep(w, -w, drop) * 0.15 * activeIntensity;
+        accum += dropAlpha;
+
+        // 落地涟漪：雨丝到底部时扩散
+        if (n_yVal < rainfallBottom + 1.5 && groundDist < 0.3) {
+            float rippleSize = (rainfallBottom + 1.5 - n_yVal) / 1.5;
+            vec2 rp = vec2(localX - n_hOff, layerUV.y - rainfallBottom);
+            float ripple = sdEllipse(rp, vec2(0.5 * rippleSize, 0.2 * rippleSize));
+            float rAlpha = smoothstep(0.01, -0.01, ripple) * 0.08 * rippleSize * activeIntensity;
+            accum += rAlpha;
+        }
     }
 
-    // lightning flash for thunderstorm variants
-    if (variant == 1 || variant == 3) {
-        float flash = sin(time * 3.0 + floor(time) * 7.0) * 0.5 + 0.5;
-        flash = pow(flash, 8.0) * 0.3;
-        accum += vec3(flash);
-    }
-
-    accum = clamp(accum, 0.0, 1.0);
-    alpha = clamp(alpha, 0.0, 0.7);
-    fragColor = vec4(accum, alpha) * qt_Opacity;
+    accum = clamp(accum, 0.0, 0.5);
+    fragColor = vec4(rainColor * accum, accum) * qt_Opacity;
 }

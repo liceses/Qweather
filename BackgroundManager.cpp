@@ -100,25 +100,9 @@ void BackgroundManager::updateWeather(int iconCode, bool isDay)
     ch["fogVariant"]     = p.fogVariant;
     ch["weatherVariant"] = p.weatherVariant;
 
-    // 临时校正天文状态以匹配 isDay，重新计算天空色
-    int savedMin = m_astronomy.currentMin();
-    bool needsAtmos = false;
-    if (!isDay && !m_astronomy.isNight()) {
-        m_astronomy.updateByMinute(m_astronomy.sunriseMin() - 30);
-        needsAtmos = true;
-    } else if (isDay && m_astronomy.isNight()) {
-        int noon = (m_astronomy.sunriseMin() + m_astronomy.sunsetMin()) / 2;
-        m_astronomy.updateByMinute(noon);
-        needsAtmos = true;
-    }
-    if (needsAtmos) {
-        QVariantMap atmos = buildAtmosphereChanges();
-        ch.insert(atmos);
-        m_astronomy.updateByMinute(savedMin);
-    } else if (!ch.contains("exposure")) {
-        QVariantMap atmos = buildAtmosphereChanges();
-        ch.insert(atmos);
-    }
+    // 获取当前天文的 base exposure 用于天气调制，不提交天空色（由 updateSunTimes 决定）
+    QVariantMap baseAtmos = buildAtmosphereChanges();
+    double baseExp = baseAtmos.contains("exposure") ? baseAtmos["exposure"].toDouble() : 1.0;
 
     // ── weather → exposure 调制 (S 曲线) ──
     auto smoothstep = [](float a, float b, float x) -> float {
@@ -136,12 +120,14 @@ void BackgroundManager::updateWeather(int iconCode, bool isDay)
     if (p.fogIntensity > 0.05f)
         fogDim = 1.0f - smoothstep(0.0f, 1.0f, p.fogIntensity) * 0.65f;
     float weatherScale = qMax(0.15f, cloudDim * rainDim * snowDim * fogDim);
-    double baseExp = ch.contains("exposure") ? ch["exposure"].toDouble() : static_cast<double>(m_skyState.exposure);
     ch["exposure"] = baseExp * weatherScale;
 
     qDebug() << "[BackgroundManager] updateWeather: code=" << iconCode
              << "isDay=" << isDay
              << "mode=" << (m_controlMode == 0 ? "Auto" : "Debug");
+    m_currentWeatherCode = iconCode;
+    m_currentIsDay = isDay;
+    emit currentWeatherChanged();
     commitSkyState(ch);
 }
 
@@ -258,6 +244,9 @@ QVariantMap BackgroundManager::buildAstronomyChanges()
 QVariantMap BackgroundManager::buildAtmosphereChanges()
 {
     float dp = m_astronomy.dayProgress();
+    // 兜底：日出日落数据异常时 dp 可能为 0.5，根据 isNight 强制修正
+    if (m_astronomy.isNight() && dp >= 0.0f && dp <= 1.0f)
+        dp = -0.1f;
 
     // ── 7 段天空色表 ──
     struct Seg { float start; const char *name; QColor z, h, a; };

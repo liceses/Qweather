@@ -65,7 +65,7 @@ public:
         return QStringLiteral(
             "SkyState{solarAlt=%1 solarAz=%2 moonAlt=%3 moonAz=%4 "
             "cloud=%5 rain=%6 snow=%7 fog=%8 lightning=%9 stars=%10 "
-            "twilight=%11 exposure=%12}")
+            "twilight=%11 exposure=%12 cloudV=%13 fogV=%14 rainV=%15}")
             .arg(solarAltitude, 0, 'f', 1)
             .arg(solarAzimuth, 0, 'f', 1)
             .arg(moonAltitude, 0, 'f', 1)
