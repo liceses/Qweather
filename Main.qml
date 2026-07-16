@@ -30,19 +30,17 @@ ApplicationWindow {
     function savePinned()    { weatherCache.save("pin_cities", JSON.stringify(pinned)) }
     function saveHistory()   { weatherCache.save("hist_cities", JSON.stringify(history)) }
 
-    // 收藏切换
     function toggleFavorite(cityObj) {
         for (let i = 0; i < favorites.length; i++) {
             if (favorites[i].id === cityObj.id) {
                 favorites.splice(i, 1)
-                favorites = favorites.slice()   // 新引用触发绑定
+                favorites = favorites.slice()
                 saveFavorites(); return false
             }
         }
         favorites.push(cityObj)
         favorites = favorites.slice()
         saveFavorites()
-        // 新收藏的城市获取天气数据，确保收藏页面不会显示 "--"
         weatherApi.weatherNow(cityObj.id)
         return true
     }
@@ -52,7 +50,6 @@ ApplicationWindow {
         return false
     }
 
-    // 固定/取消固定
     function pinCity(cityObj) {
         for (let i = 0; i < pinned.length; i++)
             if (pinned[i].id === cityObj.id) return
@@ -69,7 +66,6 @@ ApplicationWindow {
         return false
     }
 
-    // cityList 变更时同步到 C++ store
     onCityListChanged: {
         if (typeof forecastStore !== "undefined" && forecastStore)
             forecastStore.cities = root.cityList
@@ -79,7 +75,6 @@ ApplicationWindow {
             solarAstronomyStore.cities = root.cityList
     }
 
-    // 当前焦点城市是否已收藏
     readonly property bool cityFavorited: {
         let fid = focusId; let favs = favorites
         for (let i = 0; i < favs.length; i++)
@@ -120,10 +115,9 @@ ApplicationWindow {
         promoteCity(cityId, optName, optLat, optLon)
     }
 
-    // 焦点城市名 — 从栈顶推导
     property string focusName: cityList.length > 0 ? cityList[0].name : ""
+    property int stateIndex: 0
 
-    // 侧边栏城市分区 ID — 优先级：固定[0] > 收藏[0] > 历史[0] > 焦点
     readonly property string sidebarCityId: {
         if (pinned.length > 0)     return pinned[0].id
         if (favorites.length > 0)  return favorites[0].id
@@ -131,7 +125,6 @@ ApplicationWindow {
         return focusId || ""
     }
 
-    // 焦点城市变更时：记录历史 + 刷新天气 + 同步城市详情 Store
     onFocusIdChanged: {
         if (focusId) {
             addHistoryEntry(focusId)
@@ -149,14 +142,13 @@ ApplicationWindow {
         } else cityDetailStore.setCity("", "", "", "")
     }
 
-    // ===== 动态天气背景（V3 天空模拟系统） =====
+    // ===== 动态天气背景 =====
     WeatherBackground {
         id: weatherBg
         anchors.fill: parent
-        z: -1  // 确保在所有 UI 元素之后
+        z: -1
     }
 
-    // 自适应曝光遮罩 — 仅强光下压暗, 改善文字可读性
     Rectangle {
         anchors.fill: parent
         z: 0
@@ -174,7 +166,7 @@ ApplicationWindow {
         z: 100
     }
 
-    // ===== 主布局（视差 MouseArea 为卡片 MouseArea 的父级） =====
+    // ===== 主布局 =====
     MouseArea {
         id: parallaxArea
         anchors.fill: parent
@@ -209,7 +201,6 @@ ApplicationWindow {
                 anchors.fill: parent
                 anchors.margins: 8
 
-                // Logo —— 点击切换侧边栏展开/收起
                 Item {
                     Layout.alignment: Qt.AlignHCenter
                     implicitWidth: logoTxt.implicitWidth
@@ -218,7 +209,7 @@ ApplicationWindow {
                     Text {
                         id: logoTxt
                         anchors.centerIn: parent
-                        text: sidebar.sidebarExpanded ? "Weather" : "W"
+                        text: sidebar.sidebarExpanded ? "QWeather" : "Q"
                         color: "white"
                         font.pixelSize: sidebar.sidebarExpanded ? 22 : 28
                         font.bold: true
@@ -232,14 +223,13 @@ ApplicationWindow {
                     }
                 }
 
-                NavButton { icon: "qrc:/icons/squares-four.svg"; label: "仪表盘"; expanded: sidebar.sidebarExpanded; active: stack.currentIndex === 0; onClicked: stack.currentIndex = 0 }
-                NavButton { icon: "qrc:/icons/calendar.svg";     label: "天气预报";   expanded: sidebar.sidebarExpanded; active: stack.currentIndex === 1; onClicked: stack.currentIndex = 1 }
-                NavButton { icon: "qrc:/icons/air-filter.svg";   label: "空气质量";   expanded: sidebar.sidebarExpanded; active: stack.currentIndex === 2; onClicked: stack.currentIndex = 2 }
-                NavButton { icon: "qrc:/icons/sun-horizon.svg";  label: (appSettings && !appSettings.showSolarRadiation) ? "朝夕月相" : "天文"; expanded: sidebar.sidebarExpanded; active: stack.currentIndex === 3; onClicked: stack.currentIndex = 3 }
+                NavButton { icon: "qrc:/icons/squares-four.svg"; label: "仪表盘"; expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 0; onClicked: stack.stateIndex = 0 }
+                NavButton { icon: "qrc:/icons/calendar.svg";     label: "天气预报";   expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 1; onClicked: stack.stateIndex = 1 }
+                NavButton { icon: "qrc:/icons/air-filter.svg";   label: "空气质量";   expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 2; onClicked: stack.stateIndex = 2 }
+                NavButton { icon: "qrc:/icons/sun-horizon.svg";  label: (appSettings && !appSettings.showSolarRadiation) ? "朝夕月相" : "天文"; expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 3; onClicked: stack.stateIndex = 3 }
 
                 Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; Layout.leftMargin: 8; Layout.rightMargin: 8; color: "#20ffffff" }
 
-                // === 可滚动中间区：城市分区 + 收藏 ===
                 Flickable {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -251,7 +241,6 @@ ApplicationWindow {
                         id: midCol
                         width: parent.width
 
-                        // 侧边栏城市分区：固定城市列表 或 优先级城市
                         Repeater {
                             model: root.pinned.length > 0 ? root.pinned
                                   : (root.sidebarCityId ? [{ id: root.sidebarCityId }] : [])
@@ -264,10 +253,10 @@ ApplicationWindow {
                                     return (root.pinned.length === 0 && index === 0 && n === modelData.id)
                                            ? "城市详情" : n
                                 }
-                                active: stack.currentIndex === 5 && root.focusId === modelData.id
+                                active: stack.stateIndex === 5 && root.focusId === modelData.id
                                 onClicked: {
                                     root.promoteCity(modelData.id)
-                                    stack.currentIndex = 5
+                                    stack.stateIndex = 5
                                 }
                             }
                         }
@@ -278,23 +267,24 @@ ApplicationWindow {
                             color: "#20ffffff"
                         }
 
-                        NavButton { icon: "qrc:/icons/star.svg"; label: "收藏"; expanded: sidebar.sidebarExpanded; active: stack.currentIndex === 6; onClicked: stack.currentIndex = 6 }
+                        NavButton { icon: "qrc:/icons/star.svg"; label: "收藏"; expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 6; onClicked: stack.stateIndex = 6 }
                     }
                 }
 
-                NavButton { icon: "qrc:/icons/gear-six.svg"; label: "设置"; expanded: sidebar.sidebarExpanded; active: stack.currentIndex === 4; onClicked: stack.currentIndex = 4 }
+                NavButton { icon: "qrc:/icons/gear-six.svg"; label: "设置"; expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 4; onClicked: stack.stateIndex = 4 }
             }
         }
 
-        // 页面区
-        StackLayout {
+        // 页面区（交叉淡入淡出）
+        Item {
             id: stack
             Layout.fillWidth: true
             Layout.fillHeight: true
-            currentIndex: 0
 
-            // Page 0: 仪表盘
             DashboardPage {
+                anchors.fill: parent
+                opacity: stack.stateIndex === 0 ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 200 } }
                 cityList: root.cityList
                 focusId: root.focusId
                 focusName: root.focusName
@@ -307,29 +297,45 @@ ApplicationWindow {
                 }
                 onNavigateToDetail: function(cityId) {
                     root.promoteCity(cityId)
-                    stack.currentIndex = 5
+                    stack.stateIndex = 5
                 }
                 onCloseRequested: function(cityId) {
                     root.removeCity(cityId)
                 }
             }
 
-            // Page 1: 天气预报 (数据由 C++ forecastStore 驱动)
-            ForecastPage {}
-            AirQualityPage {}
-            SolarAstronomyPage {}
-            SettingsPage { weatherCache: weatherCache }
+            ForecastPage {
+                anchors.fill: parent
+                opacity: stack.stateIndex === 1 ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+            }
+            AirQualityPage {
+                anchors.fill: parent
+                opacity: stack.stateIndex === 2 ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+            }
+            SolarAstronomyPage {
+                anchors.fill: parent
+                opacity: stack.stateIndex === 3 ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+            }
+            SettingsPage {
+                anchors.fill: parent
+                opacity: stack.stateIndex === 4 ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+                weatherCache: weatherCache
+            }
 
-            // Page 5: 城市详情
             CityDetailPage {
+                anchors.fill: parent
+                opacity: stack.stateIndex === 5 ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 200 } }
                 favorited: root.cityFavorited
                 onToggleFav: function() {
                     let fid = root.focusId
                     if (!fid) return
-                    console.log("收藏切换:", fid, "已收藏:", root.isFavorite(fid))
                     let c = root.findCity(fid)
                     if (!c) {
-                        // 从 detail 中获取城市信息
                         let d = cityDetailStore.detail
                         c = { name: d.cityName || fid, id: fid, lat: "", lon: "" }
                     }
@@ -337,8 +343,10 @@ ApplicationWindow {
                 }
             }
 
-            // Page 6: 收藏
             FavoritesPage {
+                anchors.fill: parent
+                opacity: stack.stateIndex === 6 ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 200 } }
                 id: favPage
                 favorites: root.favorites
                 pinned: root.pinned
@@ -350,11 +358,11 @@ ApplicationWindow {
                 }
                 onCityDoubleClicked: function(cityId) {
                     root.focusId = cityId
-                    stack.currentIndex = 5
+                    stack.stateIndex = 5
                 }
             }
         }
-        }  // RowLayout (ends inside parallaxArea)
+        }  // RowLayout
     }  // parallaxArea
 
     // ===== 逻辑 =====
@@ -379,7 +387,6 @@ ApplicationWindow {
         if (history.length > 20) history.pop()
         saveHistory()
     }
-
 
     // ===== 信号 =====
     Connections {
@@ -408,7 +415,6 @@ ApplicationWindow {
             w[id] = { temp: now.temp, icon: now.icon, text: now.text }
             weathers = w
 
-            // 转发到动态背景系统
             var iconCode = parseInt(now.icon)
             var isDay = !(iconCode >= 150 && iconCode <= 199)
             backgroundManager.updateWeather(iconCode, isDay)
@@ -430,13 +436,11 @@ ApplicationWindow {
     Component.onCompleted: {
         loadSettings()
         weatherApi.topCity("cn", maxCards + 1)
-        // 收藏城市也需要获取天气数据，否则打开收藏页面显示 "--"
         for (let i = 0; i < favorites.length; i++) {
             weatherApi.weatherNow(favorites[i].id)
         }
     }
 
-    // 渲染泵：强制 Qt Quick 持续渲染，防止鼠标静止时帧率下降
     Item {
         NumberAnimation on opacity {
             from: 0.999; to: 1.0; duration: 100

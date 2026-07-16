@@ -38,7 +38,7 @@ void main() {
         return;
     }
 
-    vec3 rainColor = vec3(0.72, 0.74, 0.78);
+    vec3 rainColor = mix(vec3(0.85, 0.87, 0.92), vec3(0.45, 0.48, 0.52), clamp(exposure * 0.5, 0.0, 1.0));
     float accum = 0.0;
     float depth = 0.6 + 0.4 * uv.y;
     float tilt = windSpeed * 0.04;
@@ -47,8 +47,8 @@ void main() {
     tuv.x += tilt * (0.5 - tuv.y);
     vec2 suv = (tuv - 0.5) * vec2(2.0, 1.0);
 
-    float density = 0.05 + 0.95 * activeIntensity;
-    float expComp = clamp(exposure * 0.5, 0.6, 1.8);
+    float density = 0.10 + 0.90 * activeIntensity;
+    float expComp = clamp(exposure * 0.8, 0.6, 3.0);
 
     for (float l = 0.0; l < 12.0; l++) {
         float scale = 8.0 + l * 0.7;
@@ -65,7 +65,7 @@ void main() {
         float hOff = 0.6 * (cellOff - 0.5);
         float n_hOff = 0.6 * (n_cellOff - 0.5);
 
-        float dropSpeed = 0.6 + 0.9 * cellOff;
+        float dropSpeed = (0.4 + 0.6 * activeIntensity) * (0.6 + 0.9 * cellOff);
         float fallProg     = fract(time * dropSpeed + cellOff);
         float n_fallProg   = fract(time * dropSpeed + n_cellOff);
 

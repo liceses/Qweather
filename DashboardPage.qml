@@ -35,9 +35,36 @@ Item {
         }
 
         Text {
+            id: cityNameText
             Layout.alignment: Qt.AlignHCenter
             text: page.focusName || "搜索城市开始"
             color: "white"; font.pixelSize: 48; font.bold: true
+            Behavior on opacity { NumberAnimation { duration: 150 } }
+            onTextChanged: {
+                opacity = 0.0
+                textFadeIn.restart()
+            }
+            Timer {
+                id: textFadeIn
+                interval: 50
+                onTriggered: cityNameText.opacity = 1.0
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                property real lastClick: 0
+                onClicked: {
+                    var now = Date.now()
+                    if (now - lastClick < 400) {
+                        lastClick = 0
+                        if (page.focusId)
+                            page.navigateToDetail(page.focusId)
+                    } else {
+                        lastClick = now
+                    }
+                }
+            }
         }
 
         Text {

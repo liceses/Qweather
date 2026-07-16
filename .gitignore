@@ -90,3 +90,17 @@ CMakePresets.json
 
 # Screenshots
 *.png
+
+# AI agent metadata (local only)
+.reasonix/autoresearch/
+.reasonix/attachments/
+.reasonix/desktop-topic-*
+
+# Installed skills (environment, not project code)
+.claude/skills/
+
+# User weather profile config
+weather_profiles.json
+
+# Binary docs
+docs/*.pptx
