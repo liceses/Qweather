@@ -1,0 +1,27 @@
+{
+  "task_id": "20260716-111706-qt-qt-brotato-qt-dlc-c-python-flask-qt-http-5-qt",
+  "goal": "个人总结：\n在本次的实训中，我收获良多。从刚开始只是了解有Qt这个工具，到自己独立完成了“Qt-Brotato游戏”项目的设计与开发。这不仅是一次将课堂所学理论熔铸为实践能力的宝贵机会，更是一段从零到一、充满挑战与喜悦的深度探索之旅。编写代码的过程中，我感觉到自己的解决问题的能力再提升。同时在完成项目的过程中，我对软件设计有了更深一遍的了解，对各个项目模块化、组件化以及“高内聚，第耦合”有了深刻的体会。长久以来，我一直希望能开发一款跳出简单逻辑、拥有丰富交互的游戏，本次实训恰好提供了这样一个完美的载体。\n项目伊始，在需求分析阶段，我曾想完整复刻原版游戏的所有功能，但很快认识到作为初学者这并不现实 。于是我冷静地对项目功能进行了取舍，形成了适合自己的、切实可行的开发方案 。这个过程让我深刻领悟到，合理的规划和范围控制是项目成功的基础 。在核心开发阶段，我全身心投入，通过深入实践Qt的图形视图框架，成功将抽象的代码变为了屏幕上生动可控的游戏角色 。而本次项目最艰难也最富成就感的部分，无疑是全栈式的DLC支付系统的实现 。为此，我跳出C++的舒适区，自主学习并搭建了Python Flask后端服务器 ，在Qt客户端中运用网络模块与服务器进行HTTP通信 ，并成功对接支付宝沙箱接口以模拟真实支付流程 。为了解决支付宝异步回调需要公网地址的难题，我还学会了使用内网穿透工具 。当最终扫码并跑通从客户端创建订单到服务端处理并最终在游戏内解锁内容的全过程时，我获得的不仅是技术上的突破，更是对现代桌面应用开发全貌的真实体验 。\n在整个开发过程中，我借鉴了极限编程的思想，坚持采用“小步快跑、频繁测试”的迭代方法 。这种方法论将庞大的开发任务分解，让我能及时发现并化解绝大部分问题，有效避免了项目后期繁杂的集成与调试工作，保证了项目的稳步推进 。这次经历让我认识到，优秀的工程实践和开发方法，其重要性丝毫不亚于对具体技术的掌握。\n自我鉴定:\n本次实训的全方面来看，我觉得我已经重复完成了实训的所有内容。虽然是线上参加实训，且同时完成两个实训，但我没有一丝松懈。每天至少保证5个小时的编码任务。不仅全面锻炼了Qt应用开发的各项核心技能，更重要的是提升了独立分析和解决复杂问题的能力，充分的将课程与实践融合，收获了将想法付诸实现的宝贵信心。本次实训，我尽自己最大的努力，在有限的时间内，完成了一款机制较为全面，具有一定可玩性的游戏的开发。这段艰辛但受益无穷的经历，为我未来的职业生涯奠定了一份坚实而宝贵的财富 。\n仿照上文,根据我的项目写一份个人总结与自我鉴定",
+  "scope": null,
+  "non_goals": null,
+  "allowed_operations": {
+    "write": true,
+    "network": false,
+    "publish": false
+  },
+  "success_criteria": [
+    {
+      "id": "objective_evidence",
+      "description": "The goal outcome is supported by direct evidence, such as inspected code, reproduced behavior, source material, or concrete findings.",
+      "required": true,
+      "evidence_ids": [
+        "f1"
+      ]
+    },
+    {
+      "id": "verification",
+      "description": "The result has relevant verification evidence, such as tests, commands, benchmarks, manual checks, or a documented reason why verification is not applicable.",
+      "required": true,
+      "evidence_ids": null
+    }
+  ]
+}

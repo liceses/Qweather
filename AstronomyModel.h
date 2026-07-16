@@ -47,6 +47,7 @@ signals:
 private:
     float m_lat = 39.9f, m_lon = 116.4f;       // 默认北京
     int m_dayOfYear = 196;       // 默认 7 月 15 日
+    int m_lonOffset = 0;         // 经度时区偏移（分钟）
     int m_sunriseMin = 360;    // 06:00
     int m_sunsetMin = 1080;    // 18:00
     int m_currentMin = 720;    // 12:00

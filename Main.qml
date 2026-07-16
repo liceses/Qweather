@@ -145,7 +145,7 @@ ApplicationWindow {
         if (top) {
             cityDetailStore.setCity(top.id, top.name, top.lat || "", top.lon || "")
             if (top.lat && top.lon)
-                backgroundManager.setLocation(parseFloat(c.lat), parseFloat(c.lon))
+                backgroundManager.setLocation(parseFloat(top.lat), parseFloat(top.lon))
         } else cityDetailStore.setCity("", "", "", "")
     }
 

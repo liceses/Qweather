@@ -108,7 +108,8 @@ void main() {
 
     // sun
     vec2 sunPos = solarScreenPos();
-    if (solarAltitude > -5.0) {
+    float sunVis = smoothstep(-15.0, -5.0, solarAltitude);
+    if (sunVis > 0.001) {
         float dist = distance(uv, sunPos);
         float glowSize = mix(0.15, 0.3, max(0.0, -solarAltitude / 10.0));
         vec3 sunGlow = vec3(1.0, 0.9, 0.7) * exp(-dist * dist * 15.0 / (glowSize * glowSize));
@@ -116,21 +117,22 @@ void main() {
         vec3 sunCore = vec3(1.0, 0.95, 0.85) * core;
         float lowAngle = clamp(1.0 - (solarAltitude + 5.0) / 15.0, 0.0, 1.0);
         vec3 lowSunColor = mix(vec3(1.0, 0.9, 0.7), vec3(1.0, 0.5, 0.2), lowAngle);
-        skyColor += sunGlow * lowSunColor * 1.5 + sunCore;
+        skyColor += (sunGlow * lowSunColor * 1.5 + sunCore) * sunVis;
     }
 
     // moon
-    if (moonAltitude > -5.0 && moonIllum > 0.1) {
+    float moonVis = smoothstep(-15.0, -5.0, moonAltitude) * step(0.1, moonIllum);
+    if (moonVis > 0.001) {
         vec2 moonPos = moonScreenPos();
         float moonRadius = 0.04;
         float phaseMask = moonPhaseMask(uv, moonPos, moonRadius, moonPhase);
         float moonDist = distance(uv, moonPos);
-        vec3 moonGlow = vec3(0.9, 0.95, 1.0) * exp(-moonDist * moonDist * 10.0) * 0.4;
+        vec3 moonGlow = vec3(0.9, 0.95, 1.0) * exp(-moonDist * moonDist * 10.0) * 0.4 * moonVis;
         skyColor += moonGlow;
         if (phaseMask < 0.5) {
             float moonBright = 1.0 - moonDist / moonRadius;
             vec3 moonColor = vec3(0.85, 0.87, 0.9) * clamp(moonBright * 2.0, 0.0, 1.0) * moonIllum;
-            moonColor *= (1.0 - phaseMask * 2.0);
+            moonColor *= (1.0 - phaseMask * 2.0) * moonVis;
             skyColor += moonColor;
         }
     }

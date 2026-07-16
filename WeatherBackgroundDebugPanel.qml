@@ -9,9 +9,13 @@ Rectangle {
     visible: false
     z: 100
     anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 12
-    width: 340; height: Math.min(700, parent.height - 24)
-    color: "#e8e8e8"; radius: 8
+    width: 360; height: Math.min(700, parent.height - 24)
     border.color: "#bbb"; border.width: 1
+
+    property bool dragging: false
+    color: dragging ? Qt.rgba(0.91, 0.91, 0.91, 0.15) : "#e8e8e8"
+    Behavior on color { ColorAnimation { duration: 200 } }
+    radius: 8
 
     // 收集所有控件值 → 提交完整 SkyState
     function commit() {
@@ -37,6 +41,96 @@ Rectangle {
             horizonColor:   colorHorizon.color,
             ambientColor:   colorAmbient.color
         })
+    }
+
+    // ===== 演示模式 =====
+    property bool demoMode: false
+    property real demoHour: 0
+    property int demoWeatherIdx: 0
+    property var demoWeatherList: [100,101,104,300,305,310,302,400,500,502]
+    property real demoSpeed: 1.0
+
+    property var wFrom: ({})
+    property var wTo: ({})
+    property int wLerp: 0
+    property int wLerpDur: 40
+
+    function switchWeather(code) {
+        var isDay = code < 150
+        wFrom = {
+            cloudCoverage:  backgroundManager.skyState.cloudCoverage,
+            rainIntensity:  backgroundManager.skyState.rainIntensity,
+            snowIntensity:  backgroundManager.skyState.snowIntensity,
+            fogDensity:     backgroundManager.skyState.fogDensity,
+            lightningProb:  backgroundManager.skyState.lightningProb,
+            starVisibility: backgroundManager.skyState.starVisibility,
+            cloudVariant:   backgroundManager.skyState.cloudVariant,
+            fogVariant:     backgroundManager.skyState.fogVariant,
+            weatherVariant: backgroundManager.skyState.weatherVariant,
+            exposure:       backgroundManager.skyState.exposure
+        }
+        backgroundManager.updateWeather(code, isDay)
+        wTo = {
+            cloudCoverage:  backgroundManager.skyState.cloudCoverage,
+            rainIntensity:  backgroundManager.skyState.rainIntensity,
+            snowIntensity:  backgroundManager.skyState.snowIntensity,
+            fogDensity:     backgroundManager.skyState.fogDensity,
+            lightningProb:  backgroundManager.skyState.lightningProb,
+            starVisibility: backgroundManager.skyState.starVisibility,
+            cloudVariant:   backgroundManager.skyState.cloudVariant,
+            fogVariant:     backgroundManager.skyState.fogVariant,
+            weatherVariant: backgroundManager.skyState.weatherVariant,
+            exposure:       backgroundManager.skyState.exposure
+        }
+        backgroundManager.commitSkyState(wFrom)
+        wLerp = 0
+    }
+
+    Timer {
+        id: demoAnim
+        interval: 50; repeat: true; running: false
+        property int tick: 0
+        onTriggered: {
+            tick++
+            if (wLerp < wLerpDur) {
+                wLerp++
+                var t = wLerp / wLerpDur
+                t = t * t * (3.0 - 2.0 * t)
+                var interp = {}
+                for (var key in wFrom)
+                    interp[key] = wFrom[key] + (wTo[key] - wFrom[key]) * t
+                backgroundManager.commitSkyState(interp)
+            }
+            demoHour += demoSpeed / 60
+            if (demoHour >= 24) demoHour -= 24
+            backgroundManager.setDebugTime(demoHour)
+            var wi = demoSpeed > 0.5 ? 200 : 600
+            if (tick % wi === 0) {
+                var next = (demoWeatherIdx + 1) % demoWeatherList.length
+                demoWeatherIdx = next
+                switchWeather(demoWeatherList[next])
+            }
+        }
+    }
+
+    function startDemo() {
+        if (demoMode) return
+        demoMode = true
+        dragging = true  // 面板透明
+        demoHour = 0
+        demoWeatherIdx = 0
+        backgroundManager.enterDebugMode()
+        backgroundManager.updateWeather(demoWeatherList[0], demoWeatherList[0] < 150)
+        backgroundManager.setDebugTime(0)
+        demoAnim.start()
+    }
+
+    function stopDemo() {
+        if (!demoMode) return
+        demoMode = false
+        dragging = false
+        demoAnim.stop()
+        backgroundManager.exitDebugMode()
     }
 
     Shortcut {
@@ -191,6 +285,10 @@ Rectangle {
                 }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
+                Text { text: "本地时间"; width: 60; font.pixelSize: 11; color: "#555" }
+                Text { text: backgroundManager.currentLocalTime; font.pixelSize: 11; color: "#333"; font.bold: true }
+            }
+            RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "时段"; width: 60; font.pixelSize: 11; color: "#555" }
                 Text {
                     text: {
@@ -236,7 +334,19 @@ Rectangle {
                     id: cbPreset
                     Layout.fillWidth: true
                     font.pixelSize: 11
-                    model: ["100-晴","101-多云","104-阴","150-晴(夜)","300-阵雨","302-雷暴","305-小雨","310-暴雨","400-雪","500-薄雾","501-雾","502-霾"]
+                    model: ["100-晴","101-多云","102-少云","103-晴间多云","104-阴",
+                            "150-晴(夜)","151-多云(夜)","152-阴(夜)","153-晴间多云(夜)",
+                            "300-阵雨","301-强阵雨","302-雷阵雨","303-强雷阵雨","304-雷阵雨伴冰雹",
+                            "305-小雨","306-中雨","307-大雨","308-极端降雨","309-毛毛雨",
+                            "310-暴雨","311-大暴雨","312-特大暴雨","313-冻雨",
+                            "350-阵雨(夜)","351-强阵雨(夜)",
+                            "399-雨(通用)",
+                            "400-小雪","401-中雪","402-大雪","403-暴雪",
+                            "404-雨夹雪","405-雨雪天气","406-阵雨夹雪","407-阵雪",
+                            "456-阵雨夹雪(夜)","457-阵雪(夜)",
+                            "499-雪(通用)",
+                            "500-薄雾","501-雾","502-霾","503-扬沙","504-浮尘",
+                            "507-沙尘暴","508-强沙尘暴"]
                     enabled: backgroundManager.controlMode === 1
                     onActivated: function(idx) {
                         var code = model[idx].split("-")[0]
@@ -272,37 +382,43 @@ Rectangle {
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "太阳高度"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldSA; Layout.fillWidth: true; from: -10; to: 90
-                    value: backgroundManager.skyState.solarAltitude; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.solarAltitude; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldSA.value.toFixed(1) + "°"; width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "太阳方位"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldSZ; Layout.fillWidth: true; from: 0; to: 360
-                    value: backgroundManager.skyState.solarAzimuth; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.solarAzimuth; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldSZ.value.toFixed(1) + "°"; width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "月亮高度"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldMA; Layout.fillWidth: true; from: -90; to: 90
-                    value: backgroundManager.skyState.moonAltitude; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.moonAltitude; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldMA.value.toFixed(1) + "°"; width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "月亮方位"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldMZ; Layout.fillWidth: true; from: 0; to: 360
-                    value: backgroundManager.skyState.moonAzimuth; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.moonAzimuth; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldMZ.value.toFixed(1) + "°"; width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "月相"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldMP; Layout.fillWidth: true; from: 0; to: 8
-                    value: backgroundManager.skyState.moonPhase; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.moonPhase; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldMP.value.toFixed(1); width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "月光"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldMI; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.moonIllum; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.moonIllum; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldMI.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
             }
 
@@ -314,37 +430,43 @@ Rectangle {
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "云覆盖率"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldCC; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.cloudCoverage; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.cloudCoverage; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldCC.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "雨强度"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldRI; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.rainIntensity; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.rainIntensity; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldRI.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "雪强度"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldSI; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.snowIntensity; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.snowIntensity; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldSI.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "雾密度"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldFD; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.fogDensity; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.fogDensity; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldFD.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "闪电概率"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldLP; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.lightningProb; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.lightningProb; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldLP.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "星星"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldSV; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.starVisibility; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.starVisibility; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldSV.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
@@ -386,14 +508,49 @@ Rectangle {
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "曝光"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldEX; Layout.fillWidth: true; from: 0.1; to: 2
-                    value: backgroundManager.skyState.exposure; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.exposure; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldEX.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
             }
             RowLayout { Layout.fillWidth: true; spacing: 4
                 Text { text: "黄昏因子"; width: 60; font.pixelSize: 11; color: "#555" }
                 Slider { id: sldTF; Layout.fillWidth: true; from: 0; to: 1
-                    value: backgroundManager.skyState.twilightFactor; enabled: backgroundManager.controlMode === 1; onMoved: commit() }
+                    value: backgroundManager.skyState.twilightFactor; enabled: backgroundManager.controlMode === 1; onMoved: commit()
+    onPressedChanged: panel.dragging = pressed }
                 Text { text: sldTF.value.toFixed(2); width: 50; font.pixelSize: 11; color: "#888" }
+            }
+
+            Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
+
+            // === 配置持久化 ===
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Item { width: 60; height: 1 }
+                Button {
+                    text: "保存配置"
+                    Layout.fillWidth: true
+                    font.pixelSize: 11
+                    onClicked: backgroundManager.saveProfileForCode(parseInt(txtCode.text))
+                }
+            }
+
+            Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }
+
+            // === 演示 ===
+            RowLayout { Layout.fillWidth: true; spacing: 4
+                Item { width: 60; height: 1 }
+                Button {
+                    text: demoMode ? "■ 停止" : "▶ 演示"
+                    Layout.fillWidth: true
+                    font.pixelSize: 11
+                    onClicked: demoMode ? stopDemo() : startDemo()
+                }
+                CheckBox {
+                    id: chkFast
+                    text: "快速"
+                    checked: true
+                    font.pixelSize: 11
+                    onCheckedChanged: demoSpeed = checked ? 1.0 : 0.17
+                }
             }
 
             Rectangle { height: 1; color: "#ccc"; Layout.fillWidth: true }

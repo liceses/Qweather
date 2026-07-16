@@ -102,6 +102,7 @@ Item {
                 windSpeed: 0.1
                 transitionProgress: transitionCtrl.weatherTP
                 particleLimit: 60
+                exposure: backgroundManager.skyState.exposure
                 visible: backgroundManager.skyState.rainIntensity > 0.001
             }
             SnowLayer {

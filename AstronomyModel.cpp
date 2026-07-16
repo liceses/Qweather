@@ -13,7 +13,9 @@ void AstronomyModel::setLocation(float lat, float lon)
 {
     m_lat = lat;
     m_lon = lon;
-    qDebug() << "[AstronomyModel] setLocation: lat=" << lat << "lon=" << lon;
+    m_lonOffset = qBound(-720, static_cast<int>(lon / 15.0f * 60.0f), 720);
+    qDebug() << "[AstronomyModel] setLocation: lat=" << lat << "lon=" << lon
+             << "offset=" << m_lonOffset << "min";
 }
 
 void AstronomyModel::setSunTimes(const QString &sunrise, const QString &sunset)
@@ -46,10 +48,20 @@ void AstronomyModel::setMoonData(int phaseIcon, float illumination)
 
 void AstronomyModel::update(qint64 nowMsecs)
 {
-    QDateTime dt = QDateTime::fromMSecsSinceEpoch(nowMsecs);
+    QDateTime dt = QDateTime::fromMSecsSinceEpoch(nowMsecs, Qt::UTC);
     m_dayOfYear = dt.date().dayOfYear();
-    int minuteOfDay = dt.time().hour() * 60 + dt.time().minute();
+    int utcMin = dt.time().hour() * 60 + dt.time().minute();
+    int minuteOfDay = utcMin + m_lonOffset;
+    minuteOfDay = ((minuteOfDay % 1440) + 1440) % 1440;
     m_currentMin = minuteOfDay;
+
+    qDebug() << "[AstronomyModel] update:"
+             << "UTC epoch msecs=" << nowMsecs
+             << "dt(time)=" << dt.time()
+             << "dt(spec)=" << dt.timeSpec()
+             << "utcMin=" << utcMin
+             << "lonOffset=" << m_lonOffset
+             << "→ minuteOfDay=" << minuteOfDay;
 
     calcSolarPosition(m_dayOfYear, minuteOfDay);
 
