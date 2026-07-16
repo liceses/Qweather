@@ -223,10 +223,10 @@ ApplicationWindow {
                     }
                 }
 
-                NavButton { icon: "qrc:/icons/squares-four.svg"; label: "仪表盘"; expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 0; onClicked: stack.stateIndex = 0 }
-                NavButton { icon: "qrc:/icons/calendar.svg";     label: "天气预报";   expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 1; onClicked: stack.stateIndex = 1 }
-                NavButton { icon: "qrc:/icons/air-filter.svg";   label: "空气质量";   expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 2; onClicked: stack.stateIndex = 2 }
-                NavButton { icon: "qrc:/icons/sun-horizon.svg";  label: (appSettings && !appSettings.showSolarRadiation) ? "朝夕月相" : "天文"; expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 3; onClicked: stack.stateIndex = 3 }
+                NavButton { icon: "qrc:/icons/squares-four.svg"; label: "仪表盘"; expanded: sidebar.sidebarExpanded; active: root.stateIndex === 0; onClicked: root.stateIndex = 0 }
+                NavButton { icon: "qrc:/icons/calendar.svg";     label: "天气预报";   expanded: sidebar.sidebarExpanded; active: root.stateIndex === 1; onClicked: root.stateIndex = 1 }
+                NavButton { icon: "qrc:/icons/air-filter.svg";   label: "空气质量";   expanded: sidebar.sidebarExpanded; active: root.stateIndex === 2; onClicked: root.stateIndex = 2 }
+                NavButton { icon: "qrc:/icons/sun-horizon.svg";  label: (appSettings && !appSettings.showSolarRadiation) ? "朝夕月相" : "天文"; expanded: sidebar.sidebarExpanded; active: root.stateIndex === 3; onClicked: root.stateIndex = 3 }
 
                 Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; Layout.leftMargin: 8; Layout.rightMargin: 8; color: "#20ffffff" }
 
@@ -253,10 +253,10 @@ ApplicationWindow {
                                     return (root.pinned.length === 0 && index === 0 && n === modelData.id)
                                            ? "城市详情" : n
                                 }
-                                active: stack.stateIndex === 5 && root.focusId === modelData.id
+                                active: root.stateIndex === 5 && root.focusId === modelData.id
                                 onClicked: {
                                     root.promoteCity(modelData.id)
-                                    stack.stateIndex = 5
+                                    root.stateIndex = 5
                                 }
                             }
                         }
@@ -267,23 +267,23 @@ ApplicationWindow {
                             color: "#20ffffff"
                         }
 
-                        NavButton { icon: "qrc:/icons/star.svg"; label: "收藏"; expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 6; onClicked: stack.stateIndex = 6 }
+                        NavButton { icon: "qrc:/icons/star.svg"; label: "收藏"; expanded: sidebar.sidebarExpanded; active: root.stateIndex === 6; onClicked: root.stateIndex = 6 }
                     }
                 }
 
-                NavButton { icon: "qrc:/icons/gear-six.svg"; label: "设置"; expanded: sidebar.sidebarExpanded; active: stack.stateIndex === 4; onClicked: stack.stateIndex = 4 }
+                NavButton { icon: "qrc:/icons/gear-six.svg"; label: "设置"; expanded: sidebar.sidebarExpanded; active: root.stateIndex === 4; onClicked: root.stateIndex = 4 }
             }
         }
 
         // 页面区（交叉淡入淡出）
-        Item {
+        StackLayout {
             id: stack
             Layout.fillWidth: true
             Layout.fillHeight: true
+            currentIndex: root.stateIndex
 
             DashboardPage {
-                anchors.fill: parent
-                opacity: stack.stateIndex === 0 ? 1.0 : 0.0
+                opacity: stack.currentIndex === 0 ? 1.0 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 200 } }
                 cityList: root.cityList
                 focusId: root.focusId
@@ -297,7 +297,7 @@ ApplicationWindow {
                 }
                 onNavigateToDetail: function(cityId) {
                     root.promoteCity(cityId)
-                    stack.stateIndex = 5
+                    root.stateIndex = 5
                 }
                 onCloseRequested: function(cityId) {
                     root.removeCity(cityId)
@@ -305,30 +305,25 @@ ApplicationWindow {
             }
 
             ForecastPage {
-                anchors.fill: parent
-                opacity: stack.stateIndex === 1 ? 1.0 : 0.0
+                opacity: stack.currentIndex === 1 ? 1.0 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 200 } }
             }
             AirQualityPage {
-                anchors.fill: parent
-                opacity: stack.stateIndex === 2 ? 1.0 : 0.0
+                opacity: stack.currentIndex === 2 ? 1.0 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 200 } }
             }
             SolarAstronomyPage {
-                anchors.fill: parent
-                opacity: stack.stateIndex === 3 ? 1.0 : 0.0
+                opacity: stack.currentIndex === 3 ? 1.0 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 200 } }
             }
             SettingsPage {
-                anchors.fill: parent
-                opacity: stack.stateIndex === 4 ? 1.0 : 0.0
+                opacity: stack.currentIndex === 4 ? 1.0 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 200 } }
                 weatherCache: weatherCache
             }
 
             CityDetailPage {
-                anchors.fill: parent
-                opacity: stack.stateIndex === 5 ? 1.0 : 0.0
+                opacity: stack.currentIndex === 5 ? 1.0 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 200 } }
                 favorited: root.cityFavorited
                 onToggleFav: function() {
@@ -344,8 +339,7 @@ ApplicationWindow {
             }
 
             FavoritesPage {
-                anchors.fill: parent
-                opacity: stack.stateIndex === 6 ? 1.0 : 0.0
+                opacity: stack.currentIndex === 6 ? 1.0 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 200 } }
                 id: favPage
                 favorites: root.favorites
@@ -358,7 +352,7 @@ ApplicationWindow {
                 }
                 onCityDoubleClicked: function(cityId) {
                     root.focusId = cityId
-                    stack.stateIndex = 5
+                    root.stateIndex = 5
                 }
             }
         }
