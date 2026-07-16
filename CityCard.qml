@@ -19,6 +19,28 @@ Rectangle {
     property var weatherData: ({})
     signal clicked(string cityId)
     signal doubleClicked(string cityId)
+    signal closeClicked(string cityId)
+
+    // 顶部叉号 — hover 时显示
+    Rectangle {
+        anchors.top: parent.top; anchors.right: parent.right; anchors.margins: 4
+        width: 18; height: 18; radius: 9
+        z: 1
+        color: hoverArea.containsMouse ? "#44ffffff" : "transparent"
+        opacity: hoverArea.containsMouse ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Text {
+            anchors.centerIn: parent
+            text: "\u00d7"; color: "white"; font.pixelSize: 12; font.bold: true
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                clickTimer.stop()
+                card.closeClicked(card.cityId)
+            }
+        }
+    }
 
     // 焦点高亮
     Rectangle {

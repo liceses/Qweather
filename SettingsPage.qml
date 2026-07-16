@@ -87,6 +87,93 @@ Item {
                 }
             }
 
+            // ===== 最大卡片数 =====
+            Item {
+                Layout.fillWidth: true
+                property real margin: Math.max(12, page.width * 0.02)
+                implicitHeight: maxInner.implicitHeight + margin * 2
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 12
+                    color: "#20ffffff"
+                    border.width: 1; border.color: "#30ffffff"
+                }
+
+                RowLayout {
+                    id: maxInner
+                    anchors.fill: parent
+                    anchors.margins: parent.margin
+                    spacing: 8
+
+                    Text {
+                        text: "最大卡片数"
+                        color: "white"
+                        font.pixelSize: Math.max(13, Math.min(16, page.width * 0.018))
+                        Layout.fillWidth: true
+                    }
+
+                    RowLayout {
+                        spacing: 0
+                        Layout.preferredWidth: 100
+
+                        Rectangle {
+                            id: btnMinus
+                            Layout.preferredWidth: 30; Layout.preferredHeight: 30
+                            radius: 8
+                            color: mBtn.containsMouse ? "#40ffffff" : "#20ffffff"
+                            border.width: 1; border.color: "#30ffffff"
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Text {
+                                anchors.centerIn: parent
+                                text: "-"; color: "white"; font.pixelSize: 18; font.bold: true
+                            }
+                            MouseArea {
+                                id: mBtn
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                hoverEnabled: true
+                                onClicked: {
+                                    var v = appSettings.maxCards - 1
+                                    if (v >= 2) appSettings.maxCards = v
+                                }
+                            }
+                        }
+                        Rectangle {
+                            Layout.preferredWidth: 40; Layout.preferredHeight: 30
+                            color: "transparent"
+                            Text {
+                                anchors.centerIn: parent
+                                text: appSettings ? appSettings.maxCards : "4"
+                                color: "white"; font.pixelSize: 16; font.bold: true
+                            }
+                        }
+                        Rectangle {
+                            id: btnPlus
+                            Layout.preferredWidth: 30; Layout.preferredHeight: 30
+                            radius: 8
+                            color: pBtn.containsMouse ? "#40ffffff" : "#20ffffff"
+                            border.width: 1; border.color: "#30ffffff"
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Text {
+                                anchors.centerIn: parent
+                                text: "+"; color: "white"; font.pixelSize: 18; font.bold: true
+                            }
+                            MouseArea {
+                                id: pBtn
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                hoverEnabled: true
+                                onClicked: {
+                                    var v = appSettings.maxCards + 1
+                                    if (v <= 8) appSettings.maxCards = v
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // ===== 太阳辐射开关 =====
             Item {
                 id: solarCard

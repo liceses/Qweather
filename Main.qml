@@ -9,8 +9,8 @@ ApplicationWindow {
     title: "天气"
 
     // ===== 数据 =====
-    property var cityList: []           // 追踪城市 [{name,id}]
-    property int maxCities: 4           // 最多追踪城市数
+    property var cityList: []           // 栈: [0]=focusCity, [1..n]=cards
+    property int maxCards: appSettings ? appSettings.maxCards : 4
     property string focusId: ""
     property var weathers: ({})         // { cityId: {temp,icon,text,...} }
     property var favorites: []          // 收藏城市
@@ -87,6 +87,42 @@ ApplicationWindow {
         return false
     }
 
+    // ===== 栈式 cityList 管理 =====
+    function promoteCity(id, name, lat, lon) {
+        var idx = -1
+        for (var i = 0; i < cityList.length; i++)
+            if (cityList[i].id === id) { idx = i; break }
+        var entry
+        if (idx >= 0) {
+            entry = cityList[idx]; cityList.splice(idx, 1)
+        } else {
+            var c = findCity(id)
+            entry = { name: name || (c ? c.name : id), id: id,
+                      lat: lat || (c ? c.lat || "" : ""),
+                      lon: lon || (c ? c.lon || "" : "") }
+        }
+        cityList = [entry].concat(cityList)
+        if (cityList.length > maxCards + 1)
+            cityList = cityList.slice(0, maxCards + 1)
+        cityList = cityList.slice()
+        focusId = entry.id
+    }
+    function removeCity(id) {
+        var wasFocus = cityList.length > 0 && cityList[0].id === id
+        for (var i = 0; i < cityList.length; i++) {
+            if (cityList[i].id === id) { cityList.splice(i, 1); break }
+        }
+        if (cityList.length === 0) { cityList = []; cityList = cityList.slice(); return }
+        cityList = cityList.slice()
+        if (wasFocus) focusId = cityList[0].id
+    }
+    function addFocus(cityId, optName, optLat, optLon) {
+        promoteCity(cityId, optName, optLat, optLon)
+    }
+
+    // 焦点城市名 — 从栈顶推导
+    property string focusName: cityList.length > 0 ? cityList[0].name : ""
+
     // 侧边栏城市分区 ID — 优先级：固定[0] > 收藏[0] > 历史[0] > 焦点
     readonly property string sidebarCityId: {
         if (pinned.length > 0)     return pinned[0].id
@@ -105,11 +141,10 @@ ApplicationWindow {
             weatherApi.astronomyMoon(focusId, today, focusId)
         }
         if (typeof cityDetailStore === "undefined" || !cityDetailStore) return
-        let c = findCity(focusId)
-        if (c) {
-            cityDetailStore.setCity(c.id, c.name, c.lat || "", c.lon || "")
-            // 同步经纬度到天文模型
-            if (c.lat && c.lon)
+        var top = cityList[0]
+        if (top) {
+            cityDetailStore.setCity(top.id, top.name, top.lat || "", top.lon || "")
+            if (top.lat && top.lon)
                 backgroundManager.setLocation(parseFloat(c.lat), parseFloat(c.lon))
         } else cityDetailStore.setCity("", "", "", "")
     }
@@ -231,7 +266,7 @@ ApplicationWindow {
                                 }
                                 active: stack.currentIndex === 5 && root.focusId === modelData.id
                                 onClicked: {
-                                    root.focusId = modelData.id
+                                    root.promoteCity(modelData.id)
                                     stack.currentIndex = 5
                                 }
                             }
@@ -262,6 +297,7 @@ ApplicationWindow {
             DashboardPage {
                 cityList: root.cityList
                 focusId: root.focusId
+                focusName: root.focusName
                 weathers: root.weathers
                 onCitySelected: function(cityId, cityName, lat, lon) {
                     root.addFocus(cityId, cityName, lat, lon)
@@ -270,8 +306,11 @@ ApplicationWindow {
                     root.addFocus(cityId)
                 }
                 onNavigateToDetail: function(cityId) {
-                    root.focusId = cityId
+                    root.promoteCity(cityId)
                     stack.currentIndex = 5
+                }
+                onCloseRequested: function(cityId) {
+                    root.removeCity(cityId)
                 }
             }
 
@@ -304,7 +343,7 @@ ApplicationWindow {
                 favorites: root.favorites
                 pinned: root.pinned
                 weathers: root.weathers
-                onCityClicked: function(cityId) { root.addFocus(cityId) }
+                onCityClicked: function(cityId) { root.promoteCity(cityId) }
                 onPinToggled: function(cityObj) {
                     if (root.isPinned(cityObj.id)) root.unpinCity(cityObj.id)
                     else root.pinCity(cityObj)
@@ -341,40 +380,12 @@ ApplicationWindow {
         saveHistory()
     }
 
-    function addFocus(cityId, optName, optLat, optLon) {
-        // 已在列表中 → 只切换焦点
-        for (let i = 0; i < cityList.length; i++) {
-            if (cityList[i].id === cityId) {
-                focusId = cityId
-                weatherApi.weatherNow(cityId)
-                return
-            }
-        }
-        // 从各列表找城市信息，优先用传入参数
-        let c = findCity(cityId)
-        let name = c ? c.name : (optName || cityId)
-        let lat = c ? (c.lat || "") : (optLat || "")
-        let lon = c ? (c.lon || "") : (optLon || "")
-        let entry = { name: name, id: cityId, lat: lat, lon: lon }
-        if (cityList.length < maxCities) {
-            cityList.push(entry)
-        } else {
-            for (let k = 0; k < cityList.length; k++) {
-                if (cityList[k].id === focusId) {
-                    cityList[k] = entry; break
-                }
-            }
-        }
-        cityList = cityList.slice()
-        focusId = cityId
-        weatherApi.weatherNow(cityId)
-    }
 
     // ===== 信号 =====
     Connections {
         target: weatherApi
         function onCityTopReady(cities) {
-            let need = maxCities - cityList.length
+            let need = maxCards + 1 - cityList.length
             for (let i = 0; i < Math.min(cities.length, need); i++) {
                 let c = cities[i]
                 let dup = false
@@ -386,8 +397,10 @@ ApplicationWindow {
                     weatherApi.weatherNow(c.id)
                 }
             }
-            if (!focusId && cityList.length > 0) focusId = cityList[0].id
-            cityList = cityList.slice()
+            if (!focusId && cityList.length > 0) {
+                focusId = cityList[0].id
+                cityList = cityList.slice();
+            }
         }
         function onWeatherNowReady(now) {
             let id = now._location
@@ -416,7 +429,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         loadSettings()
-        weatherApi.topCity("cn", 4)
+        weatherApi.topCity("cn", maxCards + 1)
         // 收藏城市也需要获取天气数据，否则打开收藏页面显示 "--"
         for (let i = 0; i < favorites.length; i++) {
             weatherApi.weatherNow(favorites[i].id)

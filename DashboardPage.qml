@@ -9,21 +9,17 @@ Item {
     // ===== 输入属性（Main.qml 绑定注入） =====
     property var cityList: []
     property string focusId: ""
+    property string focusName: ""
     property var weathers: ({})
 
     // ===== 信号（上报给 Main.qml 处理） =====
     signal citySelected(string cityId, string cityName, string lat, string lon)
     signal focusRequested(string cityId)
     signal navigateToDetail(string cityId)
+    signal closeRequested(string cityId)
 
     // ===== 辅助 =====
-    function cityName(id) {
-        let list = cityList
-        for (let i = 0; i < list.length; i++) {
-            if (list[i].id === id) return list[i].name
-        }
-        return root.cityName(id)  // Fallback to Main.qml which searches all arrays
-    }
+    // cityName 由 Main.qml 统一管理，通过 focusName 属性传入
 
     ColumnLayout {
         anchors.centerIn: parent
@@ -40,7 +36,7 @@ Item {
 
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: page.cityName(page.focusId) || "搜索城市开始"
+            text: page.focusName || "搜索城市开始"
             color: "white"; font.pixelSize: 48; font.bold: true
         }
 
@@ -58,7 +54,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             spacing: 12
             Repeater {
-                model: page.cityList
+                model: page.cityList.slice(1)
                 delegate: CityCard {
                     cityName: modelData.name
                     cityId: modelData.id
@@ -66,6 +62,7 @@ Item {
                     weatherData: page.weathers[modelData.id] || ({})
                     onClicked: function(cityId) { page.focusRequested(cityId) }
                     onDoubleClicked: function(cityId) { page.navigateToDetail(cityId) }
+                    onCloseClicked: function(cityId) { page.closeRequested(cityId) }
                 }
             }
         }

@@ -9,6 +9,7 @@ class AppSettings : public QObject {
 
     Q_PROPERTY(bool showSolarRadiation READ showSolarRadiation WRITE setShowSolarRadiation NOTIFY showSolarRadiationChanged)
     Q_PROPERTY(bool darkMode READ darkMode WRITE setDarkMode NOTIFY darkModeChanged)
+    Q_PROPERTY(int maxCards READ maxCards WRITE setMaxCards NOTIFY maxCardsChanged)
 
     // 主题颜色令牌（由 darkMode 决定，只读）
     Q_PROPERTY(QString iconColor      READ iconColor      NOTIFY darkModeChanged)
@@ -32,6 +33,9 @@ public:
     bool darkMode() const { return m_darkMode; }
     void setDarkMode(bool dark);
 
+    int maxCards() const { return m_maxCards; }
+    void setMaxCards(int n);
+
     // 暗色模式颜色
     QString iconColor() const      { return m_darkMode ? "#ffffff" : "#1a1a1a"; }
     QString iconInactive() const   { return m_darkMode ? "#ccffffff" : "#808080"; }
@@ -48,10 +52,12 @@ public:
 signals:
     void showSolarRadiationChanged();
     void darkModeChanged();
+    void maxCardsChanged();
 
 private:
     bool m_showSolarRadiation = true;
     bool m_darkMode = true;
+    int m_maxCards = 4;
 };
 
 #endif
