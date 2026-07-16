@@ -397,7 +397,7 @@ ApplicationWindow {
 
             // 转发到动态背景系统
             var iconCode = parseInt(now.icon)
-            var isDay = iconCode < 150  // 150+ 为夜间码
+            var isDay = !(iconCode >= 150 && iconCode <= 199)
             backgroundManager.updateWeather(iconCode, isDay)
         }
         function onAstronomySunReady(cityId, result) {
@@ -420,6 +420,14 @@ ApplicationWindow {
         // 收藏城市也需要获取天气数据，否则打开收藏页面显示 "--"
         for (let i = 0; i < favorites.length; i++) {
             weatherApi.weatherNow(favorites[i].id)
+        }
+    }
+
+    // 渲染泵：强制 Qt Quick 持续渲染，防止鼠标静止时帧率下降
+    Item {
+        NumberAnimation on opacity {
+            from: 0.999; to: 1.0; duration: 100
+            loops: Animation.Infinite
         }
     }
 }

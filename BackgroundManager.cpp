@@ -226,6 +226,8 @@ void BackgroundManager::onAstronomyTimer()
     QVariantMap ch = buildAstronomyChanges();
     QVariantMap atmos = buildAtmosphereChanges();
     ch.insert(atmos);
+    if (ch.contains("exposure"))
+        ch["exposure"] = ch["exposure"].toDouble() * m_lastWeatherScale;
     qDebug() << "[BackgroundManager] astronomyTimer tick";
     commitSkyState(ch);
 }
