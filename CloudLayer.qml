@@ -12,6 +12,7 @@ ShaderEffect {
     property int variant: 1
     property real windSpeed: 0.1
     property real transitionProgress: 0.0
+    property real exposure: 1.0
 
     fragmentShader: "qrc:/shaders/cloud.frag.qsb"
 

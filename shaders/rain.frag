@@ -32,7 +32,7 @@ void main() {
         return;
     }
 
-    vec3 rainColor = vec3(0.55, 0.65, 0.85);
+    vec3 rainColor = vec3(0.72, 0.74, 0.78);
     float accum = 0.0;
 
     // 景深：下部更亮
@@ -45,11 +45,11 @@ void main() {
     tuv.x += tilt * (0.5 - tuv.y);        // 风向倾斜
 
     // 转换到 Shadertoy 坐标系 [-0.5, 0.5]
-    vec2 suv = (tuv - 0.5) * vec2(1.6, 1.0);
+    vec2 suv = (tuv - 0.5) * vec2(2.0, 1.0);
 
     // 多层雨（参考 Shadertoy: 10 层）
-    for (float l = 0.0; l < 8.0; l++) {
-        float scale = 8.0 + l * 0.8;
+    for (float l = 0.0; l < 12.0; l++) {
+        float scale = 8.0 + l * 0.7;
         vec2 layerUV = suv * scale;
 
         // 仅 X 方向网格
@@ -66,12 +66,14 @@ void main() {
         float n_hOff = 0.6 * (n_cellOff - 0.5);
 
         // 下落进度
-        float fallProg     = fract(time * (0.4 + 0.3 * cellOff) + cellOff);
-        float n_fallProg   = fract(time * (0.4 + 0.3 * n_cellOff) + n_cellOff);
+        float dropSpeed = 0.8 + 0.7 * cellOff;
+        float fallProg     = fract(time * dropSpeed + cellOff);
+        float n_fallProg   = fract(time * (0.8 + 0.7 * n_cellOff) + n_cellOff);
 
-        // 雨丝在 Y 方向的位置
-        float fallHeight = 2.0;
-        float rainfallBottom = -1.5;
+        // 雨丝在 Y 方向的位置（适配当前层的坐标范围）
+        float viewHalf = scale * 0.5;
+        float fallHeight = viewHalf * 0.98;
+        float rainfallBottom = -viewHalf * 0.98;
         float yVal   = fallHeight - (fallHeight - rainfallBottom) * fallProg;
         float n_yVal = fallHeight - (fallHeight - rainfallBottom) * n_fallProg;
 
@@ -90,7 +92,7 @@ void main() {
 
         float drop = min(drop1, drop2);
         float w = 0.003;
-        float dropAlpha = smoothstep(w, -w, drop) * 0.15 * activeIntensity;
+        float dropAlpha = smoothstep(w, -w, drop) * 0.25 * activeIntensity;
         accum += dropAlpha;
 
         // 落地涟漪：雨丝到底部时扩散

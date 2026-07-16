@@ -83,6 +83,7 @@ Item {
             time: globalClock.elapsed
             cloudCoverage: backgroundManager.skyState.cloudCoverage
             variant: backgroundManager.skyState.cloudVariant
+            exposure: backgroundManager.skyState.exposure
             windSpeed: 0.1
             transitionProgress: transitionCtrl.cloudTP
         }

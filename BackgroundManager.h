@@ -71,6 +71,7 @@ private:
     AstronomyModel m_astronomy;
     TransitionController *m_transitionCtrl = nullptr;
     QTimer m_astronomyTimer;
+    float m_lastWeatherScale = 1.0f;
 
     // 辅助: 从当前 astronomy 状态构造天文+大气 changes
     QVariantMap buildAstronomyChanges();

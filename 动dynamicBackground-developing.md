@@ -89,5 +89,8 @@
 3. **TransitionController 防抖未实现** — `m_transitionId` 机制标注为"先不做"
 4. **`weatherVariant` 字段未在 SkyState 中暴露** — `WeatherLayer.qml` 分派器需要 variant 信息来选择粒子变体（雷暴/冰雹/雨夹雪等）
 
+settings:
+  - 黑夜模式只控制文字和icon颜色 在深浅之间切换,字体深浅具体颜色值待定
 
-虽然可以正常显示黑夜的图标了,但是图标和天气码还是不对应啊
+rain.frag : 
+  - 雨强度小的时候 , 雨丝不明显 ,发现现在版本雨强度只调节雨丝可见度 ,而非密度,速度等 ; 雨强度小,可见度适当小,主要是密度和下落速度减小一些

@@ -121,6 +121,7 @@ void BackgroundManager::updateWeather(int iconCode, bool isDay)
         fogDim = 1.0f - smoothstep(0.0f, 1.0f, p.fogIntensity) * 0.65f;
     float weatherScale = qMax(0.15f, cloudDim * rainDim * snowDim * fogDim);
     ch["exposure"] = baseExp * weatherScale;
+    m_lastWeatherScale = weatherScale;
 
     qDebug() << "[BackgroundManager] updateWeather: code=" << iconCode
              << "isDay=" << isDay
@@ -141,6 +142,8 @@ void BackgroundManager::updateSunTimes(const QString &sunrise, const QString &su
     QVariantMap ch = buildAstronomyChanges();
     QVariantMap atmos = buildAtmosphereChanges();
     ch.insert(atmos);
+    if (ch.contains("exposure"))
+        ch["exposure"] = ch["exposure"].toDouble() * m_lastWeatherScale;
     commitSkyState(ch);
 }
 
@@ -315,15 +318,6 @@ QVariantMap BackgroundManager::buildAtmosphereChanges()
         exposure = 0.3f + nightBlend * 0.3f;
         starVis = (1.0f - nightBlend) * 0.8f + moonFactor * 0.2f;
     }
-
-    // ── 天气调制曝光 ──
-    float weatherMod = 0.0f;
-    if (m_skyState.cloudCoverage < 0.2f && m_skyState.rainIntensity < 0.01f && m_skyState.snowIntensity < 0.01f) {
-        weatherMod = 0.2f;
-    } else if (m_skyState.cloudCoverage > 0.7f || m_skyState.rainIntensity > 0.3f || m_skyState.snowIntensity > 0.3f) {
-        weatherMod = -0.15f;
-    }
-    exposure = qMax(0.1f, exposure + weatherMod);
 
     QVariantMap ch;
     ch["zenithColor"]    = zenith;
