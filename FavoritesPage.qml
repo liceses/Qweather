@@ -3,13 +3,12 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 // 收藏页 —— 收藏城市卡片列表，支持固定到侧边栏
-// 外部注入：favorites, pinned, weathers, onCityClicked, onPinToggled, onCityDoubleClicked
 Item {
     id: page
 
-    property var favorites: []          // [{name, id, lat, lon}]
-    property var pinned: []             // 已固定城市（用于判断状态）
-    property var weathers: ({})         // { cityId: {temp, icon, text} }
+    property var favorites: []
+    property var pinned: []
+    property var weathers: ({})
 
     signal cityClicked(string cityId)
     signal cityDoubleClicked(string cityId)
@@ -28,7 +27,6 @@ Item {
             width: parent.width
             spacing: 12
 
-            // 标题
             Text {
                 text: "收藏城市"
                 color: "white"
@@ -37,7 +35,6 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
             }
 
-            // 空状态
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: "暂无收藏城市\n在城市详情页点击星标即可收藏"
@@ -49,7 +46,6 @@ Item {
                 Layout.topMargin: 60
             }
 
-            // 收藏列表
             Repeater {
                 model: page.favorites
                 delegate: Rectangle {
@@ -78,24 +74,25 @@ Item {
                         anchors.margins: 12
                         spacing: 12
 
-                        // 天气图标
                         WeatherIcon {
+                            Layout.preferredWidth: 36
+                            Layout.preferredHeight: 36
+                            Layout.alignment: Qt.AlignVCenter
                             code: card.wdata.icon || "100"
                             iconSize: 36
-                            Layout.alignment: Qt.AlignVCenter
                         }
 
-                        // 城市信息
                         ColumnLayout {
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignVCenter
                             spacing: 2
-
                             Text {
                                 text: modelData.name || modelData.id
                                 color: "white"
                                 font.pixelSize: 16
                                 font.bold: true
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
                             }
                             Text {
                                 text: card.wdata.text || ""
@@ -105,31 +102,29 @@ Item {
                             }
                         }
 
-                        // 温度
                         Text {
-                            text: card.wdata.temp ? card.wdata.temp + "°" : "--°"
+                            Layout.preferredWidth: 50
+                            Layout.alignment: Qt.AlignVCenter
+                            horizontalAlignment: Text.AlignRight
+                            text: card.wdata.temp ? card.wdata.temp + "\u00b0" : "--\u00b0"
                             color: "white"
                             font.pixelSize: 22
                             font.bold: true
-                            Layout.alignment: Qt.AlignVCenter
                         }
 
-                        // 固定按钮
                         Rectangle {
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 32
                             Layout.alignment: Qt.AlignVCenter
-                            width: 32; height: 32
                             radius: 8
                             color: pinMouse.containsMouse ? "#35000000" : "transparent"
-
                             Behavior on color { ColorAnimation { duration: 150 } }
-
                             Text {
                                 anchors.centerIn: parent
-                                text: card.isPinned ? "📌" : "📍"
+                                text: card.isPinned ? "\uD83D\uDCCC" : "\uD83D\uDCCD"
                                 font.pixelSize: 14
                                 color: card.isPinned ? "#4caf50" : "#80ffffff"
                             }
-
                             MouseArea {
                                 id: pinMouse
                                 anchors.fill: parent
@@ -140,7 +135,6 @@ Item {
                         }
                     }
 
-                    // 点击/双击
                     property var _lastClick: 0
                     Timer {
                         id: clickTimer
@@ -156,7 +150,6 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        // 让 pin 按钮的 MouseArea 优先
                         z: -1
 
                         onClicked: function(mouse) {
@@ -174,7 +167,6 @@ Item {
                 }
             }
 
-            // 底部留白
             Item { Layout.preferredHeight: 16; visible: page.favorites.length > 0 }
         }
     }

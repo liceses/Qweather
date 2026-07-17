@@ -351,7 +351,7 @@ ApplicationWindow {
                     else root.pinCity(cityObj)
                 }
                 onCityDoubleClicked: function(cityId) {
-                    root.focusId = cityId
+                    root.promoteCity(cityId)
                     root.stateIndex = 5
                 }
             }

@@ -159,6 +159,17 @@ void BackgroundManager::setLocation(float lat, float lon)
 
     m_lerpTick = 0;
     m_lerpTimer.start();
+
+    // 立即用当前数据提交天空色，等 updateSunTimes 回来再精修
+    QVariantMap atm = buildAtmosphereChanges();
+    QVariantMap ch;
+    ch["zenithColor"]   = atm["zenithColor"];
+    ch["horizonColor"]  = atm["horizonColor"];
+    ch["ambientColor"]  = atm["ambientColor"];
+    ch["exposure"]      = atm["exposure"];
+    ch["twilightFactor"] = atm["twilightFactor"];
+    ch["starVisibility"] = atm["starVisibility"];
+    commitSkyState(ch);
 }
 
 void BackgroundManager::setParallax(float x, float y)
