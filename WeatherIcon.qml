@@ -1,15 +1,15 @@
+// WeatherIcon.qml — QWeather icon component mapping code → SVG
+// 和风天气图标组件 — 根据 icon code 一一映射对应 SVG（不再依赖 isDay 做昼夜转换）
+// Mapping reference: https://dev.qweather.com/docs/resource/icons/
 import QtQuick
 import QtQuick.Effects
 
-// 和风天气图标组件 —— 根据 icon code 显示对应 SVG
-// 用法：WeatherIcon { code: "100"; iconSize: 48 }
-// 图标映射基于 https://dev.qweather.com/docs/resource/icons/
-// 一一映射：code → SVG，不再依赖 isDay 做昼夜转换
 Image {
     id: root
+    // [EN] Weather code, icon pixel size, day flag (kept for compatibility) / [CN] 天气码、图标像素尺寸、昼夜标识（保留兼容性）
     property string code: "100"
     property int iconSize: 48
-    property bool isDay: true  // 保留兼容性，不影响图标选择
+    property bool isDay: true
 
     width: iconSize
     height: iconSize
@@ -17,6 +17,7 @@ Image {
     sourceSize.height: iconSize
     fillMode: Image.PreserveAspectFit
 
+    // [EN] Theme-aware tint color / [CN] 主题色（用于图标着色）
     readonly property bool _dark: appSettings ? appSettings.darkMode : true
 
     layer.enabled: true
@@ -26,7 +27,7 @@ Image {
         colorizationColor: root._dark ? "#1a1a1a" : "#ccffffff"
     }
 
-    // 一一映射：天气码 → SVG 文件名
+    // [EN] One-to-one mapping: weather code → SVG filename / [CN] 一一映射：天气码 → SVG 文件名
     source: {
         let c = parseInt(root.code)
         if (isNaN(c)) return ""

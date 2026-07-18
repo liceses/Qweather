@@ -1,9 +1,9 @@
+// CityDetailPage.qml — Scrolling detail page showing all available city info
+// 城市详情页 — 滚动卡片堆叠展示该城市所有可获取信息，绑定 cityDetailStore.detail
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-// 城市详情页 —— 滚动卡片堆叠展示该城市所有可获取信息
-// 绑定 cityDetailStore.detail，各卡片按数据到达依次出现
 Flickable {
     id: page
     clip: true
@@ -11,6 +11,7 @@ Flickable {
     boundsBehavior: Flickable.StopAtBounds
     ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
+    // [EN] City detail data, favorite state, toggle callback / [CN] 城市详情数据、收藏状态、切换回调
     property var detail: cityDetailStore.detail || ({})
     property bool favorited: false
     property var onToggleFav: function() {}
@@ -21,7 +22,7 @@ Flickable {
         padding: 16
         spacing: 12
 
-        // ========== 城市名大标题 + 收藏星标 ==========
+        // ========== City title + favorite star / 城市名大标题 + 收藏星标 ==========
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 8
@@ -35,7 +36,7 @@ Flickable {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            // 收藏星标
+            // [EN] Favorite star toggle / [CN] 收藏星标切换按钮
             Rectangle {
                 id: starBtn
                 anchors.verticalCenter: parent.verticalCenter
@@ -62,7 +63,7 @@ Flickable {
             }
         }
 
-        // 无城市提示
+        // [EN] No-city placeholder / [CN] 未选择城市时的提示
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: "请从仪表盘双击城市卡片，或在侧边栏选择城市"
@@ -71,7 +72,7 @@ Flickable {
             visible: !detail.cityName
         }
 
-        // ===== 卡片1: 实时天气 =====
+        // ===== Card 1: Current weather / 卡片1：实时天气 =====
         Rectangle {
             id: nowCard
             width: parent.width - parent.padding * 2
@@ -123,7 +124,7 @@ Flickable {
             }
         }
 
-        // ===== 卡片2: 空气质量 =====
+        // ===== Card 2: Air quality / 卡片2：空气质量 =====
         Rectangle {
             id: airCard
             width: parent.width - parent.padding * 2
@@ -200,7 +201,7 @@ Flickable {
             }
         }
 
-        // ===== 卡片3: 逐日预报 =====
+        // ===== Card 3: Daily forecast / 卡片3：逐日预报 =====
         Rectangle {
             id: dailyCard
             width: parent.width - parent.padding * 2
@@ -256,7 +257,7 @@ Flickable {
             }
         }
 
-        // ===== 卡片4: 逐小时预报 =====
+        // ===== Card 4: Hourly forecast / 卡片4：逐小时预报 =====
         Rectangle {
             id: hourlyCard
             width: parent.width - parent.padding * 2
@@ -313,7 +314,7 @@ Flickable {
             }
         }
 
-        // ===== 卡片5: 天气指数 =====
+        // ===== Card 5: Weather indices / 卡片5：天气指数 =====
         Rectangle {
             id: indicesCard
             width: parent.width - parent.padding * 2
@@ -364,7 +365,7 @@ Flickable {
             }
         }
 
-        // ===== 卡片6: 天气预警 =====
+        // ===== Card 6: Weather warnings / 卡片6：天气预警 =====
         Rectangle {
             id: warningCard
             width: parent.width - parent.padding * 2
@@ -424,7 +425,7 @@ Flickable {
             }
         }
 
-        // ===== 卡片7: 天文 —— 日出日落 + 月相 =====
+        // ===== Card 7: Astronomy — sunrise/sunset + moon / 卡片7：天文 — 日出日落 + 月相 =====
         Rectangle {
             id: astroCard
             width: parent.width - parent.padding * 2
@@ -485,7 +486,7 @@ Flickable {
             }
         }
 
-        // ===== 卡片8: 太阳辐射 =====
+        // ===== Card 8: Solar radiation / 卡片8：太阳辐射 =====
         Rectangle {
             id: solarCard
             width: parent.width - parent.padding * 2
@@ -555,7 +556,7 @@ Flickable {
             }
         }
 
-        // ===== 卡片9: 分钟降水 =====
+        // ===== Card 9: Minutely precipitation / 卡片9：分钟降水 =====
         Rectangle {
             id: minutelyCard
             width: parent.width - parent.padding * 2
@@ -612,11 +613,11 @@ Flickable {
             }
         }
 
-        // 底部留白
+        // [EN] Bottom spacing / [CN] 底部留白
         Item { width: 1; height: 16 }
     }
 
-    // ===== 辅助组件: 详情小标签 =====
+    // ===== Helper component: detail chip / 辅助组件：详情小标签 =====
     component DetailChip: Rectangle {
         property string label: ""
         property string value: ""

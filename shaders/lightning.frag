@@ -1,6 +1,6 @@
 #version 450
 
-// LightningLayer ¡ª È«ÆÁ¼äÐªÉÁµçÉÁË¸
+// [LightningLayer] â€” Fullscreen intermittent lightning flash / å…¨å±é—´æ­‡é—ªç”µé—ªçƒ
 layout(std140, binding=0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
@@ -17,23 +17,23 @@ void main() {
         return;
     }
 
-    // Ã¿ 3 ÃëÒ»¸ö epoch£¬ÓÃ hash ¾ö¶¨ÊÇ·ñÉÁ¹â
+    // [Every 3s is one epoch; hash determines if lightning strikes] / æ¯ 3 ç§’ä¸€ä¸ª epochï¼Œç”¨ hash åˆ¤æ–­æ˜¯å¦è§¦å‘é—ªç”µ
     float epoch = floor(time / 3.0);
-    float epochTime = fract(time / 3.0);  // 0~1
+    float epochTime = fract(time / 3.0);  // [0~1 within epoch] / epoch å†…è¿›åº¦ 0~1
 
-    // hash ¾ö¶¨´¥·¢Ê±¿Ì
+    // [Hash-based random trigger time within epoch] / åŸºäºŽ hash çš„éšæœºè§¦å‘æ—¶é—´
     float h = fract(sin(epoch * 127.1 + 311.7) * 43758.5453);
-    float triggerTime = h;  // 0~1£¬Óë epochTime ¶ÔÆë
+    float triggerTime = h;  // [0~1, compared against epochTime] / 0~1ï¼Œä¸Ž epochTime æ¯”è¾ƒ
 
     float flash = 0.0;
 
-    // µÚÒ»ÉÁ
+    // [First flash] / ç¬¬ä¸€æ¬¡é—ªçƒ
     float dt = epochTime - triggerTime;
     if (dt > 0.0 && dt < 0.15) {
         flash = exp(-dt * 30.0);
     }
 
-    // µÚ¶þÉÁ (200ms ºó£¬°´ epochTime ¹éÒ»»¯)
+    // [Second flash (200ms later, relative to one epoch)] / ç¬¬äºŒæ¬¡é—ªçƒï¼ˆ200ms åŽï¼Œç›¸å¯¹äºŽä¸€ä¸ª epochï¼‰
     float dt2 = epochTime - (triggerTime + 0.2 / 3.0);
     if (dt2 > 0.0 && dt2 < 0.1) {
         flash = max(flash, exp(-dt2 * 40.0));

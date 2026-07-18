@@ -5,21 +5,24 @@
 #include <QDateTime>
 #include <QDebug>
 
+// WeatherCache constructor: initialize database / 构造函数：初始化数据库
 WeatherCache::WeatherCache(QObject *parent)
     : QObject(parent)
 {
     initDb();
 }
 
+// Destructor: close database / 析构函数：关闭数据库
 WeatherCache::~WeatherCache()
 {
     if (m_db.isOpen()) m_db.close();
 }
 
+// Initialize SQLite database for caching / 初始化 SQLite 缓存数据库
 void WeatherCache::initDb()
 {
     m_db = QSqlDatabase::addDatabase("QSQLITE");
-    // 绿色版：数据库与 exe 同目录，即删即走不留痕迹
+    // Portable: db sits next to the executable, delete to wipe / 绿色版：数据库与exe同目录，即删即走
     QString path = QCoreApplication::applicationDirPath() + "/weather_cache.db";
     m_db.setDatabaseName(path);
 
@@ -28,6 +31,7 @@ void WeatherCache::initDb()
         return;
     }
 
+    // Create cache table if not exists / 创建缓存表
     QSqlQuery q(m_db);
     q.exec("CREATE TABLE IF NOT EXISTS cache ("
            "  k TEXT PRIMARY KEY,"
@@ -36,6 +40,7 @@ void WeatherCache::initDb()
            ")");
 }
 
+// Get cached value with TTL check / 获取缓存值并检查TTL过期
 QString WeatherCache::get(const QString &key, int ttlSeconds)
 {
     QSqlQuery q(m_db);
@@ -46,7 +51,7 @@ QString WeatherCache::get(const QString &key, int ttlSeconds)
     qint64 ts = q.value(1).toLongLong();
     qint64 now = QDateTime::currentSecsSinceEpoch();
     if (now - ts > ttlSeconds) {
-        // 过期，删掉
+        // Expired, delete entry / 过期，删除
         QSqlQuery del(m_db);
         del.prepare("DELETE FROM cache WHERE k = ?");
         del.addBindValue(key);
@@ -56,6 +61,7 @@ QString WeatherCache::get(const QString &key, int ttlSeconds)
     return q.value(0).toString();
 }
 
+// Set cached value with current timestamp / 设置缓存值并记录时间戳
 void WeatherCache::set(const QString &key, const QString &json)
 {
     QSqlQuery q(m_db);
@@ -67,6 +73,7 @@ void WeatherCache::set(const QString &key, const QString &json)
         qWarning() << "WeatherCache: 写入失败" << q.lastError().text();
 }
 
+// Remove entries older than ttl / 移除超过TTL的过期条目
 void WeatherCache::cleanExpired(int ttlSeconds)
 {
     qint64 cutoff = QDateTime::currentSecsSinceEpoch() - ttlSeconds;
@@ -76,12 +83,14 @@ void WeatherCache::cleanExpired(int ttlSeconds)
     q.exec();
 }
 
+// Clear all cached data / 清空所有缓存数据
 void WeatherCache::clearAll()
 {
     QSqlQuery q(m_db);
     q.exec("DELETE FROM cache");
 }
 
+// Save (upsert) a key-value pair / 保存（插入或替换）键值对
 void WeatherCache::save(const QString &key, const QString &value)
 {
     QSqlQuery q(m_db);
@@ -92,6 +101,7 @@ void WeatherCache::save(const QString &key, const QString &value)
     q.exec();
 }
 
+// Load value by key (no TTL check) / 根据键加载值（无TTL检查）
 QString WeatherCache::load(const QString &key)
 {
     QSqlQuery q(m_db);

@@ -1,18 +1,17 @@
 import QtQuick
 
-// WeatherBackground — Layer 栈容器 + 视差
-// 由 C++ TransitionController 控制各 Layer 的 active 状态
+// [WeatherBackground] Layer stack container + parallax / Layer 栈容器 + 视差
+// Active states of each layer are controlled by C++ TransitionController / 由 C++ TransitionController 控制各 Layer 的 active 状态
 Item {
     id: bgRoot
     anchors.fill: parent
 
-    // ===== 视差 =====
-    // 鼠标位置由 Main.qml 中的父级 MouseArea 驱动，见 Main.qml
+    // [Parallax offset driven by parent MouseArea in Main.qml] / 视差偏移，由 Main.qml 中的 MouseArea 驱动
     property double parallaxX: 0.0
     property double parallaxY: 0.0
 
-    // ===== Layer 栈 (z-ordered) =====
-    // SkyLayer + AtmosphereLayer: 始终渲染
+    // [Layer stack — z-ordered bottom to top] / Layer 栈（从下到上按 z 排序）
+    // [SkyLayer + AtmosphereLayer are always rendered] / SkyLayer + AtmosphereLayer 始终渲染
     SkyLayer {
         z: 0
         time: globalClock.elapsed
@@ -42,7 +41,7 @@ Item {
         twilightFactor: backgroundManager.skyState.twilightFactor
     }
 
-    // 条件 Layer: 由 TransitionController 控制 active
+    // [Conditional layers — active state controlled by TransitionController] / 条件 Layer，由 TransitionController 控制 active
     Loader {
         z: 20
         anchors.fill: parent
@@ -76,7 +75,7 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
     }
 
-    // Layer 组件定义
+    // [Layer component definitions] / Layer 组件定义
     Component {
         id: cloudComp
         CloudLayer {
@@ -92,8 +91,8 @@ Item {
     Component {
         id: weatherComp
         Item {
-            // 包含 Rain 和 Snow，用一个 ShaderEffect
-            // 由于 A 和 B 不能同时显示，分开两个 Loader 但共享 active 信号
+            // [Contains both Rain and Snow, using one ShaderEffect each] / 包含 Rain 和 Snow，各自使用 ShaderEffect
+            // [Rain and snow are mutually exclusive; use separate Loaders sharing the same active signal] / 雨和雪互斥显示，分开两个 Loader 但共享 active 信号
             RainLayer {
                 anchors.fill: parent
                 time: globalClock.elapsed
@@ -137,7 +136,7 @@ Item {
         }
     }
 
-    // 验证输出
+    // [Verify initialization] / 验证初始化输出
     Component.onCompleted: {
         console.log("[WeatherBackground] initialized, layers ready")
     }

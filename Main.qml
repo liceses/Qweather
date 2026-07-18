@@ -1,3 +1,5 @@
+// Main.qml — Root application window with sidebar navigation, weather data management, and city stack
+// 主应用窗口 — 侧边栏导航、天气数据管理、城市栈列表
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -8,16 +10,16 @@ ApplicationWindow {
     visible: true
     title: "天气"
 
-    // ===== 数据 =====
-    property var cityList: []           // 栈: [0]=focusCity, [1..n]=cards
+    // ===== Data / 核心数据 =====
+    property var cityList: []           // [EN] Stack: [0]=focusCity, [1..n]=cards / [CN] 城市栈：[0]焦点城市，[1..n]卡片
     property int maxCards: appSettings ? appSettings.maxCards : 4
-    property string focusId: ""
-    property var weathers: ({})         // { cityId: {temp,icon,text,...} }
-    property var favorites: []          // 收藏城市
-    property var pinned: []             // 侧边栏固定城市
-    property var history: []            // 浏览历史（最新在前）
+    property string focusId: ""         // [EN] Currently focused city ID / [CN] 当前焦点城市 ID
+    property var weathers: ({})         // [EN] { cityId: {temp,icon,text,...} } / [CN] 天气数据缓存
+    property var favorites: []          // [EN] Favorite cities / [CN] 收藏城市
+    property var pinned: []             // [EN] Sidebar-pinned cities / [CN] 侧边栏固定城市
+    property var history: []            // [EN] Browsing history (newest first) / [CN] 浏览历史（最新在前）
 
-    // ===== 持久化 =====
+    // ===== Persistence / 持久化 =====
     function loadSettings() {
         let favJson = weatherCache.load("fav_cities")
         let pinJson = weatherCache.load("pin_cities")
@@ -30,6 +32,7 @@ ApplicationWindow {
     function savePinned()    { weatherCache.save("pin_cities", JSON.stringify(pinned)) }
     function saveHistory()   { weatherCache.save("hist_cities", JSON.stringify(history)) }
 
+    // [EN] Toggle a city's favorite status, return new state / [CN] 切换城市收藏状态，返回新状态
     function toggleFavorite(cityObj) {
         for (let i = 0; i < favorites.length; i++) {
             if (favorites[i].id === cityObj.id) {
@@ -44,28 +47,33 @@ ApplicationWindow {
         weatherApi.weatherNow(cityObj.id)
         return true
     }
+    // [EN] Check if a city is favorited / [CN] 检查城市是否已收藏
     function isFavorite(id) {
         for (let i = 0; i < favorites.length; i++)
             if (favorites[i].id === id) return true
         return false
     }
 
+    // [EN] Pin a city to the sidebar / [CN] 固定城市到侧边栏
     function pinCity(cityObj) {
         for (let i = 0; i < pinned.length; i++)
             if (pinned[i].id === cityObj.id) return
         pinned.push(cityObj)
         pinned = pinned.slice(); savePinned()
     }
+    // [EN] Unpin a city from the sidebar / [CN] 取消固定城市
     function unpinCity(id) {
         pinned = pinned.filter(function(c) { return c.id !== id })
         savePinned()
     }
+    // [EN] Check if a city is pinned / [CN] 检查城市是否已固定
     function isPinned(id) {
         for (let i = 0; i < pinned.length; i++)
             if (pinned[i].id === id) return true
         return false
     }
 
+    // [EN] Sync city list changes to child stores / [CN] 城市列表变更时同步到子 store
     onCityListChanged: {
         if (typeof forecastStore !== "undefined" && forecastStore)
             forecastStore.cities = root.cityList
@@ -82,7 +90,8 @@ ApplicationWindow {
         return false
     }
 
-    // ===== 栈式 cityList 管理 =====
+    // ===== Stack-based cityList management / 栈式城市列表管理 =====
+    // [EN] Move a city to the top of the stack (focus position) / [CN] 将城市移至栈顶（焦点位置）
     function promoteCity(id, name, lat, lon) {
         var idx = -1
         for (var i = 0; i < cityList.length; i++)
@@ -102,6 +111,7 @@ ApplicationWindow {
         cityList = cityList.slice()
         focusId = entry.id
     }
+    // [EN] Remove a city from the stack / [CN] 从栈中移除城市
     function removeCity(id) {
         var wasFocus = cityList.length > 0 && cityList[0].id === id
         for (var i = 0; i < cityList.length; i++) {
@@ -111,6 +121,7 @@ ApplicationWindow {
         cityList = cityList.slice()
         if (wasFocus) focusId = cityList[0].id
     }
+    // [EN] Set a city as the focus / [CN] 将城市设为焦点
     function addFocus(cityId, optName, optLat, optLon) {
         promoteCity(cityId, optName, optLat, optLon)
     }
@@ -125,6 +136,7 @@ ApplicationWindow {
         return focusId || ""
     }
 
+    // [EN] When focus changes, fetch weather, astronomy data & update background / [CN] 焦点切换时获取天气、天文数据并更新背景
     onFocusIdChanged: {
         if (focusId) {
             addHistoryEntry(focusId)
@@ -142,13 +154,14 @@ ApplicationWindow {
         } else cityDetailStore.setCity("", "", "", "")
     }
 
-    // ===== 动态天气背景 =====
+    // ===== Dynamic weather background / 动态天气背景 =====
     WeatherBackground {
         id: weatherBg
         anchors.fill: parent
         z: -1
     }
 
+    // [EN] Dark overlay adapts to sky exposure / [CN] 根据天空曝光度叠加黑色遮罩
     Rectangle {
         anchors.fill: parent
         z: 0
@@ -166,7 +179,8 @@ ApplicationWindow {
         z: 100
     }
 
-    // ===== 主布局 =====
+    // ===== Main layout / 主布局 =====
+    // [EN] Captures mouse for parallax effect, no clicks / [CN] 捕获鼠标实现视差效果，不处理点击
     MouseArea {
         id: parallaxArea
         anchors.fill: parent
@@ -185,7 +199,7 @@ ApplicationWindow {
             anchors.fill: parent
             spacing: 0
 
-        // 左侧栏
+        // [EN] Left sidebar navigation / [CN] 左侧导航栏
         Rectangle {
             id: sidebar
             property bool sidebarExpanded: false
@@ -275,7 +289,7 @@ ApplicationWindow {
             }
         }
 
-        // 页面区（交叉淡入淡出）
+        // [EN] Page area with cross-fade / [CN] 页面区（交叉淡入淡出）
         StackLayout {
             id: stack
             Layout.fillWidth: true
@@ -359,7 +373,8 @@ ApplicationWindow {
         }  // RowLayout
     }  // parallaxArea
 
-    // ===== 逻辑 =====
+    // ===== Logic helpers / 逻辑辅助函数 =====
+    // [EN] Lookup city name by ID across all lists / [CN] 跨所有列表按 ID 查找城市名称
     function cityName(id) {
         let all = cityList.concat(favorites, pinned, history)
         for (let i = 0; i < all.length; i++) {
@@ -367,12 +382,14 @@ ApplicationWindow {
         }
         return id
     }
+    // [EN] Find city object by ID across all lists / [CN] 跨所有列表按 ID 查找城市对象
     function findCity(id) {
         let all = cityList.concat(favorites, pinned, history)
         for (let i = 0; i < all.length; i++)
             if (all[i].id === id) return all[i]
         return null
     }
+    // [EN] Add a city to browsing history / [CN] 将城市添加到浏览历史
     function addHistoryEntry(cityId) {
         let c = findCity(cityId)
         if (!c) return
@@ -382,9 +399,10 @@ ApplicationWindow {
         saveHistory()
     }
 
-    // ===== 信号 =====
+    // ===== Signal connections to weatherApi / 天气 API 信号连接 =====
     Connections {
         target: weatherApi
+        // [EN] Top cities fetched, populate cityList / [CN] 热门城市数据到达，填充 cityList
         function onCityTopReady(cities) {
             let need = maxCards + 1 - cityList.length
             for (let i = 0; i < Math.min(cities.length, need); i++) {
@@ -403,6 +421,7 @@ ApplicationWindow {
                 cityList = cityList.slice();
             }
         }
+        // [EN] Current weather data received, update weathers map & background / [CN] 实时天气数据到达，更新 weathers 映射和背景
         function onWeatherNowReady(now) {
             let id = now._location
             let w = Object.assign({}, weathers)
@@ -413,10 +432,12 @@ ApplicationWindow {
             var isDay = !(iconCode >= 150 && iconCode <= 199)
             backgroundManager.updateWeather(iconCode, isDay)
         }
+        // [EN] Solar astronomy data received, update background sun times / [CN] 太阳天文数据到达，更新背景日出日落时间
         function onAstronomySunReady(cityId, result) {
             if (cityId !== root.focusId || !result.sunrise) return
             backgroundManager.updateSunTimes(result.sunrise, result.sunset)
         }
+        // [EN] Lunar astronomy data received, update background moon phase / [CN] 月球天文数据到达，更新背景月相
         function onAstronomyMoonReady(cityId, result) {
             if (cityId !== root.focusId) return
             var phases = result.moonPhase
@@ -427,6 +448,7 @@ ApplicationWindow {
         }
     }
 
+    // [EN] Init: load persisted data, fetch top cities and favorites / [CN] 初始化：加载持久化数据、获取热门城市和收藏天气
     Component.onCompleted: {
         loadSettings()
         weatherApi.topCity("cn", maxCards + 1)
@@ -435,6 +457,7 @@ ApplicationWindow {
         }
     }
 
+    // [EN] Keep QML engine alive with a perpetual animation / [CN] 保持 QML 引擎运行（无限循环动画）
     Item {
         NumberAnimation on opacity {
             from: 0.999; to: 1.0; duration: 100

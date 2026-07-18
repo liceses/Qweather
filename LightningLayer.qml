@@ -1,6 +1,6 @@
 import QtQuick
 
-// LightningLayer — 全屏间歇闪电闪烁
+// [LightningLayer] — Fullscreen intermittent lightning flash / 全屏间歇闪电闪烁
 ShaderEffect {
     id: effect
     anchors.fill: parent

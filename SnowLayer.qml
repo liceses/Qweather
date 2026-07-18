@@ -1,19 +1,23 @@
 import QtQuick
 
-// SnowLayer �?雄1�7��粒子
+// [SnowLayer] — Snow particle system / 雪粒子系统
 ShaderEffect {
     id: effect
     anchors.fill: parent
     opacity: 1.0
 
-    // === 通用 ===
+    // [Common] / 通用
     property real time: 0.0
 
-    // === 雄1�7���?===
+    // [Snow parameters] / 雪参数
     property real intensity: 0.0
+    // [Variant: 0=snow, 1=sleet] / 变体：0=雪，1=雨夹雪
     property int variant: 0
+    // [Wind speed affecting sway] / 风速，影响雪花摇摆
     property real windSpeed: 0.1
+    // [Fade-in transition progress 0~1] / 淡入过渡进度 0~1
     property real transitionProgress: 0.0
+    // [Maximum number of particles] / 最大粒子数
     property int particleLimit: 60
 
     fragmentShader: "qrc:/shaders/snow.frag.qsb"
@@ -29,6 +33,7 @@ ShaderEffect {
         }
     }
 
+    // [Fallback] / 容错
     Rectangle {
         anchors.fill: parent
         visible: effect.status !== ShaderEffect.Compiled

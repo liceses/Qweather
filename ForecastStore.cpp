@@ -4,8 +4,10 @@
 #include <QDateTime>
 #include <QDebug>
 
+// ForecastStore — constructor / 构造函数
 ForecastStore::ForecastStore(QObject* parent) : QObject(parent) {}
 
+// setWeatherApi — inject API object & connect signals / 注入 API 对象并连接信号
 void ForecastStore::setWeatherApi(WeatherAPI* api) {
     if (m_api)
         disconnect(m_api, nullptr, this, nullptr);
@@ -18,10 +20,12 @@ void ForecastStore::setWeatherApi(WeatherAPI* api) {
     }
 }
 
+// mode — "hourly" if range contains 'h', else "daily" / 判断预报模式
 QString ForecastStore::mode() const {
     return m_range.contains('h') ? "hourly" : "daily";
 }
 
+// setCities — set tracked cities & refresh / 设置关注城市并刷新
 void ForecastStore::setCities(const QVariantList& cities) {
     m_cities = cities;
     qDebug() << "[ForecastStore] setCities count:" << m_cities.size();
@@ -29,6 +33,7 @@ void ForecastStore::setCities(const QVariantList& cities) {
     refreshAll();
 }
 
+// setRange — set forecast range (e.g. "3d", "24h") / 设置预报天数/小时数
 void ForecastStore::setRange(const QString& range) {
     if (m_range == range) return;
     m_range = range;
@@ -38,13 +43,14 @@ void ForecastStore::setRange(const QString& range) {
     refreshAll();
 }
 
+// refreshAll — fetch forecast for each tracked city / 刷新所有城市预报
 void ForecastStore::refreshAll() {
     if (!m_api || m_cities.isEmpty()) {
         qDebug() << "[ForecastStore] refreshAll skip: api=" << (m_api != nullptr) << "cities=" << m_cities.size();
         return;
     }
     bool isHourly = m_range.contains('h');
-    int count = qMin(m_cities.size(), 4);
+    int count = qMin(m_cities.size(), 4);   //todo:功能拓展,显示城市数量可设置,而非硬编码上限4个
     qDebug() << "[ForecastStore] refreshAll mode=" << (isHourly ? "hourly" : "daily") << "range=" << m_range << "count=" << count;
     for (int i = 0; i < count; ++i) {
         QString id = m_cities[i].toMap()["id"].toString();
@@ -57,8 +63,9 @@ void ForecastStore::refreshAll() {
     }
 }
 
-// ---- 数据预处理：JSON → QVariantList 图表坐标 ----
+// ---- 数据预处理：JSON → QVariantList 图表坐标 / Data transform for chart ----
 
+// onWeatherDailyReady — convert daily JSON to chart points / 将逐天预报转为图表坐标
 void ForecastStore::onWeatherDailyReady(const QString& loc, const QJsonArray& daily) {
     QVariantList points;
     QString iconDay, textDay;
@@ -92,6 +99,7 @@ void ForecastStore::onWeatherDailyReady(const QString& loc, const QJsonArray& da
     emit chartDataChanged();
 }
 
+// onWeatherHourlyReady — convert hourly JSON to chart points / 将逐小时预报转为图表坐标
 void ForecastStore::onWeatherHourlyReady(const QString& loc, const QJsonArray& hourly) {
     QVariantList points;
     QString icon, text;

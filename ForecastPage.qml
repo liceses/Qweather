@@ -1,13 +1,16 @@
+// ForecastPage.qml — Forecast page with range selector and 2×2 card grid
+// 天气预报页 — 范围选择器 + 2×2 卡片网格，数据由 C++ forecastStore 驱动
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 
-// 天气预报页 —— 纯UI布局，数据由 C++ forecastStore 驱动
 Item {
     id: page
 
+    // [EN] Current forecast mode (hourly/daily) / [CN] 当前预报模式（逐小时/逐日）
     readonly property string mode: forecastStore ? forecastStore.mode : "daily"
 
+    // [EN] Available forecast ranges / [CN] 可选预报范围
     readonly property var ranges: ["24h", "72h", "168h", "3d", "7d", "10d", "15d", "30d"]
 
     ColumnLayout {
@@ -15,7 +18,7 @@ Item {
         anchors.margins: Math.max(8, Math.min(page.width, page.height) * 0.025)
         spacing: Math.max(4, Math.min(page.height, page.width) * 0.012)
 
-        // ---- 范围选择器 ----
+        // [EN] Range selector row / [CN] 预报范围选择行
         Row {
             id: selectorRow
             Layout.fillWidth: true
@@ -66,7 +69,7 @@ Item {
             }
         }
 
-        // ---- 2×2 卡片网格 ----
+        // [EN] 2×2 forecast card grid / [CN] 2×2 预报卡片网格
         Grid {
             id: cardGrid
             Layout.fillWidth: true; Layout.fillHeight: true

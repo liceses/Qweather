@@ -1,7 +1,8 @@
+// AirQualityPage.qml — Air quality page with 2×2 card grid
+// 空气质量页 — 2×2 卡片网格，数据由 C++ airQualityStore 驱动
 import QtQuick
 import QtQuick.Layouts
 
-// 空气质量页 —— 纯UI布局，数据由 C++ airQualityStore 驱动
 Item {
     id: page
 
@@ -10,7 +11,7 @@ Item {
         anchors.margins: Math.max(8, Math.min(page.width, page.height) * 0.025)
         spacing: Math.max(6, Math.min(page.height, page.width) * 0.012)
 
-        // 标题
+        // [EN] Page title / [CN] 页面标题
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: "空气质量"
@@ -19,7 +20,7 @@ Item {
             font.bold: true
         }
 
-        // 2×2 卡片网格
+        // [EN] 2×2 air quality card grid / [CN] 2×2 空气质量卡片网格
         Grid {
             id: cardGrid
             Layout.fillWidth: true; Layout.fillHeight: true

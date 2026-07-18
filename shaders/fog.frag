@@ -1,6 +1,6 @@
 #version 450
 
-// FogLayer - fog/haze/sand overlay
+// [FogLayer] — Fog / haze / sand overlay / 雾 / 霾 / 沙尘叠加
 layout(std140, binding=0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
@@ -14,7 +14,7 @@ layout(std140, binding=0) uniform buf {
 layout(location=0) in vec2 qt_TexCoord0;
 layout(location=0) out vec4 fragColor;
 
-// ---- common functions ----
+// [Common functions] / 常用函数
 float hash1(float p) {
     p = fract(p * 0.1031);
     p *= p + 33.33;

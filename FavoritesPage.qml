@@ -1,15 +1,18 @@
+// FavoritesPage.qml — Favorites list with pin-to-sidebar functionality
+// 收藏页 — 收藏城市卡片列表，支持固定到侧边栏
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-// 收藏页 —— 收藏城市卡片列表，支持固定到侧边栏
 Item {
     id: page
 
+    // [EN] Favorites list, pinned list, weather data map / [CN] 收藏列表、固定列表、天气数据映射
     property var favorites: []
     property var pinned: []
     property var weathers: ({})
 
+    // [EN] Signals: single click, double click, pin toggle / [CN] 单击、双击、固定切换信号
     signal cityClicked(string cityId)
     signal cityDoubleClicked(string cityId)
     signal pinToggled(var cityObj)

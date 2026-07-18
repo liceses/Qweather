@@ -4,8 +4,10 @@
 #include <QJsonObject>
 #include <QDebug>
 
+// AirQualityStore — constructor / 构造函数
 AirQualityStore::AirQualityStore(QObject* parent) : QObject(parent) {}
 
+// setWeatherApi — inject API & connect air signal / 注入 API 并连接空气质量信号
 void AirQualityStore::setWeatherApi(WeatherAPI* api) {
     if (m_api)
         disconnect(m_api, nullptr, this, nullptr);
@@ -16,6 +18,7 @@ void AirQualityStore::setWeatherApi(WeatherAPI* api) {
     }
 }
 
+// setCities — set tracked cities & refresh / 设置关注城市并刷新
 void AirQualityStore::setCities(const QVariantList& cities) {
     m_cities = cities;
     qDebug() << "[AirQualityStore] setCities count:" << m_cities.size();
@@ -23,6 +26,7 @@ void AirQualityStore::setCities(const QVariantList& cities) {
     refreshAll();
 }
 
+// refreshAll — fetch air quality for each city / 刷新所有城市空气质量
 void AirQualityStore::refreshAll() {
     if (!m_api || m_cities.isEmpty()) {
         qDebug() << "[AirQualityStore] refreshAll skip: api=" << (m_api != nullptr) << "cities=" << m_cities.size();
@@ -42,6 +46,7 @@ void AirQualityStore::refreshAll() {
     }
 }
 
+// onAirCurrentReady — parse AQI response / 解析空气质量响应
 void AirQualityStore::onAirCurrentReady(const QString& cityId, const QJsonObject& result) {
     // 解析 indexes 数组：优先选择 us-epa 标准
     QJsonArray indexes = result["indexes"].toArray();

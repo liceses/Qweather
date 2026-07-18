@@ -1,30 +1,28 @@
+// DashboardPage.qml — Dashboard with search, city name, weather display, and city cards
+// 仪表盘页 — 搜索框、城市名显示、实时天气、城市卡片
 import QtQuick
 import QtQuick.Layouts
 
-// 仪表盘页 —— 从 Main.qml 提取的独立页面
-// 数据由父级 Main.qml 通过属性注入，交互通过信号上报
 Item {
     id: page
 
-    // ===== 输入属性（Main.qml 绑定注入） =====
+    // ===== Input properties (injected by Main.qml) / 输入属性（Main.qml 绑定注入） =====
     property var cityList: []
     property string focusId: ""
     property string focusName: ""
     property var weathers: ({})
 
-    // ===== 信号（上报给 Main.qml 处理） =====
+    // ===== Signals (reported to Main.qml) / 信号（上报给 Main.qml 处理） =====
     signal citySelected(string cityId, string cityName, string lat, string lon)
     signal focusRequested(string cityId)
     signal navigateToDetail(string cityId)
     signal closeRequested(string cityId)
 
-    // ===== 辅助 =====
-    // cityName 由 Main.qml 统一管理，通过 focusName 属性传入
-
     ColumnLayout {
         anchors.centerIn: parent
         spacing: 24
 
+        // [EN] Search bar for city lookup / [CN] 城市搜索框
         SearchBar {
             id: searchBox
             Layout.alignment: Qt.AlignHCenter
@@ -34,6 +32,7 @@ Item {
             }
         }
 
+        // [EN] City name title — click = focus, double-click = detail / [CN] 城市名称标题 — 单击切换焦点，双击查看详情
         Text {
             id: cityNameText
             Layout.alignment: Qt.AlignHCenter
@@ -67,6 +66,7 @@ Item {
             }
         }
 
+        // [EN] Current weather text & temp display / [CN] 当前天气描述与温度显示
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: {
@@ -77,6 +77,7 @@ Item {
             color: "white"; font.pixelSize: 28
         }
 
+        // [EN] Row of city cards (excluding focus city) / [CN] 城市卡片行（排除焦点城市）
         Row {
             Layout.alignment: Qt.AlignHCenter
             spacing: 12

@@ -1,6 +1,9 @@
+// InfoChip.qml — Small label-value chip for detail grid display
+// 信息标签 — 详情网格中的小标签-值组件
 import QtQuick
 
 Rectangle {
+    // [EN] Display label and value / [CN] 显示标签和值
     property string label: ""
     property string value: "--"
 

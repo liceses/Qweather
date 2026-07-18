@@ -6,7 +6,7 @@
 #include <QUrlQuery>
 #include <QDebug>
 
-// 缓存配置：{ prefix, TTL秒 }
+// cacheConf — get cache prefix & TTL for each request type / 获取各请求类型的缓存前缀与 TTL
 struct CacheConf { const char* prefix; int ttl; };
 static CacheConf cacheConf(ApiRequestType t) {
     switch (t) {
@@ -38,13 +38,15 @@ static CacheConf cacheConf(ApiRequestType t) {
     }
 }
 
+// WeatherAPI — constructor / 构造函数
 WeatherAPI::WeatherAPI(QObject *parent) : QObject(parent) , m_manager(new QNetworkAccessManager(this))
-{
+{   // 绑定网络响应统一处理 / hook network reply handler
     connect(m_manager,&QNetworkAccessManager::finished,this,&WeatherAPI::onReplyFinished);
 }
 
 // ============================ GeoAPI ============================
 
+// searchCity — city name lookup / 按名称搜索城市
 void WeatherAPI::searchCity(const QString &name)
 {
     if (m_cache) {
@@ -64,6 +66,7 @@ void WeatherAPI::searchCity(const QString &name)
     sendRequest(url, ApiRequestType::CityLookup);
 }
 
+// topCity — top cities by region / 热门城市查询
 void WeatherAPI::topCity(const QString &range, int number)
 {
     if (m_cache) {
@@ -85,8 +88,9 @@ void WeatherAPI::topCity(const QString &range, int number)
     sendRequest(url, ApiRequestType::CityTop);
 }
 
-// ============================ 天气预报 ============================
+// ============================ 天气预报 / Weather Forecast ============================
 
+// weatherNow — real-time weather / 实况天气
 void WeatherAPI::weatherNow(const QString &loc)
 {
     if (m_cache) {
@@ -103,6 +107,7 @@ void WeatherAPI::weatherNow(const QString &loc)
     sendRequest(url, ApiRequestType::WeatherNow);
 }
 
+// weatherDaily — daily forecast / 逐天预报
 void WeatherAPI::weatherDaily(const QString &days, const QString &loc)
 {
     QUrl url(m_host + "/v7/weather/" + days);
@@ -119,6 +124,7 @@ void WeatherAPI::weatherDaily(const QString &days, const QString &loc)
     sendRequest(url, ApiRequestType::WeatherDaily);
 }
 
+// weatherHourly — hourly forecast / 逐小时预报
 void WeatherAPI::weatherHourly(const QString &hours, const QString &loc)
 {
     QUrl url(m_host + "/v7/weather/" + hours);
@@ -129,8 +135,9 @@ void WeatherAPI::weatherHourly(const QString &hours, const QString &loc)
     sendRequest(url, ApiRequestType::WeatherHourly);
 }
 
-// ============================ 格点天气预报 ============================
+// ============================ 格点天气预报 / Grid Forecast ============================
 
+// gridWeatherNow — gridded real-time / 格点实况
 void WeatherAPI::gridWeatherNow(const QString &loc)
 {
     QUrl url(m_host + "/v7/grid-weather/now");
@@ -141,6 +148,7 @@ void WeatherAPI::gridWeatherNow(const QString &loc)
     sendRequest(url, ApiRequestType::GridWeatherNow);
 }
 
+// gridWeatherDaily — gridded daily / 格点逐天预报
 void WeatherAPI::gridWeatherDaily(const QString &days, const QString &loc)
 {
     QUrl url(m_host + "/v7/grid-weather/" + days);
@@ -151,6 +159,7 @@ void WeatherAPI::gridWeatherDaily(const QString &days, const QString &loc)
     sendRequest(url, ApiRequestType::GridWeatherDaily);
 }
 
+// gridWeatherHourly — gridded hourly / 格点逐小时预报
 void WeatherAPI::gridWeatherHourly(const QString &hours, const QString &loc)
 {
     QUrl url(m_host + "/v7/grid-weather/" + hours);
@@ -161,8 +170,9 @@ void WeatherAPI::gridWeatherHourly(const QString &hours, const QString &loc)
     sendRequest(url, ApiRequestType::GridWeatherHourly);
 }
 
-// ============================ 分钟预报 ============================
+// ============================ 分钟预报 / Minutely Precipitation ============================
 
+// minutelyPrecip — min-by-min precipitation / 分钟级降水预报
 void WeatherAPI::minutelyPrecip(const QString &loc)
 {
     QUrl url(m_host + "/v7/minutely/5m");
@@ -173,8 +183,9 @@ void WeatherAPI::minutelyPrecip(const QString &loc)
     sendRequest(url, ApiRequestType::MinutelyPrecip);
 }
 
-// ============================ 预警 (v1) ============================
+// ============================ 预警 / Weather Warnings ============================
 
+// warningNow — current weather alerts / 当前天气预警
 void WeatherAPI::warningNow(const QString &lat, const QString &lng)
 {
     QUrl url(m_host + "/weatheralert/v1/current/" + lat + "/" + lng);
@@ -184,8 +195,9 @@ void WeatherAPI::warningNow(const QString &lat, const QString &lng)
     sendRequest(url, ApiRequestType::WarningNow);
 }
 
-// ============================ 天气指数 ============================
+// ============================ 天气指数 / Weather Indices ============================
 
+// indices — weather indices (UV, comfort, etc.) / 天气生活指数
 void WeatherAPI::indices(const QString &days, const QString &type, const QString &loc)
 {
     QUrl url(m_host + "/v7/indices/" + days);
@@ -197,8 +209,9 @@ void WeatherAPI::indices(const QString &days, const QString &type, const QString
     sendRequest(url, ApiRequestType::Indices);
 }
 
-// ============================ 空气质量 ============================
+// ============================ 空气质量 / Air Quality ============================
 
+// airCurrent — real-time air quality / 实时空气质量
 void WeatherAPI::airCurrent(const QString &lat, const QString &lng, const QString &cityId)
 {
     if (m_cache && !cityId.isEmpty()) {
@@ -215,6 +228,7 @@ void WeatherAPI::airCurrent(const QString &lat, const QString &lng, const QStrin
     sendRequest(url, ApiRequestType::AirCurrent);
 }
 
+// airHourly — hourly air quality / 逐小时空气质量
 void WeatherAPI::airHourly(const QString &lat, const QString &lng, const QString &cityId)
 {
     QUrl url(m_host + "/airquality/v1/hourly/" + lat + "/" + lng);
@@ -225,6 +239,7 @@ void WeatherAPI::airHourly(const QString &lat, const QString &lng, const QString
     sendRequest(url, ApiRequestType::AirHourly);
 }
 
+// airDaily — daily air quality / 逐天空气质量
 void WeatherAPI::airDaily(const QString &lat, const QString &lng, const QString &cityId)
 {
     QUrl url(m_host + "/airquality/v1/daily/" + lat + "/" + lng);
@@ -235,8 +250,9 @@ void WeatherAPI::airDaily(const QString &lat, const QString &lng, const QString 
     sendRequest(url, ApiRequestType::AirDaily);
 }
 
-// ============================ 时光机 ============================
+// ============================ 时光机 / Historical Data ============================
 
+// historicalWeather — past weather / 历史天气
 void WeatherAPI::historicalWeather(const QString &loc, const QString &date)
 {
     QUrl url(m_host + "/v7/historical/weather");
@@ -248,6 +264,7 @@ void WeatherAPI::historicalWeather(const QString &loc, const QString &date)
     sendRequest(url, ApiRequestType::HistoricalWeather);
 }
 
+// historicalAir — past air quality / 历史空气质量
 void WeatherAPI::historicalAir(const QString &loc, const QString &date)
 {
     QUrl url(m_host + "/v7/historical/air");
@@ -259,8 +276,9 @@ void WeatherAPI::historicalAir(const QString &loc, const QString &date)
     sendRequest(url, ApiRequestType::HistoricalAir);
 }
 
-// ============================ 热带气旋 ============================
+// ============================ 热带气旋 / Tropical Cyclone ============================
 
+// stormList — list storms by basin & year / 热带气旋列表
 void WeatherAPI::stormList(const QString &basin, const QString &year)
 {
     QUrl url(m_host + "/v7/tropical/storm-list");
@@ -272,6 +290,7 @@ void WeatherAPI::stormList(const QString &basin, const QString &year)
     sendRequest(url, ApiRequestType::StormList);
 }
 
+// stormTrack — storm track by ID / 热带气旋路径
 void WeatherAPI::stormTrack(const QString &sid)
 {
     QUrl url(m_host + "/v7/tropical/storm-track");
@@ -282,6 +301,7 @@ void WeatherAPI::stormTrack(const QString &sid)
     sendRequest(url, ApiRequestType::StormTrack);
 }
 
+// stormForecast — storm forecast by ID / 热带气旋预报
 void WeatherAPI::stormForecast(const QString &sid)
 {
     QUrl url(m_host + "/v7/tropical/storm-forecast");
@@ -292,8 +312,9 @@ void WeatherAPI::stormForecast(const QString &sid)
     sendRequest(url, ApiRequestType::StormForecast);
 }
 
-// ============================ 海洋数据 ============================
+// ============================ 海洋数据 / Ocean Data ============================
 
+// oceanTide — tide forecast / 潮汐预报
 void WeatherAPI::oceanTide(const QString &loc, const QString &date)
 {
     QUrl url(m_host + "/v7/ocean/tide");
@@ -305,8 +326,9 @@ void WeatherAPI::oceanTide(const QString &loc, const QString &date)
     sendRequest(url, ApiRequestType::OceanTide);
 }
 
-// ============================ 太阳辐射 ============================
+// ============================ 太阳辐射 / Solar Radiation ============================
 
+// solarRadiation — solar radiation forecast / 太阳辐射预报
 void WeatherAPI::solarRadiation(const QString &lat, const QString &lng,
                                 const QString &cityId, int hours, int interval)
 {
@@ -326,8 +348,9 @@ void WeatherAPI::solarRadiation(const QString &lat, const QString &lng,
     sendRequest(url, ApiRequestType::SolarRadiation);
 }
 
-// ============================ 天文 ============================
+// ============================ 天文 / Astronomy ============================
 
+// astronomySun — sunrise / sunset / 日出日落
 void WeatherAPI::astronomySun(const QString &loc, const QString &date,
                               const QString &cityId)
 {
@@ -347,6 +370,7 @@ void WeatherAPI::astronomySun(const QString &loc, const QString &date,
     sendRequest(url, ApiRequestType::AstronomySun);
 }
 
+// astronomyMoon — moon phase & rise/set / 月相与月出月落
 void WeatherAPI::astronomyMoon(const QString &loc, const QString &date,
                                const QString &cityId)
 {
@@ -366,6 +390,7 @@ void WeatherAPI::astronomyMoon(const QString &loc, const QString &date,
     sendRequest(url, ApiRequestType::AstronomyMoon);
 }
 
+// solarElevAngle — solar elevation angle / 太阳高度角
 void WeatherAPI::solarElevAngle(const QString &loc, const QString &date,
                                 const QString &time, const QString &tz, const QString &alt)
 {
@@ -382,8 +407,9 @@ void WeatherAPI::solarElevAngle(const QString &loc, const QString &date,
 }
 
 
-// ============================ 统一路由 ============================
+// ============================ 统一路由 / Unified Router ============================
 
+// onReplyFinished — unified network reply handler / 网络响应统一处理入口
 void WeatherAPI::onReplyFinished(QNetworkReply *reply)
 {
     QByteArray data = reply->readAll();
@@ -442,6 +468,7 @@ void WeatherAPI::onReplyFinished(QNetworkReply *reply)
     case ApiRequestType::SolarElevationAngle:  handleSolarElevationAngle(data, loc);  break;
     }
 }
+// sendRequest — enqueue HTTP GET request / 发起 HTTP GET 请求
 void WeatherAPI::sendRequest(const QUrl &url, ApiRequestType type)
 {
     QNetworkRequest req(url);
@@ -450,8 +477,9 @@ void WeatherAPI::sendRequest(const QUrl &url, ApiRequestType type)
     m_manager->get(req);
 }
 
-// ============================ Handler 函数 ============================
+// ============================ Handler 函数 / Response Handlers ============================
 
+// handleCityLookup — parse city search result / 解析城市搜索结果
 void WeatherAPI::handleCityLookup(const QByteArray &d)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["location"].toArray();
@@ -459,12 +487,14 @@ void WeatherAPI::handleCityLookup(const QByteArray &d)
     emit cityLookupReady(arr);
 }
 
+// handleCityTop — parse top-city result / 解析热门城市结果
 void WeatherAPI::handleCityTop(const QByteArray &d)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["topCityList"].toArray();
     emit cityTopReady(arr);
 }
 
+// handleWeatherNow — parse real-time weather / 解析实况天气
 void WeatherAPI::handleWeatherNow(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object()["now"].toObject();
@@ -472,18 +502,21 @@ void WeatherAPI::handleWeatherNow(const QByteArray &d, const QString &loc)
     emit weatherNowReady(obj);
 }
 
+// handleWeatherDaily — parse daily forecast / 解析逐天预报
 void WeatherAPI::handleWeatherDaily(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["daily"].toArray();
     emit weatherDailyReady(loc, arr);
 }
 
+// handleWeatherHourly — parse hourly forecast / 解析逐小时预报
 void WeatherAPI::handleWeatherHourly(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["hourly"].toArray();
     emit weatherHourlyReady(loc, arr);
 }
 
+// handleGridWeatherNow — parse gridded real-time / 解析格点实况
 void WeatherAPI::handleGridWeatherNow(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object()["now"].toObject();
@@ -491,18 +524,21 @@ void WeatherAPI::handleGridWeatherNow(const QByteArray &d, const QString &loc)
     emit gridWeatherNowReady(obj);
 }
 
+// handleGridWeatherDaily — parse gridded daily / 解析格点逐天预报
 void WeatherAPI::handleGridWeatherDaily(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["daily"].toArray();
     emit gridWeatherDailyReady(loc, arr);
 }
 
+// handleGridWeatherHourly — parse gridded hourly / 解析格点逐小时预报
 void WeatherAPI::handleGridWeatherHourly(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["hourly"].toArray();
     emit gridWeatherHourlyReady(loc, arr);
 }
 
+// handleMinutelyPrecip — parse minutely precip / 解析分钟级降水
 void WeatherAPI::handleMinutelyPrecip(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
@@ -510,6 +546,7 @@ void WeatherAPI::handleMinutelyPrecip(const QByteArray &d, const QString &loc)
     emit minutelyPrecipReady(obj);
 }
 
+// handleWarningNow — parse weather alerts / 解析天气预警
 void WeatherAPI::handleWarningNow(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
@@ -517,30 +554,35 @@ void WeatherAPI::handleWarningNow(const QByteArray &d, const QString &loc)
     emit warningNowReady(obj);
 }
 
+// handleIndices — parse weather indices / 解析天气指数
 void WeatherAPI::handleIndices(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["daily"].toArray();
     emit indicesReady(loc, arr);
 }
 
+// handleAirCurrent — parse real-time air quality / 解析实时空气质量
 void WeatherAPI::handleAirCurrent(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
     emit airCurrentReady(loc, obj);
 }
 
+// handleAirHourly — parse hourly air quality / 解析逐小时空气质量
 void WeatherAPI::handleAirHourly(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
     emit airHourlyReady(loc, obj);
 }
 
+// handleAirDaily — parse daily air quality / 解析逐天空气质量
 void WeatherAPI::handleAirDaily(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
     emit airDailyReady(loc, obj);
 }
 
+// handleHistoricalWeather — parse historical weather / 解析历史天气
 void WeatherAPI::handleHistoricalWeather(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
@@ -548,6 +590,7 @@ void WeatherAPI::handleHistoricalWeather(const QByteArray &d, const QString &loc
     emit historicalWeatherReady(obj);
 }
 
+// handleHistoricalAir — parse historical air quality / 解析历史空气质量
 void WeatherAPI::handleHistoricalAir(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
@@ -555,12 +598,14 @@ void WeatherAPI::handleHistoricalAir(const QByteArray &d, const QString &loc)
     emit historicalAirReady(obj);
 }
 
+// handleStormList — parse storm list / 解析热带气旋列表
 void WeatherAPI::handleStormList(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["storm"].toArray();
     emit stormListReady(arr);
 }
 
+// handleStormTrack — parse storm track / 解析热带气旋路径
 void WeatherAPI::handleStormTrack(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
@@ -568,12 +613,14 @@ void WeatherAPI::handleStormTrack(const QByteArray &d, const QString &loc)
     emit stormTrackReady(obj);
 }
 
+// handleStormForecast — parse storm forecast / 解析热带气旋预报
 void WeatherAPI::handleStormForecast(const QByteArray &d, const QString &loc)
 {
     QJsonArray arr = QJsonDocument::fromJson(d).object()["forecast"].toArray();
     emit stormForecastReady(arr);
 }
 
+// handleOceanTide — parse tide data / 解析潮汐数据
 void WeatherAPI::handleOceanTide(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
@@ -581,24 +628,28 @@ void WeatherAPI::handleOceanTide(const QByteArray &d, const QString &loc)
     emit oceanTideReady(obj);
 }
 
+// handleSolarRadiation — parse solar radiation / 解析太阳辐射
 void WeatherAPI::handleSolarRadiation(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
     emit solarRadiationReady(loc, obj);
 }
 
+// handleAstronomySun — parse sunrise/sunset / 解析日出日落
 void WeatherAPI::handleAstronomySun(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
     emit astronomySunReady(loc, obj);
 }
 
+// handleAstronomyMoon — parse moon phase / 解析月相
 void WeatherAPI::handleAstronomyMoon(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();
     emit astronomyMoonReady(loc, obj);
 }
 
+// handleSolarElevationAngle — parse solar elevation angle / 解析太阳高度角
 void WeatherAPI::handleSolarElevationAngle(const QByteArray &d, const QString &loc)
 {
     QJsonObject obj = QJsonDocument::fromJson(d).object();

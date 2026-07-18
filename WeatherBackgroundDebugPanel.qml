@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-// WeatherBackgroundDebugPanel
-// 所有控件通过 commitSkyState({全部 17 字段}) 统一提交
+// [WeatherBackgroundDebugPanel] — Debug control panel for weather system / 天气系统调试控制面板
+// All controls submit via commitSkyState({all 17 fields}) / 所有控件通过 commitSkyState({全部 17 字段}) 统一提交
 Rectangle {
     id: panel
     visible: false
@@ -17,7 +17,7 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: 200 } }
     radius: 8
 
-    // 收集所有控件值 → 提交完整 SkyState
+    // [Collect all control values → submit complete SkyState] / 收集所有控件值 → 提交完整 SkyState
     function commit() {
         backgroundManager.commitSkyState({
             solarAltitude:  sldSA.value,
@@ -43,7 +43,7 @@ Rectangle {
         })
     }
 
-    // ===== 演示模式 =====
+    // [Demo mode — automatic weather & time cycling] / 演示模式——自动循环切换天气和时间
     property bool demoMode: false
     property real demoHour: 0
     property int demoWeatherIdx: 0
@@ -147,7 +147,7 @@ Rectangle {
         }
     }
 
-    // 关闭
+    // [Close button] / 关闭按钮
     Rectangle {
         anchors.top: parent.top; anchors.right: parent.right; anchors.margins: 4
         width: 24; height: 24; radius: 12; color: "#d44"

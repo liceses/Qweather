@@ -1,6 +1,6 @@
 #version 450
 
-// RainLayer - grid-based rain with density control + exposure compensation
+// [RainLayer] — Grid-based rain with density control + exposure compensation / 基于网格的雨，带密度控制 + 曝光补偿
 layout(std140, binding=0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
@@ -16,6 +16,7 @@ layout(std140, binding=0) uniform buf {
 layout(location=0) in vec2 qt_TexCoord0;
 layout(location=0) out vec4 fragColor;
 
+// [Signed distance function for ellipse] / 椭圆有符号距离函数
 float sdEllipse(vec2 p, vec2 r) {
     return (length(p / r) - 1.0) * min(r.x, r.y);
 }

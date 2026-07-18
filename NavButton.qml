@@ -1,12 +1,14 @@
+// NavButton.qml — Sidebar navigation button with collapsible icon+label
+// 导航按钮 — 侧边栏导航按钮，折叠态仅图标居中，展开态 icon + 文字左对齐
+// Active green highlight, hover white highlight, SVG tint via MultiEffect
+// active 绿色高亮，hover 白色高亮，图标着色：MultiEffect brightness+colorization
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
 
-// 导航按钮 —— 折叠态仅图标居中，展开态 icon + 文字左对齐
-// active 绿色高亮，hover 白色高亮
-// 图标着色：layer.effect MultiEffect brightness+colorization（Qt6 标准 SVG 染色方案）
 Item {
     id: root
+    // [EN] Button label, icon path, active/pressed state, sidebar expanded state / [CN] 按钮文字、图标路径、激活状态、侧边栏展开状态
     property string label: ""
     property string icon: ""
     property bool active: false
@@ -25,7 +27,7 @@ Item {
         NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
     }
 
-    // 主题颜色
+    // [EN] Theme-aware color scheme / [CN] 主题色（跟随 darkMode）
     readonly property bool _dark: appSettings ? appSettings.darkMode : true
 
     Rectangle {
@@ -39,7 +41,7 @@ Item {
         Behavior on color { ColorAnimation { duration: 200 } }
     }
 
-    // 折叠态：图标居中（展开时淡出）
+    // [EN] Collapsed mode: centered icon (fades out when expanded) / [CN] 折叠态：图标居中（展开时淡出）
     Image {
         anchors.centerIn: parent
         source: root.icon
@@ -57,7 +59,7 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
     }
 
-    // 展开态：图标 + 文字左对齐（折叠时淡出）
+    // [EN] Expanded mode: icon + label left-aligned (fades out when collapsed) / [CN] 展开态：图标 + 文字左对齐（折叠时淡出）
     Row {
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left

@@ -1,6 +1,6 @@
 #version 450
 
-// SkyLayer - sky gradient + sun glow + moon SDF + stars
+// [SkyLayer] — Sky gradient + sun glow + moon SDF + stars / 天空渐变 + 太阳光晕 + 月相 SDF + 星星
 layout(std140, binding=0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
@@ -24,7 +24,7 @@ layout(std140, binding=0) uniform buf {
 layout(location=0) in vec2 qt_TexCoord0;
 layout(location=0) out vec4 fragColor;
 
-// ---- ACES tone mapping (inlined) ----
+// [ACES tone mapping (inlined)] / ACES 色调映射（内联）
 vec3 acesTonemap(vec3 color) {
     float a = 2.51;
     float b = 0.03;
@@ -34,7 +34,7 @@ vec3 acesTonemap(vec3 color) {
     return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
 }
 
-// ---- common functions ----
+// [Common functions] / 常用函数
 const float PI = 3.14159265359;
 const float DEG2RAD = 0.01745329252;
 
@@ -106,7 +106,7 @@ void main() {
     vec3 skyColor = mix(zenithColor.rgb, horizonColor.rgb, horizonBlend);
     skyColor = mix(skyColor, ambientColor.rgb, 0.15);
 
-    // sun
+    // [Sun glow rendering] / 太阳光晕渲染
     vec2 sunPos = solarScreenPos();
     float sunVis = smoothstep(-15.0, -5.0, solarAltitude);
     if (sunVis > 0.001) {
@@ -120,7 +120,7 @@ void main() {
         skyColor += (sunGlow * lowSunColor * 1.5 + sunCore) * sunVis;
     }
 
-    // moon
+    // [Moon rendering with phase mask] / 月相渲染
     float moonVis = smoothstep(-15.0, -5.0, moonAltitude) * step(0.1, moonIllum);
     if (moonVis > 0.001) {
         vec2 moonPos = moonScreenPos();
@@ -137,11 +137,11 @@ void main() {
         }
     }
 
-    // stars
+    // [Star field overlay] / 星空叠加
     vec3 stars = starField(uv, time, starVisibility, 1.0);
     skyColor += stars;
 
-    // exposure + tonemap (ACES)
+    // [Exposure + ACES tonemap] / 曝光 + ACES 色调映射
     skyColor = acesTonemap(skyColor * exposure);
 
     fragColor = vec4(skyColor, 1.0) * qt_Opacity;

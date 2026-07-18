@@ -1,3 +1,5 @@
+// SettingsPage.qml — Settings for dark mode, max cards, solar radiation, cache, version
+// 设置页 — 黑夜模式、最大卡片数、太阳辐射开关、缓存管理、版本信息
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -5,6 +7,7 @@ import QtQuick.Layouts
 Item {
     id: page
 
+    // [EN] Weather cache interface for cache clearing / [CN] 天气缓存接口，用于清除缓存
     property var weatherCache: null
 
     Flickable {
@@ -18,7 +21,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Math.max(12, page.height * 0.02)
 
-            // 标题
+            // [EN] Page title / [CN] 页面标题
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: Math.max(12, page.height * 0.02)
@@ -28,7 +31,7 @@ Item {
                 font.bold: true
             }
 
-            // ===== 黑夜模式 =====
+            // ===== Dark mode toggle / 黑夜模式开关 =====
             Item {
                 id: darkCard
                 Layout.fillWidth: true
@@ -87,7 +90,7 @@ Item {
                 }
             }
 
-            // ===== 最大卡片数 =====
+            // ===== Max cards setting / 最大卡片数设置 =====
             Item {
                 Layout.fillWidth: true
                 property real margin: Math.max(12, page.width * 0.02)
@@ -174,7 +177,7 @@ Item {
                 }
             }
 
-            // ===== 太阳辐射开关 =====
+            // ===== Solar radiation toggle / 太阳辐射显示开关 =====
             Item {
                 id: solarCard
                 Layout.fillWidth: true
@@ -246,7 +249,7 @@ Item {
                 }
             }
 
-            // ===== 缓存管理 =====
+            // ===== Cache management / 缓存管理 =====
             Item {
                 id: cacheCard
                 Layout.fillWidth: true
@@ -310,7 +313,7 @@ Item {
                 }
             }
 
-            // ===== 版本 =====
+            // ===== Version info / 版本信息 =====
             Item {
                 id: versionCard
                 Layout.fillWidth: true
@@ -342,7 +345,7 @@ Item {
                 }
             }
 
-            // 数据来源
+            // [EN] Data source attribution / [CN] 数据来源
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: "数据来源：和风天气"

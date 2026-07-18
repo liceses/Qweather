@@ -1,3 +1,5 @@
+// ForecastCard.qml — Individual forecast card with chart (hourly/daily)
+// 预报卡片 — 含折线图（逐小时/逐日），数据由 C++ forecastStore 驱动
 import QtQuick
 import QtQuick.Layouts
 import QtCharts
@@ -5,20 +7,24 @@ import QtCharts
 Item {
     id: card
 
+    // [EN] City ID, display name, chart mode (hourly/daily) / [CN] 城市 ID、显示名、图表模式（逐小时/逐日）
     property string cityId: ""
     property string cityName: ""
     property string mode: "hourly"
 
+    // [EN] Chart data points from forecastStore / [CN] 从 forecastStore 获取图表数据点
     property var points: {
         if (!forecastStore || !forecastStore.chartData) return []
         var d = forecastStore.chartData[cityId + "_" + mode]
         return d !== undefined ? d : []
     }
+    // [EN] Extra info (weather text, icon) / [CN] 额外信息（天气描述、图标）
     property var info: {
         if (!forecastStore || !forecastStore.chartData) return ({})
         return forecastStore.chartData[cityId + "_info"] || ({})
     }
 
+    // [EN] Card background with hover effect / [CN] 卡片背景，悬停时高亮
     Rectangle {
         anchors.fill: parent
         radius: Math.min(card.width, card.height) * 0.04
@@ -35,6 +41,7 @@ Item {
             anchors.margins: Math.max(4, Math.min(card.width, card.height) * 0.035)
             spacing: 0
 
+            // [EN] Header: weather icon, city name, weather text / [CN] 头部：天气图标、城市名、天气描述
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Math.max(2, card.width * 0.01)
@@ -60,6 +67,7 @@ Item {
                 }
             }
 
+            // [EN] Temperature trend chart / [CN] 温度趋势折线图
             ChartView {
                 id: chartView
                 Layout.fillWidth: true; Layout.fillHeight: true
@@ -85,7 +93,7 @@ Item {
                     labelFormat: "%.0f"
                 }
 
-                // 预声明三个 series —— 避免 removeAllSeries/createSeries 导致的 NaN 轴问题
+                // [EN] Pre-declare three series to avoid NaN axis issues on clear/append / [CN] 预声明三个 series，避免动态增删导致的 NaN 轴问题
                 SplineSeries {
                     id: hourlySeries
                     name: "温度"; color: "#ff9800"
@@ -102,6 +110,7 @@ Item {
                     axisX: axisX; axisY: axisY
                 }
 
+                // [EN] No-data placeholder / [CN] 无数据占位提示
                 Text {
                     anchors.centerIn: parent
                     text: "暂无预报数据"
@@ -113,6 +122,7 @@ Item {
         }
     }
 
+    // [EN] Re-render chart when data or mode changes / [CN] 数据或模式变更时重新绘制图表
     onPointsChanged: updateChart()
     onModeChanged:  updateChart()
 
@@ -123,6 +133,7 @@ Item {
         acceptedButtons: Qt.NoButton
     }
 
+    // [EN] Render chart: compute axis range, append data points / [CN] 绘制图表：计算轴范围，追加数据点
     function updateChart() {
         if (!points || points.length === 0) {
             hourlySeries.clear(); maxSeries.clear(); minSeries.clear()
@@ -132,7 +143,7 @@ Item {
         }
 
         var n = points.length
-        // 先算数据范围 → 设轴 → clear → append（clear 后 axis 不自动重新缩放）
+        // [EN] Compute range → set axis → clear → append (axis won't auto-rescale after clear) / [CN] 先算数据范围 → 设轴 → clear → append（clear 后轴不自动重新缩放）
         var yMin = 99, yMax = -99
         for (var k = 0; k < n; k++) {
             if (mode === "hourly") {

@@ -1,7 +1,8 @@
+// SolarAstronomyPage.qml — Solar / astronomy page with 2×2 card grid
+// 阳光天文页 — 2×2 卡片网格，数据由 C++ solarAstronomyStore 驱动
 import QtQuick
 import QtQuick.Layouts
 
-// 阳光天文页 —— 纯UI布局，数据由 C++ solarAstronomyStore 驱动
 Item {
     id: page
 
@@ -10,7 +11,7 @@ Item {
         anchors.margins: Math.max(8, Math.min(page.width, page.height) * 0.025)
         spacing: Math.max(6, Math.min(page.height, page.width) * 0.012)
 
-        // 标题
+        // [EN] Page title (toggles between Solar+Astronomy or just Astronomy) / [CN] 页面标题（切换太阳辐射模式时显示不同名称）
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: appSettings && appSettings.showSolarRadiation ? "阳光天文" : "朝夕月相"
@@ -19,7 +20,7 @@ Item {
             font.bold: true
         }
 
-        // 2×2 卡片网格
+        // [EN] 2×2 solar/astronomy card grid / [CN] 2×2 阳光天文卡片网格
         Grid {
             id: cardGrid
             Layout.fillWidth: true; Layout.fillHeight: true

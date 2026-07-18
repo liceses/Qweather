@@ -1,13 +1,17 @@
+// AirQualityCard.qml — Air quality display card with AQI, category, pollutant grid
+// 空气质量卡片 — AQI 指数、类别、污染物网格展示
 import QtQuick
 import QtQuick.Layouts
 
 Item {
     id: card
 
+    // [EN] City ID, display name, air quality data / [CN] 城市 ID、显示名、空气质量数据
     property string cityId: ""
     property string cityName: ""
     property var airData: ({})
 
+    // [EN] Card background with hover effect / [CN] 卡片背景，悬停时高亮
     Rectangle {
         anchors.fill: parent
         radius: Math.min(card.width, card.height) * 0.04
@@ -24,7 +28,7 @@ Item {
             anchors.margins: Math.max(6, Math.min(card.width, card.height) * 0.04)
             spacing: Math.max(2, card.height * 0.01)
 
-            // 城市名
+            // [EN] City name / [CN] 城市名
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: card.cityName || "--"
@@ -35,7 +39,7 @@ Item {
                 Layout.maximumWidth: card.width * 0.85
             }
 
-            // AQI 大数字 + 彩色圆点
+            // [EN] AQI value with color dot / [CN] AQI 大数字 + 彩色圆点
             Row {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: Math.max(4, card.width * 0.015)
@@ -57,7 +61,7 @@ Item {
                 }
             }
 
-            // 类别
+            // [EN] Air quality category / [CN] 空气质量类别
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: card.airData.category || ""
@@ -66,7 +70,7 @@ Item {
                 font.bold: true
             }
 
-            // 首要污染物
+            // [EN] Primary pollutant / [CN] 首要污染物
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: card.airData.primaryPollutant ? "首要: " + card.airData.primaryPollutant : ""
@@ -75,7 +79,7 @@ Item {
                 visible: text !== ""
             }
 
-            // 污染物网格
+            // [EN] Pollutant data grid / [CN] 污染物数据网格
             Grid {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.fillWidth: true
@@ -113,7 +117,7 @@ Item {
                 }
             }
 
-            // 无数据提示
+            // [EN] No-data placeholder / [CN] 无数据占位提示
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: "暂无空气质量数据"

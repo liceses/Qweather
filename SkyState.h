@@ -2,37 +2,37 @@
 #include <QColor>
 #include <QObject>
 
-// SkyState: 统一渲染状态 — C++ struct 暴露给 QML
-// 所有字段通过 Q_PROPERTY 暴露，QML ShaderEffect 直接绑定
+// SkyState — Unified rendering state exposed to QML
+// 统一渲染状态，通过 Q_PROPERTY 暴露所有字段供 QML ShaderEffect 直接绑定
 struct SkyState {
     Q_GADGET
-    // 天文
+    // Astronomy — Sun & moon position for sky rendering / 天文：太阳/月亮位置与月相
     Q_PROPERTY(float solarAltitude  MEMBER solarAltitude)
     Q_PROPERTY(float solarAzimuth   MEMBER solarAzimuth)
     Q_PROPERTY(float moonAltitude   MEMBER moonAltitude)
     Q_PROPERTY(float moonAzimuth    MEMBER moonAzimuth)
     Q_PROPERTY(float moonPhase      MEMBER moonPhase)
     Q_PROPERTY(float moonIllum      MEMBER moonIllum)
-    // 大气
+    // Atmosphere — Sky dome color & lighting / 大气：天顶色、地平线色、环境色与曝光
     Q_PROPERTY(QColor zenithColor   MEMBER zenithColor)
     Q_PROPERTY(QColor horizonColor  MEMBER horizonColor)
     Q_PROPERTY(QColor ambientColor  MEMBER ambientColor)
     Q_PROPERTY(float exposure       MEMBER exposure)
     Q_PROPERTY(float twilightFactor MEMBER twilightFactor)
-    // 天气
+    // Weather — Cloud, rain, snow, fog, lightning, stars / 天气：云量、雨雪强度、雾密度、闪电概率、星空可见度
     Q_PROPERTY(float cloudCoverage  MEMBER cloudCoverage)
     Q_PROPERTY(float rainIntensity  MEMBER rainIntensity)
     Q_PROPERTY(float snowIntensity  MEMBER snowIntensity)
     Q_PROPERTY(float fogDensity     MEMBER fogDensity)
     Q_PROPERTY(float lightningProb  MEMBER lightningProb)
     Q_PROPERTY(float starVisibility MEMBER starVisibility)
-    // 变体
+    // Variants — Visual sub-type selection / 变体：云、雾、天气视觉子类型选择
     Q_PROPERTY(int cloudVariant   MEMBER cloudVariant)
     Q_PROPERTY(int fogVariant     MEMBER fogVariant)
     Q_PROPERTY(int weatherVariant MEMBER weatherVariant)
 
 public:
-    // 天文
+    // Astronomy fields / 天文字段：太阳高度角/方位角、月亮高度角/方位角、月相、月照率
     float solarAltitude = 45.0f;
     float solarAzimuth = 180.0f;
     float moonAltitude = 30.0f;
@@ -40,14 +40,14 @@ public:
     float moonPhase = 4.0f;
     float moonIllum = 1.0f;
 
-    // 大气
+    // Atmosphere fields / 大气字段：天顶色、地平线色、环境色、曝光度、黄昏因子
     QColor zenithColor{"#4a90d9"};
     QColor horizonColor{"#87ceeb"};
     QColor ambientColor{"#c8e0f0"};
     float exposure = 1.0f;
     float twilightFactor = 0.0f;
 
-    // 天气
+    // Weather fields / 天气字段：云量、雨强、雪强、雾密度、闪电概率、星空可见度
     float cloudCoverage = 0.0f;
     float rainIntensity = 0.0f;
     float snowIntensity = 0.0f;
@@ -55,12 +55,12 @@ public:
     float lightningProb = 0.0f;
     float starVisibility = 0.0f;
 
-    // 变体
+    // Variant fields / 变体字段：云、雾、天气视觉子类型
     int cloudVariant = 0;
     int fogVariant = 0;
     int weatherVariant = 0;
 
-    // 验证输出
+    // dump — Debug string for state verification / 调试用状态输出
     QString dump() const {
         return QStringLiteral(
             "SkyState{solarAlt=%1 solarAz=%2 moonAlt=%3 moonAz=%4 "
@@ -84,4 +84,5 @@ public:
     }
 };
 
+// Register SkyState as Qt metatype for QML interop / 注册元类型以便在 QML 中传递
 Q_DECLARE_METATYPE(SkyState)

@@ -1,3 +1,5 @@
+// SearchBar.qml — City search bar with popup, autocomplete, keyboard navigation
+// 搜索栏 — 城市搜索弹窗、自动补全、键盘导航
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -10,6 +12,7 @@ Rectangle {
     border.width: 1
     border.color: hoverArea.containsMouse ? "#50ffffff" : "#40ffffff"
 
+    // [EN] Search result list, selection signal, loading state, keyboard selection index / [CN] 搜索结果列表、选中信号、加载状态、键盘选中索引
     property var cityList: []
     signal citySelected(string cityId, string cityName, string lat, string lon)
     property alias placeholderText: placeholderLabel.text
@@ -20,6 +23,7 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: 200 } }
     Behavior on border.color { ColorAnimation { duration: 200 } }
 
+    // [EN] Search icon + placeholder text / [CN] 搜索图标 + 占位文字
     Row {
         anchors.centerIn: parent
         spacing: 6
@@ -49,6 +53,7 @@ Rectangle {
         }
     }
 
+    // [EN] Search popup with animations / [CN] 搜索弹窗（含入场/出场动画）
     Popup {
         id: searchPopup
         x: -50; y: root.height + 8
@@ -75,7 +80,7 @@ Rectangle {
             anchors.fill: parent
             spacing: 0
 
-            // 搜索输入区
+            // [EN] Search input area / [CN] 搜索输入区
             Item {
 
                 Layout.fillWidth: true
@@ -181,7 +186,7 @@ Rectangle {
                 }
             }
 
-            // 分隔线
+            // [EN] Divider / [CN] 分隔线
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
@@ -190,7 +195,7 @@ Rectangle {
                 color: "#12ffffff"
             }
 
-            // 结果列表
+            // [EN] Search result list with keyboard navigation / [CN] 搜索结果列表（支持键盘导航）
             ListView {
                 id: resultList
                 Layout.fillWidth: true
@@ -303,6 +308,7 @@ Rectangle {
         }
     }
 
+    // [EN] Select a city from results, emit signal and close popup / [CN] 选中搜索结果，发射信号并关闭弹窗
     function selectCity(idx) {
         if (idx < 0 || idx >= root.cityList.length) return
         var c = root.cityList[idx]
@@ -312,6 +318,7 @@ Rectangle {
         searchPopup.close()
     }
 
+    // [EN] Debounce timer — wait 300ms before searching / [CN] 防抖定时器 — 300ms 后发起搜索
     Timer {
         id: debounce
         interval: 300
@@ -324,6 +331,7 @@ Rectangle {
         }
     }
 
+    // [EN] Handle API search results / [CN] 处理 API 搜索返回结果
     Connections {
         target: weatherApi
         function onCityLookupReady(citys) {

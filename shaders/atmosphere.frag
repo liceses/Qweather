@@ -1,6 +1,6 @@
 #version 450
 
-// AtmosphereLayer - twilight scattering + exposure control
+// [AtmosphereLayer] — Twilight scattering + exposure control / 黄昏散射 + 曝光控制
 layout(std140, binding=0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
@@ -26,7 +26,7 @@ void main() {
 
     vec3 atmosColor = mix(zenith, horizon, horizonBlend);
 
-    // twilight warm tint
+    // [Twilight warm tint overlay] / 黄昏暖色调叠加
     if (twilightFactor > 0.01) {
         vec3 twilightTint = vec3(1.0, 0.6, 0.3) * twilightFactor * 0.15;
         atmosColor += twilightTint;

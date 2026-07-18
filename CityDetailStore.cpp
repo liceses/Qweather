@@ -4,8 +4,8 @@
 #include <QDate>
 #include <QDebug>
 
+// CityDetailStore — constructor, pre-init detail sections to avoid QML TypeError / 构造函数，预初始化各数据段避免 QML 访问 undefined
 CityDetailStore::CityDetailStore(QObject* parent) : QObject(parent) {
-    // 预初始化保证 QML 端访问 detail.xxx 时不会因 undefined 中间对象抛 TypeError
     m_detail["now"] = QVariantMap();
     m_detail["air"] = QVariantMap();
     m_detail["daily"] = QVariantList();
@@ -18,6 +18,7 @@ CityDetailStore::CityDetailStore(QObject* parent) : QObject(parent) {
     m_detail["minutely"] = QVariantMap();
 }
 
+// setWeatherApi — inject API & connect all detail signals / 注入 API 并连接所有详情信号
 void CityDetailStore::setWeatherApi(WeatherAPI* api) {
     if (m_api)
         disconnect(m_api, nullptr, this, nullptr);
@@ -46,6 +47,7 @@ void CityDetailStore::setWeatherApi(WeatherAPI* api) {
     }
 }
 
+// setCity — switch active city & fetch all data / 切换当前城市并拉取全部数据
 void CityDetailStore::setCity(const QString& cityId, const QString& cityName,
                               const QString& lat, const QString& lon) {
     if (cityId.isEmpty()) {
@@ -78,6 +80,7 @@ void CityDetailStore::setCity(const QString& cityId, const QString& cityName,
     fetchAll();
 }
 
+// fetchAll — dispatch all API requests for current city / 发送当前城市所有 API 请求
 void CityDetailStore::fetchAll() {
     if (!m_api || m_cityId.isEmpty()) return;
 
@@ -98,13 +101,14 @@ void CityDetailStore::fetchAll() {
     }
 }
 
-// 每次更新 detail 都需创建新 QVariantMap，触发 QML property var 绑定
+// emitUpdated — trigger QML binding by signalling detailChanged / 触发 QML 绑定刷新
 void CityDetailStore::emitUpdated() {
     emit detailChanged();
 }
 
-// ---- 处理器 ----
+// ---- 处理器 / Handlers ----
 
+// onWeatherNowReady — handle real-time weather / 处理实况天气
 void CityDetailStore::onWeatherNowReady(const QJsonObject& obj) {
     if (obj["_location"].toString() != m_cityId) return;
     QVariantMap now;
@@ -127,6 +131,7 @@ void CityDetailStore::onWeatherNowReady(const QJsonObject& obj) {
     emitUpdated();
 }
 
+// onWeatherDailyReady — handle daily forecast / 处理逐天预报
 void CityDetailStore::onWeatherDailyReady(const QString& loc, const QJsonArray& arr) {
     if (loc != m_cityId) return;
     QVariantList daily;
@@ -156,6 +161,7 @@ void CityDetailStore::onWeatherDailyReady(const QString& loc, const QJsonArray& 
     emitUpdated();
 }
 
+// onWeatherHourlyReady — handle hourly forecast / 处理逐小时预报
 void CityDetailStore::onWeatherHourlyReady(const QString& loc, const QJsonArray& arr) {
     if (loc != m_cityId) return;
     QVariantList hourly;
@@ -179,6 +185,7 @@ void CityDetailStore::onWeatherHourlyReady(const QString& loc, const QJsonArray&
     emitUpdated();
 }
 
+// onAirCurrentReady — handle air quality / 处理空气质量
 void CityDetailStore::onAirCurrentReady(const QString& cityId, const QJsonObject& obj) {
     if (cityId != m_cityId) return;
 
@@ -234,6 +241,7 @@ void CityDetailStore::onAirCurrentReady(const QString& cityId, const QJsonObject
     emitUpdated();
 }
 
+// onIndicesReady — handle weather indices / 处理天气指数
 void CityDetailStore::onIndicesReady(const QString& loc, const QJsonArray& arr) {
     if (loc != m_cityId) return;
     QVariantList indices;
@@ -252,6 +260,7 @@ void CityDetailStore::onIndicesReady(const QString& loc, const QJsonArray& arr) 
     emitUpdated();
 }
 
+// onWarningNowReady — handle weather alerts / 处理天气预警
 void CityDetailStore::onWarningNowReady(const QJsonObject& obj) {
     QJsonArray alerts = obj["alerts"].toArray();
     QVariantList warnings;
@@ -285,6 +294,7 @@ void CityDetailStore::onWarningNowReady(const QJsonObject& obj) {
     emitUpdated();
 }
 
+// onAstronomySunReady — handle sunrise/sunset / 处理日出日落
 void CityDetailStore::onAstronomySunReady(const QString& cityId, const QJsonObject& obj) {
     if (cityId != m_cityId) return;
     QVariantMap sun;
@@ -296,6 +306,7 @@ void CityDetailStore::onAstronomySunReady(const QString& cityId, const QJsonObje
     emitUpdated();
 }
 
+// onAstronomyMoonReady — handle moon phase / 处理月相
 void CityDetailStore::onAstronomyMoonReady(const QString& cityId, const QJsonObject& obj) {
     if (cityId != m_cityId) return;
     QVariantMap moon;
@@ -314,6 +325,7 @@ void CityDetailStore::onAstronomyMoonReady(const QString& cityId, const QJsonObj
     emitUpdated();
 }
 
+// onSolarRadiationReady — handle solar radiation / 处理太阳辐射
 void CityDetailStore::onSolarRadiationReady(const QString& cityId, const QJsonObject& obj) {
     if (cityId != m_cityId) return;
     QJsonArray forecasts = obj["forecasts"].toArray();
@@ -343,6 +355,7 @@ void CityDetailStore::onSolarRadiationReady(const QString& cityId, const QJsonOb
     emitUpdated();
 }
 
+// onMinutelyPrecipReady — handle minutely precipitation / 处理分钟级降水
 void CityDetailStore::onMinutelyPrecipReady(const QJsonObject& obj) {
     // 过滤：_location 为 "lat,lng" 格式
     QString expectedLoc = m_lat + "," + m_lon;

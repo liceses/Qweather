@@ -6,8 +6,10 @@
 #include <QDate>
 #include <QDebug>
 
+// SolarAstronomyStore — constructor / 构造函数
 SolarAstronomyStore::SolarAstronomyStore(QObject* parent) : QObject(parent) {}
 
+// setWeatherApi — inject API & connect solar/astro signals / 注入 API 并连接太阳/天文信号
 void SolarAstronomyStore::setWeatherApi(WeatherAPI* api) {
     if (m_api)
         disconnect(m_api, nullptr, this, nullptr);
@@ -22,6 +24,7 @@ void SolarAstronomyStore::setWeatherApi(WeatherAPI* api) {
     }
 }
 
+// setAppSettings — inject settings & react to solar toggle / 注入设置并监听太阳辐射开关
 void SolarAstronomyStore::setAppSettings(AppSettings* settings) {
     m_appSettings = settings;
     if (m_appSettings) {
@@ -33,6 +36,7 @@ void SolarAstronomyStore::setAppSettings(AppSettings* settings) {
     }
 }
 
+// setCities — set tracked cities & refresh / 设置关注城市并刷新
 void SolarAstronomyStore::setCities(const QVariantList& cities) {
     m_cities = cities;
     qDebug() << "[SolarAstronomy] setCities count:" << m_cities.size();
@@ -40,6 +44,7 @@ void SolarAstronomyStore::setCities(const QVariantList& cities) {
     refreshAll();
 }
 
+// refreshAll — fetch solar & astronomy for each city / 刷新所有城市太阳与天文数据
 void SolarAstronomyStore::refreshAll() {
     if (!m_api || m_cities.isEmpty()) {
         qDebug() << "[SolarAstronomy] refreshAll skip: api=" << (m_api != nullptr) << "cities=" << m_cities.size();
@@ -65,8 +70,9 @@ void SolarAstronomyStore::refreshAll() {
     }
 }
 
-// ---- 太阳辐射 handler ----
+// ---- 太阳辐射 handler / Solar radiation handler ----
 
+// onSolarRadiationReady — parse GHI/DNI/DHI / 解析太阳辐射数据
 void SolarAstronomyStore::onSolarRadiationReady(const QString& cityId, const QJsonObject& result) {
     QJsonArray forecasts = result["forecasts"].toArray();
     QVariantMap solar;
@@ -98,8 +104,9 @@ void SolarAstronomyStore::onSolarRadiationReady(const QString& cityId, const QJs
     mergeAndEmit(cityId);
 }
 
-// ---- 日出日落 handler ----
+// ---- 日出日落 handler / Sunrise/sunset handler ----
 
+// onAstronomySunReady — parse sunrise/sunset / 解析日出日落
 void SolarAstronomyStore::onAstronomySunReady(const QString& cityId, const QJsonObject& result) {
     QVariantMap sun;
     sun["sunrise"] = result["sunrise"].toString();
@@ -113,8 +120,9 @@ void SolarAstronomyStore::onAstronomySunReady(const QString& cityId, const QJson
     mergeAndEmit(cityId);
 }
 
-// ---- 月相 handler ----
+// ---- 月相 handler / Moon phase handler ----
 
+// onAstronomyMoonReady — parse moon phase & rise/set / 解析月相与月出月落
 void SolarAstronomyStore::onAstronomyMoonReady(const QString& cityId, const QJsonObject& result) {
     QVariantMap moon;
     QJsonArray phases = result["moonPhase"].toArray();
@@ -135,8 +143,7 @@ void SolarAstronomyStore::onAstronomyMoonReady(const QString& cityId, const QJso
     mergeAndEmit(cityId);
 }
 
-// ---- 合并 3 个 API 结果，写入最终数据 ----
-
+// mergeAndEmit — merge solar + sun + moon then emit / 合并三项数据后发射信号
 void SolarAstronomyStore::mergeAndEmit(const QString& cityId) {
     QVariantMap raw = m_solarRaw[cityId].toMap();
     QVariantMap solar = raw["solar"].toMap();

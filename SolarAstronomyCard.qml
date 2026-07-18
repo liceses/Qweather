@@ -1,14 +1,18 @@
+// SolarAstronomyCard.qml — Solar radiation (GHI/DNI/DHI) and astronomy (sunrise/sunset/moon) card
+// 阳光天文卡片 — 太阳辐射（GHI/DNI/DHI）与天文（日出/日落/月相）展示
 import QtQuick
 import QtQuick.Layouts
 
 Item {
     id: card
 
+    // [EN] City ID, display name, solar/astronomy data, radiation toggle / [CN] 城市 ID、显示名、阳光天文数据、太阳辐射开关
     property string cityId: ""
     property string cityName: ""
     property var solarData: ({})
     property bool showSolarRadiation: true
 
+    // [EN] Card background with hover effect / [CN] 卡片背景，悬停时高亮
     Rectangle {
         anchors.fill: parent
         radius: Math.min(card.width, card.height) * 0.04
@@ -25,7 +29,7 @@ Item {
             anchors.margins: Math.max(6, Math.min(card.width, card.height) * 0.04)
             spacing: Math.max(2, card.height * 0.01)
 
-            // 城市名
+            // [EN] City name / [CN] 城市名
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: card.cityName || "--"
@@ -36,7 +40,7 @@ Item {
                 Layout.maximumWidth: card.width * 0.85
             }
 
-            // GHI 大数字
+            // [EN] GHI (Global Horizontal Irradiance) big number / [CN] GHI（总水平辐照度）大数字
             Row {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 4
@@ -66,7 +70,7 @@ Item {
                 visible: card.showSolarRadiation
             }
 
-            // DNI / DHI 副行
+            // [EN] DNI (Direct Normal) and DHI (Diffuse Horizontal) sub-row / [CN] DNI（直接法向）和 DHI（散射水平）副行
             Row {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: Math.max(12, card.width * 0.06)
@@ -96,7 +100,7 @@ Item {
                 }
             }
 
-            // 分隔线
+            // [EN] Separator / [CN] 分隔线
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
@@ -106,7 +110,7 @@ Item {
                 visible: card.showSolarRadiation
             }
 
-            // 日出日落
+            // [EN] Sunrise & sunset row / [CN] 日出日落行
             Row {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: Math.max(16, card.width * 0.08)
@@ -132,7 +136,7 @@ Item {
                 }
             }
 
-            // 月相
+            // [EN] Moon phase row / [CN] 月相行
             Row {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 6
@@ -152,7 +156,7 @@ Item {
                 }
             }
 
-            // 无数据提示
+            // [EN] No-data placeholder / [CN] 无数据占位提示
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: card.showSolarRadiation ? "暂无天文数据" : "暂无日出日落/月相数据"

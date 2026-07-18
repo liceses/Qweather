@@ -1,7 +1,7 @@
+// CityCard.qml — City info card with weather icon, name, temp; click/double-click/close
+// 城市信息卡片 — 半透明圆角卡片，显示城市名 + 天气图标 + 温度，支持单击/双击/关闭
 import QtQuick
 
-// 城市信息卡片 —— 半透明圆角矩形，显示城市名 + 天气图标 + 温度
-// 单击切换焦点，双击跳转详情，hover 半透明高亮
 Rectangle {
     id: card
     width: 160; height: 100
@@ -13,15 +13,17 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: 200 } }
     Behavior on border.color { ColorAnimation { duration: 200 } }
 
+    // [EN] City display name, ID, focus state, weather data / [CN] 城市显示名、ID、焦点状态、天气数据
     property string cityName: ""
     property string cityId: ""
     property bool isFocus: false
     property var weatherData: ({})
+    // [EN] Signals: single click, double click, close / [CN] 单击、双击、关闭信号
     signal clicked(string cityId)
     signal doubleClicked(string cityId)
     signal closeClicked(string cityId)
 
-    // 顶部叉号 — hover 时显示
+    // [EN] Close button — visible on hover / [CN] 顶部关闭按钮 — 悬停时显示
     Rectangle {
         anchors.top: parent.top; anchors.right: parent.right; anchors.margins: 4
         width: 18; height: 18; radius: 9
@@ -42,13 +44,14 @@ Rectangle {
         }
     }
 
-    // 焦点高亮
+    // [EN] Focus highlight overlay / [CN] 焦点城市高亮覆盖层
     Rectangle {
         anchors.fill: parent
         radius: parent.radius
         color: card.isFocus ? "#404caf50" : "transparent"
     }
 
+    // [EN] Content: weather icon, city name, temperature / [CN] 内容：天气图标、城市名、温度
     Column {
         anchors.centerIn: parent
         spacing: 4
@@ -76,13 +79,13 @@ Rectangle {
         }
     }
 
-    // 双击检测
+    // [EN] Double-click detection: wait 400ms to distinguish click vs double-click / [CN] 双击检测：400ms 内判定双击，超时判单击
     property var _lastClickTime: 0
     Timer {
         id: clickTimer
         interval: 400
         onTriggered: {
-            card.clicked(card.cityId)          // 超时 = 单击
+            card.clicked(card.cityId)
             card._lastClickTime = 0
         }
     }
@@ -98,10 +101,10 @@ Rectangle {
             if (now - card._lastClickTime < 400) {
                 clickTimer.stop()
                 card._lastClickTime = 0
-                card.doubleClicked(card.cityId)  // 双击
+                card.doubleClicked(card.cityId)
             } else {
                 card._lastClickTime = now
-                clickTimer.restart()             // 等 400ms 判单击
+                clickTimer.restart()
             }
         }
     }
