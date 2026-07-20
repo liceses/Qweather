@@ -246,8 +246,10 @@ void TransitionController::activateLayer(float &tp, bool &active,
                     return;
                 }
                 tp = 1.0f;
-                emitTP(name, tp);
-        qDebug() << "[TransitionController] activate(" << name
+                if (name == QStringLiteral("cloud"))   emit cloudTPChanged();
+                else if (name == QStringLiteral("weather")) emit weatherTPChanged();
+                else if (name == QStringLiteral("fog")) emit fogTPChanged();
+                qDebug() << "[TransitionController] activate(" << name
                  << ") tp timer FIRED → tp=1.0";
             });
         } else {

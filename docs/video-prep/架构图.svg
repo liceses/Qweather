@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 680" font-family="'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0e27"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="apiGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+    <linearGradient id="cppGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4facfe"/>
+      <stop offset="100%" stop-color="#00f2fe"/>
+    </linearGradient>
+    <linearGradient id="storeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#43e97b"/>
+      <stop offset="100%" stop-color="#38f9d7"/>
+    </linearGradient>
+    <linearGradient id="qmlGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fa709a"/>
+      <stop offset="100%" stop-color="#fee140"/>
+    </linearGradient>
+    <linearGradient id="shaderGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f093fb"/>
+      <stop offset="100%" stop-color="#f5576c"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#8899cc"/>
+    </marker>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="900" height="680" fill="url(#bg)" rx="12"/>
+
+  <!-- 标题 -->
+  <text x="450" y="38" text-anchor="middle" fill="#ffffff" font-size="20" font-weight="bold" letter-spacing="2">QWeather 系统架构图</text>
+  <line x1="300" y1="50" x2="600" y2="50" stroke="#334caf50" stroke-width="2"/>
+
+  <!-- ======= 第一层: API ======= -->
+  <rect x="275" y="68" width="350" height="56" rx="10" fill="url(#apiGrad)" filter="url(#shadow)"/>
+  <text x="450" y="90" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">和风天气 API</text>
+  <text x="450" y="110" text-anchor="middle" fill="#dde" font-size="11">QWeather API · 24 Endpoints (HTTPS)</text>
+
+  <!-- 箭头 1→2 -->
+  <line x1="450" y1="124" x2="450" y2="150" stroke="#8899cc" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ======= 第二层: WeatherAPI ======= -->
+  <rect x="225" y="155" width="450" height="56" rx="10" fill="url(#cppGrad)" filter="url(#shadow)"/>
+  <text x="450" y="178" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">WeatherAPI (C++)</text>
+  <text x="450" y="197" text-anchor="middle" fill="#dde" font-size="11">QNetworkAccessManager · 统一 onReplyFinished 路由 · 26 个信号</text>
+
+  <!-- 箭头 2→3 -->
+  <line x1="450" y1="211" x2="450" y2="240" stroke="#8899cc" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ======= 第三层: 缓存 + Store ======= -->
+  <!-- 缓存左分支 -->
+  <rect x="70" y="248" width="220" height="56" rx="10" fill="#2a3a5a" stroke="#4a6a9a" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="180" y="272" text-anchor="middle" fill="#8ab4f8" font-size="13" font-weight="bold">WeatherCache</text>
+  <text x="180" y="291" text-anchor="middle" fill="#99b" font-size="10">SQLite · TTL 过期 · 键值存储</text>
+
+  <!-- Store 中间 -->
+  <rect x="320" y="248" width="260" height="56" rx="10" fill="url(#storeGrad)" filter="url(#shadow)"/>
+  <text x="450" y="270" text-anchor="middle" fill="#1a3a2a" font-size="13" font-weight="bold">Data Stores (C++)</text>
+  <text x="450" y="290" text-anchor="middle" fill="#2a4a3a" font-size="10">Forecast · AirQuality · SolarAstronomy · CityDetail</text>
+
+  <!-- 缓存右分支: GlobalClock + AppSettings -->
+  <rect x="610" y="248" width="220" height="56" rx="10" fill="#2a3a5a" stroke="#4a6a9a" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="720" y="270" text-anchor="middle" fill="#8ab4f8" font-size="13" font-weight="bold">GlobalClock / AppSettings</text>
+  <text x="720" y="290" text-anchor="middle" fill="#99b" font-size="10">60fps 时间源 / QSettings 持久化</text>
+
+  <!-- 箭头 2→3 分叉线 -->
+  <line x1="450" y1="211" x2="180" y2="242" stroke="#8899cc" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="450" y1="211" x2="450" y2="242" stroke="#8899cc" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="450" y1="211" x2="720" y2="242" stroke="#8899cc" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 箭头 3→4 -->
+  <line x1="450" y1="304" x2="450" y2="335" stroke="#8899cc" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ======= 第四层: QQmlApplicationEngine ======= -->
+  <rect x="225" y="340" width="450" height="46" rx="10" fill="#1a2a4a" stroke="#4caf50" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="450" y="360" text-anchor="middle" fill="#4caf50" font-size="14" font-weight="bold">QQmlApplicationEngine</text>
+  <text x="450" y="377" text-anchor="middle" fill="#8a9" font-size="11">10 个 setContextProperty — 上下文属性注入</text>
+
+  <!-- 箭头 4→5 -->
+  <line x1="450" y1="386" x2="450" y2="415" stroke="#8899cc" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ======= 第五层: 天空系统 ======= -->
+  <rect x="225" y="420" width="450" height="56" rx="10" fill="#2a2a1a" stroke="#f0d060" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="450" y="442" text-anchor="middle" fill="#f0d060" font-size="14" font-weight="bold">V3 天空模拟系统 (C++)</text>
+  <text x="450" y="462" text-anchor="middle" fill="#ccb" font-size="10">BackgroundManager · AstronomyModel · WeatherProfile · TransitionController</text>
+
+  <!-- 箭头 5→6 -->
+  <line x1="450" y1="476" x2="450" y2="505" stroke="#8899cc" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ======= 第六层: QML 页面 ======= -->
+  <rect x="225" y="510" width="450" height="46" rx="10" fill="url(#qmlGrad)" filter="url(#shadow)"/>
+  <text x="450" y="532" text-anchor="middle" fill="#3a1a2a" font-size="14" font-weight="bold">QML Pages (7 个页面)</text>
+  <text x="450" y="550" text-anchor="middle" fill="#5a2a3a" font-size="10">Main · Dashboard · Forecast · AirQuality · Solar · CityDetail · Favorites · Settings</text>
+
+  <!-- 箭头 6→7 -->
+  <line x1="450" y1="556" x2="450" y2="582" stroke="#8899cc" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ======= 第七层: 着色器 ======= -->
+  <rect x="175" y="588" width="550" height="56" rx="10" fill="url(#shaderGrad)" filter="url(#shadow)"/>
+  <text x="450" y="611" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">WeatherBackground — ShaderEffect Layer 栈</text>
+  <text x="450" y="630" text-anchor="middle" fill="#fdd" font-size="10">Sky(fBM) → Atmosphere → Cloud(raymarch) → Rain/Snow(grid) → Fog → Lightning</text>
+
+  <!-- GPU 标注 -->
+  <rect x="170" y="648" width="560" height="24" rx="6" fill="#00000040" stroke="#ffffff20" stroke-width="1"/>
+  <text x="450" y="665" text-anchor="middle" fill="#8899cc" font-size="10">GPU — GLSL #version 450 · qt_add_shaders → .qsb · ACES 色调映射 · 60fps</text>
+
+  <!-- 右侧图层 z-order 标注 -->
+  <rect x="750" y="588" width="110" height="66" rx="6" fill="#00000060" stroke="#ffffff20" stroke-width="1"/>
+  <text x="805" y="605" text-anchor="middle" fill="#aaa" font-size="9">z-order</text>
+  <text x="755" y="620" fill="#f5576c" font-size="9">z:50 Lightning</text>
+  <text x="755" y="634" fill="#f093fb" font-size="9">z:40 Fog</text>
+  <text x="755" y="648" fill="#43e97b" font-size="9">z:30 Weather</text>
+
+  <!-- 底部标注 -->
+  <text x="450" y="678" text-anchor="middle" fill="#555" font-size="9">Qt 6.11 · C++17 · QML · GLSL · Qt Charts · SQLite</text>
+</svg>

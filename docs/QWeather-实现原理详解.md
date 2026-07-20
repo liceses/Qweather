@@ -772,13 +772,19 @@ dp > 1.0    (夜晚)  : exposure=0.3~0.6, starVis=0.2~0.8
 当切换城市时，使用 60 帧的 smoothstep 插值过渡：
 
 ```
-save m_lerpFrom = [当前 solarAltitude, solarAzimuth, moonAltitude,
-                    moonAzimuth, starVisibility, twilightFactor]
+save m_lerpFrom = [当前 solarAltitude, solarAzimuth, moonAltitude, moonAzimuth]
     ↓
 m_astronomy.setLocation(lat, lon)
 m_astronomy.update(now)
     ↓
-save m_lerpTo = [新的天文值]
+save m_lerpTo = [新的 solarAltitude, solarAzimuth, moonAltitude, moonAzimuth]
+    ↓
+buildAtmosphereChanges()  → 得到新的 starVisibility, twilightFactor, exposure, 颜色
+    ↓
+save m_lerpFrom[4,5] = [当前 starVisibility, twilightFactor]  (旧值)
+save m_lerpTo[4,5]   = buildAtmosphereChanges 返回的新值
+    ↓
+立即提交大气颜色、曝光(× m_lastWeatherScale)、星光、黄昏因子
     ↓
 m_lerpTick = 0
 m_lerpTimer.start(16ms)
@@ -786,10 +792,27 @@ m_lerpTimer.start(16ms)
 tickLerp() [每 16ms]:
   t = tick / 60
   t = t²(3-2t)  // smoothstep
-  // 线性插值 6 个天文字段
+  // 线性插值 6 个字段: solarAltitude, solarAzimuth, moonAltitude,
+  //                    moonAzimuth, starVisibility, twilightFactor
   commitSkyState(changes)
   if (t >= 1.0) stop timer
 ```
+
+> **注意**：`starVisibility` 和 `twilightFactor` 的 lerp 目标值必须在 `buildAtmosphereChanges()` 之后捕获，否则 lerp 会用旧快照覆盖正确的新值。
+
+#### `setLocation` 中曝光计算的注意事项
+
+`setLocation` 提交的曝光值需要叠加天气压暗因子（`m_lastWeatherScale`），否则切换城市时曝光会短暂跳变为晴天基础值，随后才被 `updateWeather` 修正为正确的压暗值：
+
+```cpp
+// setLocation 中
+ch["exposure"] = atm["exposure"].toDouble() * m_lastWeatherScale;
+
+// updateSunTimes、onAstronomyTimer 中也有同样的乘法
+ch["exposure"] = baseExp * m_lastWeatherScale;
+```
+
+初始值 `m_lastWeatherScale = 1.0f`（晴天无压暗），首次加载时不影响。
 
 ---
 

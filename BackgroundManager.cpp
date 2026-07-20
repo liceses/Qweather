@@ -158,8 +158,6 @@ void BackgroundManager::setLocation(float lat, float lon)
     m_lerpFrom[1] = m_skyState.solarAzimuth;
     m_lerpFrom[2] = m_skyState.moonAltitude;
     m_lerpFrom[3] = m_skyState.moonAzimuth;
-    m_lerpFrom[4] = m_skyState.starVisibility;
-    m_lerpFrom[5] = m_skyState.twilightFactor;
 
     // Compute new astronomy values as lerp target / 计算新天文值为插值目标
     m_astronomy.setLocation(lat, lon);
@@ -168,22 +166,26 @@ void BackgroundManager::setLocation(float lat, float lon)
     m_lerpTo[1] = m_astronomy.solarAzimuth();
     m_lerpTo[2] = m_astronomy.moonAltitude();
     m_lerpTo[3] = m_astronomy.moonAzimuth();
-    m_lerpTo[4] = m_skyState.starVisibility;
-    m_lerpTo[5] = m_skyState.twilightFactor;
 
-    m_lerpTick = 0;
-    m_lerpTimer.start();
-
-    // Also commit current atmosphere colors immediately / 同时立即提交当前大气颜色
+    // Compute new atmosphere values first, so lerp targets match / 先计算新大气参数，确保插值目标正确
     QVariantMap atm = buildAtmosphereChanges();
+    m_lerpFrom[4] = m_skyState.starVisibility;
+    m_lerpFrom[5] = m_skyState.twilightFactor;
+    m_lerpTo[4] = static_cast<float>(atm["starVisibility"].toDouble());
+    m_lerpTo[5] = static_cast<float>(atm["twilightFactor"].toDouble());
+
+    // Commit atmosphere colors immediately / 立即提交当前大气颜色
     QVariantMap ch;
     ch["zenithColor"]   = atm["zenithColor"];
     ch["horizonColor"]  = atm["horizonColor"];
     ch["ambientColor"]  = atm["ambientColor"];
-    ch["exposure"]      = atm["exposure"];
+    ch["exposure"]      = atm["exposure"].toDouble() * m_lastWeatherScale;
     ch["twilightFactor"] = atm["twilightFactor"];
     ch["starVisibility"] = atm["starVisibility"];
     commitSkyState(ch);
+
+    m_lerpTick = 0;
+    m_lerpTimer.start();
 }
 
 // Set parallax offset (stub for future use) / 设置视差偏移（预留）
@@ -231,7 +233,7 @@ void BackgroundManager::setDebugTime(qreal hour)
     changes["zenithColor"]   = atmos["zenithColor"];
     changes["horizonColor"]  = atmos["horizonColor"];
     changes["ambientColor"]  = atmos["ambientColor"];
-    changes["exposure"]      = atmos["exposure"];
+    changes["exposure"]      = atmos["exposure"].toDouble() * m_lastWeatherScale;
     changes["twilightFactor"] = atmos["twilightFactor"];
     changes["starVisibility"] = atmos["starVisibility"];
 
