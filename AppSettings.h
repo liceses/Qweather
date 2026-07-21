@@ -60,6 +60,10 @@ signals:
     void maxCardsChanged();
 
 private:
+    void loadFromFile();
+    void saveToFile();
+
+    QString m_configPath;
     bool m_showSolarRadiation = true;  // Solar radiation card visibility / 太阳辐射卡片可见性
     bool m_darkMode = true;            // Dark mode enabled / 深色模式启用
     int m_maxCards = 4;                // Max forecast cards / 最大预报卡片数
