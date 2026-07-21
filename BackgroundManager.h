@@ -31,7 +31,7 @@ public:
     Q_INVOKABLE void commitSkyState(const QVariantMap &changes);
 
     // Weather / astronomy update entry points / 天气/天文更新入口
-    Q_INVOKABLE void updateWeather(int iconCode, bool isDay);
+    Q_INVOKABLE void updateWeather(int iconCode);
     Q_INVOKABLE void updateSunTimes(const QString &sunrise, const QString &sunset);
     Q_INVOKABLE void updateMoonData(int phaseIcon, float illumination);
     Q_INVOKABLE void setLocation(float lat, float lon);
@@ -49,7 +49,7 @@ public:
     Q_PROPERTY(int currentWeatherCode READ currentWeatherCode NOTIFY currentWeatherChanged)
     Q_PROPERTY(bool currentIsDay READ currentIsDay NOTIFY currentWeatherChanged)
     int currentWeatherCode() const { return m_currentWeatherCode; }
-    bool currentIsDay() const { return m_currentIsDay; }
+    bool currentIsDay() const { return !m_astronomy.isNight(); }
 
     // currentLocalTime — Formatted HH:mm from astronomy model / 从天体模型格式化的 HH:mm 本地时间
     Q_PROPERTY(QString currentLocalTime READ currentLocalTime NOTIFY skyStateChanged)
@@ -91,7 +91,6 @@ private:
     WeatherProfileDB m_profiles;   // Weather profile database / 天气配置数据库
     QString m_configPath;          // Path to profile JSON config / 配置文件路径
     int m_currentWeatherCode = 100; // Last applied weather icon code / 最近应用的天气图标码
-    bool m_currentIsDay = true;     // Whether current time is day / 当前是否为白天
     AstronomyModel m_astronomy;     // Astronomy calculation model / 天文计算模型
     TransitionController *m_transitionCtrl = nullptr; // Injected transition controller / 注入的过渡控制器
     QTimer m_astronomyTimer;       // Timer for astronomy updates / 天文更新定时器

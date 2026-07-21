@@ -428,9 +428,7 @@ ApplicationWindow {
             w[id] = { temp: now.temp, icon: now.icon, text: now.text }
             weathers = w
 
-            var iconCode = parseInt(now.icon)
-            var isDay = !(iconCode >= 150 && iconCode <= 199)
-            backgroundManager.updateWeather(iconCode, isDay)
+            backgroundManager.updateWeather(parseInt(now.icon))
         }
         // [EN] Solar astronomy data received, update background sun times / [CN] 太阳天文数据到达，更新背景日出日落时间
         function onAstronomySunReady(cityId, result) {

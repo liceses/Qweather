@@ -69,7 +69,7 @@ Rectangle {
             weatherVariant: backgroundManager.skyState.weatherVariant,
             exposure:       backgroundManager.skyState.exposure
         }
-        backgroundManager.updateWeather(code, isDay)
+        backgroundManager.updateWeather(code)
         wTo = {
             cloudCoverage:  backgroundManager.skyState.cloudCoverage,
             rainIntensity:  backgroundManager.skyState.rainIntensity,
@@ -120,7 +120,7 @@ Rectangle {
         demoHour = 0
         demoWeatherIdx = 0
         backgroundManager.enterDebugMode()
-        backgroundManager.updateWeather(demoWeatherList[0], demoWeatherList[0] < 150)
+        backgroundManager.updateWeather(demoWeatherList[0])
         backgroundManager.setDebugTime(0)
         demoAnim.start()
     }
@@ -360,7 +360,7 @@ Rectangle {
                     onClicked: {
                         var code = parseInt(txtCode.text)
                         if (!isNaN(code)) {
-                            backgroundManager.updateWeather(code, chkIsDay.checked)
+                            backgroundManager.updateWeather(code)
                             console.log("[DebugPanel] updateWeather code=" + code + " isDay=" + chkIsDay.checked)
                         }
                     }

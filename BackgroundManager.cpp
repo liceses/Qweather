@@ -92,16 +92,17 @@ void BackgroundManager::commitSkyState(const QVariantMap &changes)
 // ==================== Auto mode: update weather from icon code / 自动模式：根据图标编码更新天气 ====================
 
 // Update weather from icon code (auto mode) / 根据天气图标编码更新（自动模式）
-void BackgroundManager::updateWeather(int iconCode, bool isDay)
+void BackgroundManager::updateWeather(int iconCode)
 {
-    WeatherProfile p = m_profiles.fromCode(iconCode, isDay);
+    bool isNight = m_astronomy.isNight();
+    WeatherProfile p = m_profiles.fromCode(iconCode, !isNight);
     QVariantMap ch;
     ch["cloudCoverage"]  = p.cloudCoverage;
     ch["rainIntensity"]  = (p.weatherParticle == "rain")  ? static_cast<double>(p.intensity) : 0.0;
     ch["snowIntensity"]  = (p.weatherParticle == "snow") ? static_cast<double>(p.intensity) : 0.0;
     ch["fogDensity"]     = static_cast<double>(p.fogIntensity);
     ch["lightningProb"]  = p.lightningActive ? 1.0 : 0.0;
-    ch["starVisibility"] = (!isDay) ? 0.8 : 0.0;
+    ch["starVisibility"] = isNight ? 0.8 : 0.0;
 
     // Compute combined dimming from weather conditions / 计算天气条件的综合压暗系数
     QVariantMap baseAtmos = buildAtmosphereChanges();
@@ -117,10 +118,9 @@ void BackgroundManager::updateWeather(int iconCode, bool isDay)
     m_lastWeatherScale = weatherScale;
 
     qDebug() << "[BackgroundManager] updateWeather: code=" << iconCode
-             << "isDay=" << isDay
+             << "isNight=" << isNight
              << "mode=" << (m_controlMode == 0 ? "Auto" : "Debug");
     m_currentWeatherCode = iconCode;
-    m_currentIsDay = isDay;
     emit currentWeatherChanged();
     commitSkyState(ch);
 }
