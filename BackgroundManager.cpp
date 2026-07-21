@@ -400,10 +400,9 @@ QString BackgroundManager::dumpState() const
         .arg(m_astronomy.sunsetMin());
 }
 
-// Save current sky state as a named profile for a weather code / 将当前天空状态保存为某天气编码的描述档
+// Save current sky state as a named profile for a weather code / 将当前天空状态保存为某天气码的配置
 void BackgroundManager::saveProfileForCode(int code)
 {
-    bool isDay = (code < 150);
     WeatherProfile p;
     p.weatherParticle = m_skyState.rainIntensity > 0.01 ? "rain"
                       : m_skyState.snowIntensity > 0.01 ? "snow" : "";
@@ -418,11 +417,7 @@ void BackgroundManager::saveProfileForCode(int code)
     p.lightningActive = m_skyState.lightningProb > 0.5f;
     p.exposureOffset = 0.0f;
 
-    if (isDay)
-        m_profiles.setDayProfile(code, p);
-    else
-        m_profiles.setNightOverride(code, p);
+    m_profiles.setProfile(code, p);
     m_profiles.saveToFile(m_configPath);
-    qDebug() << "[BackgroundManager] saved profile for code" << code
-             << "isDay=" << isDay << "to" << m_configPath;
+    qDebug() << "[BackgroundManager] saved profile for code" << code << "to" << m_configPath;
 }

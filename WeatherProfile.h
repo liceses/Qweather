@@ -24,30 +24,21 @@ struct WeatherProfile {
 };
 
 // WeatherProfileDB — Weather profile database indexed by icon code
-// 天气配置数据库，按天气图标码索引，区分白天/夜间配置
+// 天气配置数据库，按天气图标码索引
 class WeatherProfileDB {
 public:
     WeatherProfileDB();
 
-    // fromCode — Lookup profile by weather icon code / 根据天气图标码查找配置
     WeatherProfile fromCode(int iconCode) const;
-    // dumpRegisteredCodes — Debug: list all registered codes / 调试：列出所有已注册的码
     void dumpRegisteredCodes() const;
 
-    // Persistence / 持久化
     void loadFromFile(const QString &path);
     void saveToFile(const QString &path) const;
 
-    // Accessors / 访问器
-    const QHash<int, WeatherProfile> &dayProfiles() const { return m_dayProfiles; }
-    const QHash<int, WeatherProfile> &nightOverrides() const { return m_nightOverrides; }
-
-    // Mutators (for debug tuning) / 写入方法（供调试调校保存）
-    void setDayProfile(int code, const WeatherProfile &p) { m_dayProfiles[code] = p; }
-    void setNightOverride(int code, const WeatherProfile &p) { m_nightOverrides[code] = p; }
+    const QHash<int, WeatherProfile> &profiles() const { return m_profiles; }
+    void setProfile(int code, const WeatherProfile &p) { m_profiles[code] = p; }
 
 private:
-    QHash<int, WeatherProfile> m_dayProfiles;    // Daytime profiles indexed by code / 白天配置表
-    QHash<int, WeatherProfile> m_nightOverrides; // Nighttime overrides indexed by code / 夜间覆盖配置表
-    void initProfiles();                         // Initialize built-in profiles / 初始化内置配置
+    QHash<int, WeatherProfile> m_profiles;
+    void initProfiles();
 };
