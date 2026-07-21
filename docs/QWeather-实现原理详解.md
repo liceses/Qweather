@@ -696,7 +696,7 @@ WeatherProfile fromCode(int iconCode, bool isDay) {
 | Q_INVOKABLE | 说明 |
 |-------------|------|
 | `commitSkyState(changes)` | 统一状态提交入口 |
-| `updateWeather(iconCode, isDay)` | 根据天气码更新天空状态 |
+| `updateWeather(iconCode)` | 根据天气码更新天空状态（昼夜由天文模型判断） |
 | `updateSunTimes(sunrise, sunset)` | 更新日出日落 |
 | `updateMoonData(phaseIcon, illum)` | 更新月相数据 |
 | `setLocation(lat, lon)` | 切换城市（含插值过渡） |
@@ -720,10 +720,13 @@ auto applyColor = [&](const char *key, QColor &member);
 
 ---
 
-#### `updateWeather(iconCode, isDay)` — 天气码到渲染参数的完整映射
+#### `updateWeather(iconCode)` — 天气码到渲染参数的完整映射
 
 ```
-WeatherProfile p = m_profiles.fromCode(iconCode, isDay)
+bool isNight = m_astronomy.isNight();
+WeatherProfile p = m_profiles.fromCode(iconCode, !isNight)
+    ↓
+starVisibility = isNight ? 0.8 : 0.0     ← 昼夜由天文模型判断
     ↓
 计算曝光缩放因子:
   cloudDim = 1 - 0.45 * cloudCoverage
@@ -1561,7 +1564,7 @@ brightness = flash × 1.5 × lightningProb
 8. onFocusIdChanged → weatherNow / astronomySun / astronomyMoon 调用
 9. CityDetailStore.setCity → fetchAll (10 个 API)
 10. weatherNowReady → weathers[id] = {temp,icon,text}
-    → backgroundManager.updateWeather(iconCode, isDay)
+    → backgroundManager.updateWeather(iconCode)
 11. updateWeather → WeatherProfile.fromCode → 计算 exposure
     → commitSkyState({cloudCoverage, rainIntensity, ...})
 12. commitSkyState → TransitionController.setSkyState
