@@ -30,7 +30,7 @@ public:
     WeatherProfileDB();
 
     // fromCode — Lookup profile by weather icon code / 根据天气图标码查找配置
-    WeatherProfile fromCode(int iconCode, bool isDay) const;
+    WeatherProfile fromCode(int iconCode) const;
     // dumpRegisteredCodes — Debug: list all registered codes / 调试：列出所有已注册的码
     void dumpRegisteredCodes() const;
 

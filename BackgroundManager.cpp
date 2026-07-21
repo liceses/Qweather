@@ -95,7 +95,7 @@ void BackgroundManager::commitSkyState(const QVariantMap &changes)
 void BackgroundManager::updateWeather(int iconCode)
 {
     bool isNight = m_astronomy.isNight();
-    WeatherProfile p = m_profiles.fromCode(iconCode, !isNight);
+    WeatherProfile p = m_profiles.fromCode(iconCode);
     QVariantMap ch;
     ch["cloudCoverage"]  = p.cloudCoverage;
     ch["rainIntensity"]  = (p.weatherParticle == "rain")  ? static_cast<double>(p.intensity) : 0.0;

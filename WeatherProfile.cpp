@@ -14,14 +14,12 @@ WeatherProfileDB::WeatherProfileDB()
 
 // ===== fromCode: look up profile by weather icon code / 根据天气图标编码查找描述档 =====
 
-WeatherProfile WeatherProfileDB::fromCode(int iconCode, bool isDay) const
+WeatherProfile WeatherProfileDB::fromCode(int iconCode) const
 {
-    // Night override takes precedence / 夜晚覆盖优先
-    if (!isDay && m_nightOverrides.contains(iconCode))
-        return m_nightOverrides[iconCode];
-    // Day profile / 白天描述档
     if (m_dayProfiles.contains(iconCode))
         return m_dayProfiles[iconCode];
+    if (m_nightOverrides.contains(iconCode))
+        return m_nightOverrides[iconCode];
     // Fallback: clear sky / 兜底：晴天
     WeatherProfile sunny;
     sunny.cloudActive = false;
