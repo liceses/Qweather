@@ -37,6 +37,19 @@ int main(int argc, char *argv[])
 
     AppSettings appSettings;
 
+    // Migrate: fill default API key on first launch / 首次启动自动填充旧 key
+    if (appSettings.apiKey().isEmpty())
+        appSettings.setApiKey("ac6fe42e65be4a79a9eca8fc5043c2bf");
+    weatherapi.setApiConfig(appSettings.apiKey(), appSettings.apiHost());
+
+    // Runtime sync: when user changes API config in settings / 运行时同步用户在设置页改配置
+    QObject::connect(&appSettings, &AppSettings::apiKeyChanged, &weatherapi, [&]() {
+        weatherapi.setApiConfig(appSettings.apiKey(), appSettings.apiHost());
+    });
+    QObject::connect(&appSettings, &AppSettings::apiHostChanged, &weatherapi, [&]() {
+        weatherapi.setApiConfig(appSettings.apiKey(), appSettings.apiHost());
+    });
+
     SolarAstronomyStore solarAstronomyStore;
     solarAstronomyStore.setWeatherApi(&weatherapi);
     solarAstronomyStore.setAppSettings(&appSettings);

@@ -44,6 +44,14 @@ WeatherAPI::WeatherAPI(QObject *parent) : QObject(parent) , m_manager(new QNetwo
     connect(m_manager,&QNetworkAccessManager::finished,this,&WeatherAPI::onReplyFinished);
 }
 
+// setApiConfig — Set API key and host at runtime / 运行时设置 API 密钥和地址
+void WeatherAPI::setApiConfig(const QString &key, const QString &host)
+{
+    m_key = key;
+    if (!host.isEmpty())
+        m_host = host;
+}
+
 // ============================ GeoAPI ============================
 
 // searchCity — city name lookup / 按名称搜索城市

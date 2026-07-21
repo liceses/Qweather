@@ -12,6 +12,8 @@ class AppSettings : public QObject {
     Q_PROPERTY(bool showSolarRadiation READ showSolarRadiation WRITE setShowSolarRadiation NOTIFY showSolarRadiationChanged)
     Q_PROPERTY(bool darkMode READ darkMode WRITE setDarkMode NOTIFY darkModeChanged)
     Q_PROPERTY(int maxCards READ maxCards WRITE setMaxCards NOTIFY maxCardsChanged)
+    Q_PROPERTY(QString apiKey READ apiKey WRITE setApiKey NOTIFY apiKeyChanged)
+    Q_PROPERTY(QString apiHost READ apiHost WRITE setApiHost NOTIFY apiHostChanged)
 
     // 主题颜色令牌（由 darkMode 决定，只读）
     Q_PROPERTY(QString iconColor      READ iconColor      NOTIFY darkModeChanged)
@@ -41,6 +43,12 @@ public:
     int maxCards() const { return m_maxCards; }
     void setMaxCards(int n);
 
+    // API key (Base64 encoded in file) / API 密钥（文件中 Base64 编码存储）
+    QString apiKey() const;
+    void setApiKey(const QString &key);
+    QString apiHost() const { return m_apiHost; }
+    void setApiHost(const QString &host);
+
     // Theme color tokens (auto-switch on darkMode) / 主题色令牌（跟随 darkMode 自动切换）
     QString iconColor() const      { return m_darkMode ? "#ffffff" : "#1a1a1a"; }
     QString iconInactive() const   { return m_darkMode ? "#ccffffff" : "#808080"; }
@@ -58,12 +66,16 @@ signals:
     void showSolarRadiationChanged();
     void darkModeChanged();
     void maxCardsChanged();
+    void apiKeyChanged();
+    void apiHostChanged();
 
 private:
     void loadFromFile();
     void saveToFile();
 
     QString m_configPath;
+    QString m_apiKeyEncoded;           // Base64-encoded API key / Base64 编码后的 API 密钥
+    QString m_apiHost;                 // API base host / API 基础地址
     bool m_showSolarRadiation = true;  // Solar radiation card visibility / 太阳辐射卡片可见性
     bool m_darkMode = true;            // Dark mode enabled / 深色模式启用
     int m_maxCards = 4;                // Max forecast cards / 最大预报卡片数

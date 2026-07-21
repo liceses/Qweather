@@ -313,6 +313,101 @@ Item {
                 }
             }
 
+            // ===== API Settings / API 设置 =====
+            Item {
+                id: apiCard
+                Layout.fillWidth: true
+                property real margin: Math.max(12, page.width * 0.02)
+                implicitHeight: apiInner.implicitHeight + margin * 2
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 12
+                    color: "#20ffffff"
+                    border.width: 1; border.color: "#30ffffff"
+                }
+
+                ColumnLayout {
+                    id: apiInner
+                    anchors.fill: parent
+                    anchors.margins: apiCard.margin
+                    spacing: Math.max(6, page.height * 0.01)
+
+                    Text {
+                        text: "API 设置"
+                        color: "white"
+                        font.pixelSize: Math.max(13, Math.min(16, page.width * 0.018))
+                        font.bold: true
+                    }
+
+                    Text {
+                        text: "API Key"
+                        color: "#80ffffff"
+                        font.pixelSize: Math.max(9, Math.min(11, page.width * 0.013))
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 32; radius: 6
+                        color: "#0affffff"; border.width: 1; border.color: "#20ffffff"
+                        TextInput {
+                            id: apiKeyInput
+                            anchors.fill: parent; anchors.margins: 8
+                            color: "white"; font.pixelSize: 13
+                            text: appSettings ? appSettings.apiKey : ""
+                            clip: true
+                        }
+                    }
+
+                    Text {
+                        text: "API Host"
+                        color: "#80ffffff"
+                        font.pixelSize: Math.max(9, Math.min(11, page.width * 0.013))
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 32; radius: 6
+                        color: "#0affffff"; border.width: 1; border.color: "#20ffffff"
+                        TextInput {
+                            id: apiHostInput
+                            anchors.fill: parent; anchors.margins: 8
+                            color: "white"; font.pixelSize: 13
+                            text: appSettings ? appSettings.apiHost : ""
+                            clip: true
+                        }
+                    }
+
+                    RowLayout {
+                        spacing: 8
+                        Rectangle {
+                            radius: 8
+                            color: saveBtn.containsMouse ? "#30ffffff" : "#15ffffff"
+                            border.width: 1; border.color: saveBtn.containsMouse ? "#50ffffff" : "#30ffffff"
+                            Layout.preferredWidth: saveText.implicitWidth + 24
+                            Layout.preferredHeight: 28
+                            Text {
+                                id: saveText; anchors.centerIn: parent
+                                text: "保存"; color: "white"; font.pixelSize: 12
+                            }
+                            MouseArea {
+                                id: saveBtn; anchors.fill: parent
+                                hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (appSettings) {
+                                        appSettings.apiKey = apiKeyInput.text
+                                        appSettings.apiHost = apiHostInput.text
+                                    }
+                                }
+                            }
+                        }
+                        Text {
+                            text: "以 Base64 编码存储，非加密"
+                            color: "#60ffffff"
+                            font.pixelSize: Math.max(8, Math.min(10, page.width * 0.012))
+                        }
+                    }
+                }
+            }
+
             // ===== Version info / 版本信息 =====
             Item {
                 id: versionCard
