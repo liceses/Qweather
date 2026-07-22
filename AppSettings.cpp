@@ -3,12 +3,11 @@
 #include <QJsonObject>
 #include <QFile>
 #include <QDir>
-#include <QStandardPaths>
 #include <QCoreApplication>
 
 // AppSettings constructor: load persisted values / 构造函数：加载持久化设置
 AppSettings::AppSettings(QObject* parent) : QObject(parent) {
-    QString dataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QString dataDir = QCoreApplication::applicationDirPath();
     QDir().mkpath(dataDir);
     m_configPath = dataDir + "/settings.json";
     m_apiHost = "https://kc2k5qe8b5.re.qweatherapi.com";

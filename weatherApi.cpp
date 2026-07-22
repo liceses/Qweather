@@ -5,7 +5,8 @@
 #include <QJsonArray>
 #include <QUrlQuery>
 #include <QFile>
-#include <QStandardPaths>
+#include <QDir>
+#include <QCoreApplication>
 #include <QDebug>
 
 // cacheConf — get cache prefix & TTL for each request type / 获取各请求类型的缓存前缀与 TTL
@@ -555,7 +556,9 @@ QVariantMap WeatherAPI::requestCounts() const
 // saveCounts — persist counts to JSON file / 持久化计数到 JSON 文件
 void WeatherAPI::saveCounts()
 {
-    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/api_stats.json";
+    QString dir = QCoreApplication::applicationDirPath();
+    QDir().mkpath(dir);
+    QString path = dir + "/api_stats.json";
     QJsonArray req, hit;
     for (int i = 0; i < 24; i++) {
         req.append(m_requestCount[i]);
@@ -572,7 +575,7 @@ void WeatherAPI::saveCounts()
 // loadCounts — restore counts from JSON file / 从 JSON 文件恢复计数
 void WeatherAPI::loadCounts()
 {
-    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/api_stats.json";
+    QString path = QCoreApplication::applicationDirPath() + "/api_stats.json";
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly)) return;
     QJsonObject root = QJsonDocument::fromJson(f.readAll()).object();
