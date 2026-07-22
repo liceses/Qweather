@@ -124,6 +124,7 @@ void WeatherAPI::weatherDaily(const QString &days, const QString &loc)
     QUrl url(m_host + "/v7/weather/" + days);
     QUrlQuery q;
     q.addQueryItem("location", loc);
+    q.addQueryItem("_days", days);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
     if (m_cache) {
@@ -147,6 +148,7 @@ void WeatherAPI::weatherHourly(const QString &hours, const QString &loc)
     QUrl url(m_host + "/v7/weather/" + hours);
     QUrlQuery q;
     q.addQueryItem("location", loc);
+    q.addQueryItem("_hours", hours);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
     sendRequest(url, ApiRequestType::WeatherHourly);
@@ -463,14 +465,16 @@ void WeatherAPI::onReplyFinished(QNetworkReply *reply)
     QString loc = q.queryItemValue("_loc");
     if (loc.isEmpty()) loc = q.queryItemValue("location");
 
-    // 写入缓存
+    // 写入缓存（读/写键格式必须一致）
     if (m_cache) {
         auto cc = cacheConf(type);
         if (cc.prefix && !loc.isEmpty()) {
             QString key = QString("%1:%2").arg(cc.prefix, loc);
-            if (type == ApiRequestType::WeatherHourly) {
-                QString hours = q.queryItemValue("location").isEmpty()
-                    ? q.queryItemValue("_loc") : q.queryItemValue("location");
+            if (type == ApiRequestType::WeatherDaily) {
+                QString days = q.queryItemValue("_days");
+                key = QString("%1:%2:%3").arg(cc.prefix, days, loc);
+            } else if (type == ApiRequestType::WeatherHourly) {
+                QString hours = q.queryItemValue("_hours");
                 key = QString("%1:%2:%3").arg(cc.prefix, loc, hours);
             } else if (type == ApiRequestType::Indices) {
                 QString days = q.queryItemValue("_days");
