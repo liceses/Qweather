@@ -38,9 +38,9 @@ int main(int argc, char *argv[])
 
     AppSettings appSettings;
 
-    // Migrate: fill default API key on first launch / 首次启动自动填充旧 key
+    // Load API config: saved settings > env var > empty (user enters in settings)
     if (appSettings.apiKey().isEmpty())
-        appSettings.setApiKey("ac6fe42e65be4a79a9eca8fc5043c2bf");
+        appSettings.setApiKey(qEnvironmentVariable("QW_API_KEY", ""));
     weatherapi.setApiConfig(appSettings.apiKey(), appSettings.apiHost());
 
     // Runtime sync: when user changes API config in settings / 运行时同步用户在设置页改配置
