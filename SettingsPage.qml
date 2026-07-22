@@ -9,6 +9,7 @@ Item {
 
     // [EN] Weather cache interface for cache clearing / [CN] 天气缓存接口，用于清除缓存
     property var weatherCache: null
+    signal navigateToApiUsage()
 
     Flickable {
         anchors.fill: parent
@@ -436,6 +437,51 @@ Item {
                         text: "v0.1"
                         color: "#80ffffff"
                         font.pixelSize: Math.max(13, Math.min(16, page.width * 0.018))
+                    }
+                }
+            }
+
+            // ===== API Usage Stats (debug) / API 请求统计入口 =====
+            Item {
+                Layout.fillWidth: true
+                property real margin: Math.max(12, page.width * 0.02)
+                implicitHeight: apiStatsInner.implicitHeight + margin * 2
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 12
+                    color: "#20ffffff"
+                    border.width: 1; border.color: "#30ffffff"
+                }
+
+                RowLayout {
+                    id: apiStatsInner
+                    anchors.fill: parent
+                    anchors.margins: parent.margin
+                    spacing: 8
+
+                    Text {
+                        text: "API 请求统计"
+                        color: "white"
+                        font.pixelSize: Math.max(13, Math.min(16, page.width * 0.018))
+                        Layout.fillWidth: true
+                    }
+
+                    Rectangle {
+                        radius: 8
+                        color: statsBtn.containsMouse ? "#30ffffff" : "#15ffffff"
+                        border.width: 1; border.color: statsBtn.containsMouse ? "#50ffffff" : "#30ffffff"
+                        Layout.preferredWidth: statsText.implicitWidth + 20
+                        Layout.preferredHeight: 28
+                        Text {
+                            id: statsText; anchors.centerIn: parent
+                            text: "查看"; color: "white"; font.pixelSize: 12
+                        }
+                        MouseArea {
+                            id: statsBtn; anchors.fill: parent
+                            hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: page.navigateToApiUsage()
+                        }
                     }
                 }
             }

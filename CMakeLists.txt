@@ -45,6 +45,7 @@ qt_add_qml_module(appqml1
         FogLayer.qml
         LightningLayer.qml
         WeatherBackgroundDebugPanel.qml
+        ApiUsagePage.qml
     SOURCES AppSettings.h AppSettings.cpp
     SOURCES weatherApi.h weatherApi.cpp
     SOURCES WeatherCache.h WeatherCache.cpp

@@ -48,6 +48,9 @@ public:
     // setApiConfig — Set API key and host at runtime / 运行时设置 API 密钥和地址
     Q_INVOKABLE void setApiConfig(const QString &key, const QString &host = "");
 
+    // requestCounts — Get per-endpoint request counts / 获取各端点请求计数
+    Q_INVOKABLE QVariantMap requestCounts() const;
+
     // ===== QML-callable API methods / 以下函数均可从 QML 直接调用 =====
 
     // —— GeoAPI — Geographic info / 地理信息 ——
@@ -195,6 +198,7 @@ private:
     WeatherCache *m_cache = nullptr;    // Optional cache layer / 可选的缓存层
     QString m_key;           // API key set at runtime / 运行时设置的 API 密钥
     QString m_host;          // API base host set at runtime / 运行时设置的 API 基础地址
+    int m_requestCount[24] = {0};  // Per-endpoint request counter / 各端点请求计数器
 };
 
 

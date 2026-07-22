@@ -334,6 +334,7 @@ ApplicationWindow {
                 opacity: stack.currentIndex === 4 ? 1.0 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 200 } }
                 weatherCache: weatherCache
+                onNavigateToApiUsage: root.stateIndex = 7
             }
 
             CityDetailPage {
@@ -368,6 +369,12 @@ ApplicationWindow {
                     root.promoteCity(cityId)
                     root.stateIndex = 5
                 }
+            }
+
+            // [EN] API usage stats page / [CN] API 请求统计页
+            ApiUsagePage {
+                opacity: stack.currentIndex === 7 ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 200 } }
             }
         }
         }  // RowLayout

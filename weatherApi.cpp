@@ -515,10 +515,30 @@ void WeatherAPI::onReplyFinished(QNetworkReply *reply)
 // sendRequest — enqueue HTTP GET request / 发起 HTTP GET 请求
 void WeatherAPI::sendRequest(const QUrl &url, ApiRequestType type)
 {
+    m_requestCount[static_cast<int>(type)]++;
     QNetworkRequest req(url);
     req.setRawHeader("Accept", "application/json");
     req.setAttribute(QNetworkRequest::User, static_cast<int>(type));
     m_manager->get(req);
+}
+
+// requestCounts — return map of endpoint name → count / 返回端点名称→次数映射
+QVariantMap WeatherAPI::requestCounts() const
+{
+    static const char *names[] = {
+        "CityLookup","CityTop","WeatherNow","WeatherDaily","WeatherHourly",
+        "GridWeatherNow","GridWeatherDaily","GridWeatherHourly",
+        "MinutelyPrecip","WarningNow","Indices",
+        "AirCurrent","AirHourly","AirDaily",
+        "HistoricalWeather","HistoricalAir",
+        "StormList","StormTrack","StormForecast",
+        "OceanTide","SolarRadiation","AstronomySun","AstronomyMoon",
+        "SolarElevationAngle"
+    };
+    QVariantMap map;
+    for (int i = 0; i < 24; i++)
+        map[QString::fromLatin1(names[i])] = m_requestCount[i];
+    return map;
 }
 
 // ============================ Handler 函数 / Response Handlers ============================
