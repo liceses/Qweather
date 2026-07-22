@@ -109,3 +109,14 @@ weather_cache.db
 
 # Binary docs
 docs/*.pptx
+
+# Design docs & plans (not source code)
+docs/
+todo.md
+动态天气背景*
+和风天气*
+天气模拟系统*
+天空模拟系统*
+效果图*.svg
+动态*.md
+\345\212\250*.md
