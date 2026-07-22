@@ -86,7 +86,7 @@ void CityDetailStore::fetchAll() {
 
     QString today = QDate::currentDate().toString("yyyyMMdd");
 
-    m_api->weatherNow(m_cityId);
+    // weatherNow is already called by Main.qml::onFocusIdChanged
     m_api->weatherDaily("3d", m_cityId);
     m_api->weatherHourly("24h", m_cityId);
     m_api->indices("1d", "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16", m_cityId);

@@ -135,6 +135,12 @@ void WeatherAPI::weatherDaily(const QString &days, const QString &loc)
 // weatherHourly — hourly forecast / 逐小时预报
 void WeatherAPI::weatherHourly(const QString &hours, const QString &loc)
 {
+    if (m_cache) {
+        auto cc = cacheConf(ApiRequestType::WeatherHourly);
+        QString key = QString("%1:%2:%3").arg(cc.prefix, loc, hours);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) { handleWeatherHourly(c.toUtf8(), loc); return; }
+    }
     QUrl url(m_host + "/v7/weather/" + hours);
     QUrlQuery q;
     q.addQueryItem("location", loc);
@@ -183,6 +189,12 @@ void WeatherAPI::gridWeatherHourly(const QString &hours, const QString &loc)
 // minutelyPrecip — min-by-min precipitation / 分钟级降水预报
 void WeatherAPI::minutelyPrecip(const QString &loc)
 {
+    if (m_cache) {
+        auto cc = cacheConf(ApiRequestType::MinutelyPrecip);
+        QString key = QString("%1:%2").arg(cc.prefix, loc);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) { handleMinutelyPrecip(c.toUtf8(), loc); return; }
+    }
     QUrl url(m_host + "/v7/minutely/5m");
     QUrlQuery q;
     q.addQueryItem("location", loc);
@@ -196,8 +208,15 @@ void WeatherAPI::minutelyPrecip(const QString &loc)
 // warningNow — current weather alerts / 当前天气预警
 void WeatherAPI::warningNow(const QString &lat, const QString &lng)
 {
+    if (m_cache) {
+        auto cc = cacheConf(ApiRequestType::WarningNow);
+        QString key = QString("%1:%2_%3").arg(cc.prefix, lat, lng);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) { handleWarningNow(c.toUtf8(), lat + "," + lng); return; }
+    }
     QUrl url(m_host + "/weatheralert/v1/current/" + lat + "/" + lng);
     QUrlQuery q;
+    q.addQueryItem("_loc", lat + "," + lng);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
     sendRequest(url, ApiRequestType::WarningNow);
@@ -208,10 +227,17 @@ void WeatherAPI::warningNow(const QString &lat, const QString &lng)
 // indices — weather indices (UV, comfort, etc.) / 天气生活指数
 void WeatherAPI::indices(const QString &days, const QString &type, const QString &loc)
 {
+    if (m_cache) {
+        auto cc = cacheConf(ApiRequestType::Indices);
+        QString key = QString("%1:%2:%3:%4").arg(cc.prefix, loc, days, type);
+        QString c = m_cache->get(key, cc.ttl);
+        if (!c.isEmpty()) { handleIndices(c.toUtf8(), loc); return; }
+    }
     QUrl url(m_host + "/v7/indices/" + days);
     QUrlQuery q;
     q.addQueryItem("type", type);
     q.addQueryItem("location", loc);
+    q.addQueryItem("_days", days);
     q.addQueryItem("key", m_key);
     url.setQuery(q);
     sendRequest(url, ApiRequestType::Indices);
@@ -439,8 +465,18 @@ void WeatherAPI::onReplyFinished(QNetworkReply *reply)
         auto cc = cacheConf(type);
         if (cc.prefix && !loc.isEmpty()) {
             QString key = QString("%1:%2").arg(cc.prefix, loc);
-            // 天文 API 缓存键需包含日期
-            if (type == ApiRequestType::AstronomySun || type == ApiRequestType::AstronomyMoon) {
+            if (type == ApiRequestType::WeatherHourly) {
+                QString hours = q.queryItemValue("location").isEmpty()
+                    ? q.queryItemValue("_loc") : q.queryItemValue("location");
+                key = QString("%1:%2:%3").arg(cc.prefix, loc, hours);
+            } else if (type == ApiRequestType::Indices) {
+                QString days = q.queryItemValue("_days");
+                QString typeName = q.queryItemValue("type");
+                key = QString("%1:%2:%3:%4").arg(cc.prefix, loc, days, typeName);
+            } else if (type == ApiRequestType::WarningNow) {
+                QString latLng = q.queryItemValue("_loc");
+                key = QString("%1:%2").arg(cc.prefix, latLng.replace(",", "_"));
+            } else if (type == ApiRequestType::AstronomySun || type == ApiRequestType::AstronomyMoon) {
                 QString date = q.queryItemValue("date");
                 if (!date.isEmpty())
                     key = QString("%1:%2:%3").arg(cc.prefix, loc, date);
