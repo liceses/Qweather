@@ -4,6 +4,8 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QUrlQuery>
+#include <QFile>
+#include <QStandardPaths>
 #include <QDebug>
 
 // cacheConf — get cache prefix & TTL for each request type / 获取各请求类型的缓存前缀与 TTL
@@ -63,7 +65,7 @@ void WeatherAPI::searchCity(const QString &name)
         QString c = m_cache->get(key, cc.ttl);
         if (!c.isEmpty()) {
             QJsonArray arr = QJsonDocument::fromJson(c.toUtf8()).object()["location"].toArray();
-            if (!arr.isEmpty()) { emit cityLookupReady(arr); return; }
+            if (!arr.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::CityLookup)]++; emit cityLookupReady(arr); return; }
         }
     }
     QUrl url(m_host + "/geo/v2/city/lookup");
@@ -83,6 +85,7 @@ void WeatherAPI::topCity(const QString &range, int number)
         QString c = m_cache->get(key, cc.ttl);
         if (!c.isEmpty()) {
             QJsonArray arr = QJsonDocument::fromJson(c.toUtf8()).object()["topCityList"].toArray();
+            m_cacheHitCount[static_cast<int>(ApiRequestType::CityTop)]++;
             emit cityTopReady(arr);
             return;
         }
@@ -105,7 +108,7 @@ void WeatherAPI::weatherNow(const QString &loc)
         auto cc = cacheConf(ApiRequestType::WeatherNow);
         QString key = QString("%1:%2").arg(cc.prefix, loc);
         QString c = m_cache->get(key, cc.ttl);
-        if (!c.isEmpty()) { handleWeatherNow(c.toUtf8(), loc); return; }
+        if (!c.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::WeatherNow)]++; handleWeatherNow(c.toUtf8(), loc); return; }
     }
     QUrl url(m_host + "/v7/weather/now");
     QUrlQuery q;
@@ -127,7 +130,7 @@ void WeatherAPI::weatherDaily(const QString &days, const QString &loc)
         auto cc = cacheConf(ApiRequestType::WeatherDaily);
         QString key = QString("%1:%2:%3").arg(cc.prefix, days, loc);
         QString c = m_cache->get(key, cc.ttl);
-        if (!c.isEmpty()) { handleWeatherDaily(c.toUtf8(), loc); return; }
+        if (!c.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::WeatherDaily)]++; handleWeatherDaily(c.toUtf8(), loc); return; }
     }
     sendRequest(url, ApiRequestType::WeatherDaily);
 }
@@ -139,7 +142,7 @@ void WeatherAPI::weatherHourly(const QString &hours, const QString &loc)
         auto cc = cacheConf(ApiRequestType::WeatherHourly);
         QString key = QString("%1:%2:%3").arg(cc.prefix, loc, hours);
         QString c = m_cache->get(key, cc.ttl);
-        if (!c.isEmpty()) { handleWeatherHourly(c.toUtf8(), loc); return; }
+        if (!c.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::WeatherHourly)]++; handleWeatherHourly(c.toUtf8(), loc); return; }
     }
     QUrl url(m_host + "/v7/weather/" + hours);
     QUrlQuery q;
@@ -193,7 +196,7 @@ void WeatherAPI::minutelyPrecip(const QString &loc)
         auto cc = cacheConf(ApiRequestType::MinutelyPrecip);
         QString key = QString("%1:%2").arg(cc.prefix, loc);
         QString c = m_cache->get(key, cc.ttl);
-        if (!c.isEmpty()) { handleMinutelyPrecip(c.toUtf8(), loc); return; }
+        if (!c.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::MinutelyPrecip)]++; handleMinutelyPrecip(c.toUtf8(), loc); return; }
     }
     QUrl url(m_host + "/v7/minutely/5m");
     QUrlQuery q;
@@ -212,7 +215,7 @@ void WeatherAPI::warningNow(const QString &lat, const QString &lng)
         auto cc = cacheConf(ApiRequestType::WarningNow);
         QString key = QString("%1:%2_%3").arg(cc.prefix, lat, lng);
         QString c = m_cache->get(key, cc.ttl);
-        if (!c.isEmpty()) { handleWarningNow(c.toUtf8(), lat + "," + lng); return; }
+        if (!c.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::WarningNow)]++; handleWarningNow(c.toUtf8(), lat + "," + lng); return; }
     }
     QUrl url(m_host + "/weatheralert/v1/current/" + lat + "/" + lng);
     QUrlQuery q;
@@ -231,7 +234,7 @@ void WeatherAPI::indices(const QString &days, const QString &type, const QString
         auto cc = cacheConf(ApiRequestType::Indices);
         QString key = QString("%1:%2:%3:%4").arg(cc.prefix, loc, days, type);
         QString c = m_cache->get(key, cc.ttl);
-        if (!c.isEmpty()) { handleIndices(c.toUtf8(), loc); return; }
+        if (!c.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::Indices)]++; handleIndices(c.toUtf8(), loc); return; }
     }
     QUrl url(m_host + "/v7/indices/" + days);
     QUrlQuery q;
@@ -252,7 +255,7 @@ void WeatherAPI::airCurrent(const QString &lat, const QString &lng, const QStrin
         auto cc = cacheConf(ApiRequestType::AirCurrent);
         QString key = QString("%1:%2").arg(cc.prefix, cityId);
         QString c = m_cache->get(key, cc.ttl);
-        if (!c.isEmpty()) { handleAirCurrent(c.toUtf8(), cityId); return; }
+        if (!c.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::AirCurrent)]++; handleAirCurrent(c.toUtf8(), cityId); return; }
     }
     QUrl url(m_host + "/airquality/v1/current/" + lat + "/" + lng);
     QUrlQuery q;
@@ -370,7 +373,7 @@ void WeatherAPI::solarRadiation(const QString &lat, const QString &lng,
         auto cc = cacheConf(ApiRequestType::SolarRadiation);
         QString key = QString("%1:%2").arg(cc.prefix, cityId);
         QString c = m_cache->get(key, cc.ttl);
-        if (!c.isEmpty()) { handleSolarRadiation(c.toUtf8(), cityId); return; }
+        if (!c.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::SolarRadiation)]++; handleSolarRadiation(c.toUtf8(), cityId); return; }
     }
     QUrl url(m_host + "/solarradiation/v1/forecast/" + lat + "/" + lng);
     QUrlQuery q;
@@ -392,7 +395,7 @@ void WeatherAPI::astronomySun(const QString &loc, const QString &date,
         auto cc = cacheConf(ApiRequestType::AstronomySun);
         QString key = QString("%1:%2:%3").arg(cc.prefix, cityId, date);
         QString c = m_cache->get(key, cc.ttl);
-        if (!c.isEmpty()) { handleAstronomySun(c.toUtf8(), cityId); return; }
+        if (!c.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::AstronomySun)]++; handleAstronomySun(c.toUtf8(), cityId); return; }
     }
     QUrl url(m_host + "/v7/astronomy/sun");
     QUrlQuery q;
@@ -412,7 +415,7 @@ void WeatherAPI::astronomyMoon(const QString &loc, const QString &date,
         auto cc = cacheConf(ApiRequestType::AstronomyMoon);
         QString key = QString("%1:%2:%3").arg(cc.prefix, cityId, date);
         QString c = m_cache->get(key, cc.ttl);
-        if (!c.isEmpty()) { handleAstronomyMoon(c.toUtf8(), cityId); return; }
+        if (!c.isEmpty()) { m_cacheHitCount[static_cast<int>(ApiRequestType::AstronomyMoon)]++; handleAstronomyMoon(c.toUtf8(), cityId); return; }
     }
     QUrl url(m_host + "/v7/astronomy/moon");
     QUrlQuery q;
@@ -522,7 +525,7 @@ void WeatherAPI::sendRequest(const QUrl &url, ApiRequestType type)
     m_manager->get(req);
 }
 
-// requestCounts — return map of endpoint name → count / 返回端点名称→次数映射
+// requestCounts — return nested map: endpoint → {requests, cacheHits} / 返回嵌套映射
 QVariantMap WeatherAPI::requestCounts() const
 {
     static const char *names[] = {
@@ -536,9 +539,56 @@ QVariantMap WeatherAPI::requestCounts() const
         "SolarElevationAngle"
     };
     QVariantMap map;
-    for (int i = 0; i < 24; i++)
-        map[QString::fromLatin1(names[i])] = m_requestCount[i];
+    for (int i = 0; i < 24; i++) {
+        QVariantMap entry;
+        entry["requests"] = m_requestCount[i];
+        entry["cacheHits"] = m_cacheHitCount[i];
+        map[QString::fromLatin1(names[i])] = entry;
+    }
     return map;
+}
+
+// saveCounts — persist counts to JSON file / 持久化计数到 JSON 文件
+void WeatherAPI::saveCounts()
+{
+    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/api_stats.json";
+    QJsonArray req, hit;
+    for (int i = 0; i < 24; i++) {
+        req.append(m_requestCount[i]);
+        hit.append(m_cacheHitCount[i]);
+    }
+    QJsonObject root;
+    root["requests"] = req;
+    root["cacheHits"] = hit;
+    QFile f(path);
+    if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        f.write(QJsonDocument(root).toJson());
+}
+
+// loadCounts — restore counts from JSON file / 从 JSON 文件恢复计数
+void WeatherAPI::loadCounts()
+{
+    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/api_stats.json";
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) return;
+    QJsonObject root = QJsonDocument::fromJson(f.readAll()).object();
+    QJsonArray req = root["requests"].toArray();
+    QJsonArray hit = root["cacheHits"].toArray();
+    int n = qMin(24, qMin(req.size(), hit.size()));
+    for (int i = 0; i < n; i++) {
+        m_requestCount[i] = req[i].toInt();
+        m_cacheHitCount[i] = hit[i].toInt();
+    }
+}
+
+// resetCounts — zero all counters / 重置所有计数器
+void WeatherAPI::resetCounts()
+{
+    for (int i = 0; i < 24; i++) {
+        m_requestCount[i] = 0;
+        m_cacheHitCount[i] = 0;
+    }
+    saveCounts();
 }
 
 // ============================ Handler 函数 / Response Handlers ============================

@@ -8,11 +8,15 @@ Item {
     // Raw data from C++, refreshed by Timer / 来自 C++ 的原始数据，由 Timer 刷新
     property var rawCounts: ({})
 
-    // Convert to array of {key, value} for Repeater / 转为 {key, value} 数组供 Repeater 使用
+    // Convert to array of {key, requests, cacheHits, hitRate} for Repeater / 转为数组供 Repeater 使用
     property var countList: {
         var arr = []
-        for (var k in rawCounts)
-            arr.push({key: k, value: rawCounts[k]})
+        for (var k in rawCounts) {
+            var v = rawCounts[k]
+            var req = v.requests || 0
+            var hit = v.cacheHits || 0
+            arr.push({key: k, requests: req, cacheHits: hit, hitRate: req > 0 ? (hit / req * 100).toFixed(1) : "-"})
+        }
         return arr
     }
 
@@ -41,13 +45,6 @@ Item {
                 font.pixelSize: 28; font.bold: true
             }
 
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: "本次会话累计（重启清零）"
-                color: "#80ffffff"
-                font.pixelSize: 13
-            }
-
             Grid {
                 id: grid
                 Layout.fillWidth: true
@@ -59,24 +56,50 @@ Item {
 
                     Rectangle {
                         width: (grid.width - grid.spacing) / 2
-                        height: 44; radius: 8
+                        height: 56; radius: 8
                         color: "#20ffffff"
                         border.width: 1; border.color: "#30ffffff"
 
-                        RowLayout {
-                            anchors.fill: parent; anchors.margins: 12
+                        ColumnLayout {
+                            anchors.fill: parent; anchors.margins: 10; spacing: 2
                             Text {
                                 text: modelData.key
-                                color: "#ccffffff"
-                                font.pixelSize: 12
-                                Layout.fillWidth: true
+                                color: "white"; font.pixelSize: 12; font.bold: true
                                 elide: Text.ElideRight
                             }
                             Text {
-                                text: modelData.value
-                                color: "white"
-                                font.pixelSize: 16; font.bold: true
+                                text: "请求: " + modelData.requests + "  缓存: " + modelData.cacheHits
+                                color: "#ccffffff"; font.pixelSize: 11
                             }
+                            Text {
+                                text: "命中率: " + modelData.hitRate + "%"
+                                color: modelData.hitRate !== "-" && parseFloat(modelData.hitRate) > 50 ? "#4caf50" : "#aaa"
+                                font.pixelSize: 11; font.bold: true
+                            }
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 12
+                Rectangle {
+                    radius: 8
+                    color: resetBtn.containsMouse ? "#30ffffff" : "#15ffffff"
+                    border.width: 1; border.color: resetBtn.containsMouse ? "#50ffffff" : "#30ffffff"
+                    Layout.preferredWidth: resetText.implicitWidth + 24
+                    Layout.preferredHeight: 32
+                    Text {
+                        id: resetText; anchors.centerIn: parent
+                        text: "重置计数"; color: "white"; font.pixelSize: 12
+                    }
+                    MouseArea {
+                        id: resetBtn; anchors.fill: parent
+                        hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (weatherApi) weatherApi.resetCounts()
+                            rawCounts = weatherApi ? weatherApi.requestCounts() : ({})
                         }
                     }
                 }

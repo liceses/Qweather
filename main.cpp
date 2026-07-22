@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
     WeatherCache cache;
     WeatherAPI weatherapi;
     weatherapi.setCache(&cache);
+    weatherapi.loadCounts();
 
     ForecastStore forecastStore;
     forecastStore.setWeatherApi(&weatherapi);
@@ -84,6 +85,10 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("backgroundManager", &bgManager);
     engine.rootContext()->setContextProperty("transitionCtrl", &transitionCtrl);
     engine.loadFromModule("qml1", "Main");
+
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {
+        weatherapi.saveCounts();
+    });
 
     return QApplication::exec();
 }
